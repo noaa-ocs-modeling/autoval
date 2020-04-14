@@ -13,7 +13,7 @@ myCode=${mount}"/GitHub/autoval/autoval/validate/run.py"
 PYTHONPATH=${mount}"/GitHub/csdllib"
 
 # Specify the INI file
-iniFile=${mount}"/GitHub/autoval/tests/singlerun.al182012_hsofs.ini"
+iniFile=${mount}"/GitHub/autoval/autoval/tests/singlerun.al182012.hsofs.ini"
 
 # Execute
 PYTHONPATH=${PYTHONPATH} ${pyPath} -W ignore ${myCode} -i ${iniFile}
