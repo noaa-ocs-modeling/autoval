@@ -1,0 +1,5 @@
+This is an experimental web portal for graphic visualization of the operational and experimental results from the storm surge and tide forecast systems being developed and tested by the National Ocean Service.
+
+ESTOFS model output is NOT a total water level guidance. Actual water levels can be significantly higher than forecast due to waves, steric effect and other components not presently included in the ESTOFS.
+
+Please check with your regional National Weather Service forecast office for the official water level forecast.
