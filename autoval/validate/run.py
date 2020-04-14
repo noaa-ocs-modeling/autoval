@@ -5,6 +5,7 @@ import sys
 import argparse
 import csdllib
 
+#==============================================================================
 def read_cmd_argv (argv):
 
     parser = argparse.ArgumentParser()
@@ -17,7 +18,9 @@ def read_cmd_argv (argv):
     print(args)
     return args
     
+#==============================================================================
 if __name__ == "__main__":
+
     cmd = read_cmd_argv ( sys.argv[1:] )
     cfg = csdllib.oper.sys.config (cmd.iniFile)
     print(cfg)
