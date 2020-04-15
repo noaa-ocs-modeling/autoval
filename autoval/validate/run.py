@@ -11,8 +11,8 @@ def read_cmd_argv (argv):
 
     parser = argparse.ArgumentParser()
     
-    parser.add_argument('-i','--iniFile',        required=True)
-    parser.add_argument('-p','--modelPath',      required=False)
+    parser.add_argument('-i','--iniFile',     required=True)
+    parser.add_argument('-p','--paths',       required=True)
     
     args = parser.parse_args() 
 
@@ -25,11 +25,11 @@ def check_comout (comout):
     Checks the validity of the specified model output directory.
     """
     if not os.path.exists(comout):
-        msg('e','ofs path ' + comout + ' does not exist. Exiting')
-        exit
+        msg('w','ofs path ' + comout + ' does not exist.')
+        return 0
     elif len(glob.glob(os.path.join(comout,'*.nc'))) == 0:
-        msg('e','No netCDF files in ofs path ' + comout + '. Exiting')
-        exit
+        msg('w','No netCDF files in ofs path ' + comout + '.')
+        return 0
     return 1
 
 #==============================================================================
@@ -57,23 +57,31 @@ def singleRun (cfg):
 #==============================================================================
 if __name__ == "__main__":
 
-    cmd = read_cmd_argv          (sys.argv[1:]) # Read command line aruments
+    cmd = read_cmd_argv (sys.argv[1:])   # Read command line aruments
+
+    expPaths = []                        # Define path(s) to experiment(s)
+    if os.path.isdir(cmd.paths):  
+        expPaths.append(cmd.paths)       # cmd line argument was a single path
+    elif os.path.isfile(cmd.paths):      # check if this is a list file
+        with open(cmd.paths) as f:       #  cmd line argument was a list 
+            lines = f.readlines()        #   with possible path(s) to run(s)
+            for line in lines:
+                expPaths.append(line.strip())
+    
+    if len(expPaths) == 0:               # Nothing to do. Bye.
+        msg('e','No valid model paths found. Exiting.')
+        exit
+    
+    for p in expPaths:                   # verify validity of paths
+        if check_comout (p) == 0:
+            msg('w', p + ' is invalid.')
+            expPaths.remove (p)
+    
+    expTags = []
+    msg('i','Detected valid directories:')
+    for p in expPaths:
+        msg (' ',p ) #+ ' tag=' + tag)
+    
+    # Read diagnostics ini file
     cfg = csdllib.oper.sys.config (cmd.iniFile) # Read config file
 
-    # Define path to model output
-    if cmd.modelPath:              # Command line is priority over ini file
-        cfg['Experiment']['path'] = cmd.modelPath
-
-
-    print (cfg) 
-
-    if cfg['Mode']['multirun']:
-        # Assemble multirun setup here
-        experiments = []
-        # Call singlerun for each experiment, collect diagFields
-        for exp in experiments:
-            grid, diagFields = singleRun (cfg)
-        # Perform multirun diagnostics here
-
-    else:
-        singleRun (cfg)
