@@ -70,7 +70,7 @@ if __name__ == "__main__":
     
     if len(expPaths) == 0:               # Nothing to do. Bye.
         msg('e','No valid model paths found. Exiting.')
-        exit
+        quit()
     
     for p in expPaths:                   # verify validity of paths
         if check_comout (p) == 0:
