@@ -21,6 +21,9 @@ def read_cmd_argv (argv):
     return args
 #==============================================================================
 def check_comout (comout):
+    """
+    Checks the validity of the specified model output directory.
+    """
     if not os.path.exists(comout):
         msg('e','ofs path ' + comout + ' does not exist. Exiting')
         return 0
@@ -28,11 +31,11 @@ def check_comout (comout):
         msg('e','No netCDF files in ofs path ' + comout + '. Exiting')
         return 0
     return 1
-       
+
 #==============================================================================
 def singleRun (cfg):
     """
-    Performs validation of a single given run,
+    Performs validation of a single given run.
     Returns diagnostic fields (diagFields) for multirun analysis, if requested
     """
     grid       = []
@@ -41,7 +44,7 @@ def singleRun (cfg):
     # 1. Check model Path
     comout = cfg['Experiment']['path']
     if not check_comout (comout):
-        pass # exit here
+        raise # exit here
     
     # 2. Parse cfg on what to do
     
@@ -57,11 +60,14 @@ if __name__ == "__main__":
 
     cmd = read_cmd_argv          (sys.argv[1:])
     cfg = csdllib.oper.sys.config (cmd.iniFile)
+    if cmd.modelPath:              # Command line is priority over ini file
+        cfg['Experiment']['path'] = cmd.modelPath
+
     print (cfg) 
 
     if cfg['Mode']['multirun']:
-        print (cfg['Mode']['multirun'])
         # Assemble multirun setup here
+        experiments = []
         # Call singlerun for each experiment, collect diagFields
         for exp in experiments:
             grid, diagFields = singleRun (cfg)
