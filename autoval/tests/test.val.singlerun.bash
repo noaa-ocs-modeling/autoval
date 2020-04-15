@@ -16,5 +16,9 @@ PYTHONPATH=${mount}"/GitHub/csdllib"
 iniFile=${mount}"/GitHub/autoval/autoval/tests/singlerun.al182012.hsofs.ini"
 
 # Execute
-PYTHONPATH=${PYTHONPATH} ${pyPath} -W ignore ${myCode} -i ${iniFile} -p $1
-
+if test -z $1 
+then
+    PYTHONPATH=${PYTHONPATH} ${pyPath} -W ignore ${myCode} -i ${iniFile}
+else
+    PYTHONPATH=${PYTHONPATH} ${pyPath} -W ignore ${myCode} -i ${iniFile} -p $1
+fi
