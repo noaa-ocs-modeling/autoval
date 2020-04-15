@@ -1,7 +1,7 @@
 """
 @author: Sergey.Vinogradov@noaa.gov
 """
-import sys, os
+import sys, os, glob
 import argparse
 import csdllib
 from csdllib.oper.sys import msg
@@ -24,8 +24,11 @@ def check_comout (comout):
     if not os.path.exists(comout):
         msg('e','ofs path ' + comout + ' does not exist. Exiting')
         return 0
-    else:
-        return 1   
+    elif len(glob.glob(os.path.join(comout,'*.nc'))) == 0:
+        msg('e','No netCDF files in ofs path ' + comout + '. Exiting')
+        return 0
+    return 1
+       
 #==============================================================================
 def singleRun (cfg):
     """
@@ -46,6 +49,7 @@ def singleRun (cfg):
     # 3. Call out validation, save
     # 4. Call out report generator
     # 5. Call out plotting
+
     return grid, diagFields 
 
 #==============================================================================
