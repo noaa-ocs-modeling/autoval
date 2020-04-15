@@ -85,8 +85,11 @@ if __name__ == "__main__":
             if f=='':
                 folders.remove(f)
         tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]
+        expTags.append(tag)
         msg (' ',p + ' tag=' + tag)
     
     # Read diagnostics ini file
     cfg = csdllib.oper.sys.config (cmd.iniFile) # Read config file
+    # TODO
+    # Define ini file structure for diagnostics flow
 
