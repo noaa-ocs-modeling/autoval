@@ -56,7 +56,10 @@ def singleRun (cfg):
 
 #==============================================================================
 if __name__ == "__main__":
-
+    '''
+    Need to collect :: expPaths (paths to experimental outputs)
+                       expTags  (tags for experiments)
+    '''
     cmd = read_cmd_argv (sys.argv[1:])   # Read command line aruments
 
     expPaths = []                        # Define path(s) to experiment(s)
@@ -90,6 +93,14 @@ if __name__ == "__main__":
     
     # Read diagnostics ini file
     cfg = csdllib.oper.sys.config (cmd.iniFile) # Read config file
-    # TODO
-    # Define ini file structure for diagnostics flow
+    cfg['Analysis']
 
+    # Get data
+
+    # Run diagnostics - individual and across the experiments
+
+    # Save/upload diagnostics reports
+
+    # Plot graphics
+
+    # Upload graphics
