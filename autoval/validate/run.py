@@ -77,10 +77,15 @@ if __name__ == "__main__":
             msg('w', p + ' is invalid.')
             expPaths.remove (p)
     
-    expTags = []
+    expTags = []                         # set up experiment tags
     msg('i','Detected valid directories:')
     for p in expPaths:
-        msg (' ',p ) #+ ' tag=' + tag)
+        folders = p.split('/')
+        for f in folders:
+            if f=='':
+                folders.remove(f)
+        tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]
+        msg (' ',p + ' tag=' + tag)
     
     # Read diagnostics ini file
     cfg = csdllib.oper.sys.config (cmd.iniFile) # Read config file
