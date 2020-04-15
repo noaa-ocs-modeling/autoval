@@ -26,10 +26,10 @@ def check_comout (comout):
     """
     if not os.path.exists(comout):
         msg('e','ofs path ' + comout + ' does not exist. Exiting')
-        return 0
+        exit
     elif len(glob.glob(os.path.join(comout,'*.nc'))) == 0:
         msg('e','No netCDF files in ofs path ' + comout + '. Exiting')
-        return 0
+        exit
     return 1
 
 #==============================================================================
@@ -43,8 +43,7 @@ def singleRun (cfg):
 
     # 1. Check model Path
     comout = cfg['Experiment']['path']
-    if not check_comout (comout):
-        raise # exit here
+    check_comout (comout)
     
     # 2. Parse cfg on what to do
     
