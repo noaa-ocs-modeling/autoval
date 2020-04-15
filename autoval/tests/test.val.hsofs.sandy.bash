@@ -13,12 +13,13 @@ myCode=${mount}"/GitHub/autoval/autoval/validate/run.py"
 PYTHONPATH=${mount}"/GitHub/csdllib"
 
 # Specify the INI file
-iniFile=${mount}"/GitHub/autoval/autoval/tests/singlerun.al182012.hsofs.ini"
+iniFile=${mount}"/GitHub/autoval/autoval/tests/al182012.hsofs.ini"
 
 # Execute
 if test -z $1 
 then
-    PYTHONPATH=${PYTHONPATH} ${pyPath} -W ignore ${myCode} -i ${iniFile}
+    echo "Please specify a path to experiment folder"
+    echo "Or a path to a file with folders paths for multirun analysis"
 else
     PYTHONPATH=${PYTHONPATH} ${pyPath} -W ignore ${myCode} -i ${iniFile} -p $1
 fi

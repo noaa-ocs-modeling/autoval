@@ -57,10 +57,13 @@ def singleRun (cfg):
 #==============================================================================
 if __name__ == "__main__":
 
-    cmd = read_cmd_argv          (sys.argv[1:])
-    cfg = csdllib.oper.sys.config (cmd.iniFile)
+    cmd = read_cmd_argv          (sys.argv[1:]) # Read command line aruments
+    cfg = csdllib.oper.sys.config (cmd.iniFile) # Read config file
+
+    # Define path to model output
     if cmd.modelPath:              # Command line is priority over ini file
         cfg['Experiment']['path'] = cmd.modelPath
+
 
     print (cfg) 
 
