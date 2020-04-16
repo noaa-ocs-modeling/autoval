@@ -1,7 +1,7 @@
 """
 @author: Sergey.Vinogradov@noaa.gov
 """
-import sys, os, glob
+import sys, os, glob, shutil
 import argparse
 import csdllib
 from csdllib.oper.sys import msg
@@ -19,6 +19,23 @@ def read_cmd_argv (argv):
     msg('i', 'autoval.validate.run.py is configured with :')
     print(args)
     return args
+
+#==============================================================================
+def setDir (path, flush=False):
+    """
+    Creates (or flushes) directories.
+    """    
+    if not os.path.exists(path):
+        msg('w', 'Path='+path+' does not exist. Trying to mkdir.')
+        try:
+            os.makedirs(path)
+        except:
+            msg ('e', 'Cannot make path=' + path)
+    elif flush:
+        msg('w', 'Path='+path+' will be flushed.')
+        shutil.rmtree(path)
+        setDir (path)
+
 #==============================================================================
 def check_comout (comout):
     """
@@ -61,7 +78,17 @@ if __name__ == "__main__":
                        expTags  (tags for experiments)
     '''
     cmd = read_cmd_argv (sys.argv[1:])   # Read command line aruments
+    cfg = csdllib.oper.sys.config (cmd.iniFile) # Read config file
+    
+    # Set up validation execution paths, flush tmp directory
+    _workDir = cfg['Analysis']['workdir']
+    _dataDir = cfg['Analysis']['localdatadir']
+    _tmpDir  = cfg['Analysis']['tmpdir']
+    setDir (_workDir)
+    setDir (_dataDir)
+    setDir (_tmpDir, flush=True)
 
+    # Find and validate path(s) to model output(s)
     expPaths = []                        # Define path(s) to experiment(s)
     if os.path.isdir(cmd.paths):  
         expPaths.append(cmd.paths)       # cmd line argument was a single path
@@ -91,9 +118,9 @@ if __name__ == "__main__":
         expTags.append(tag)
         msg (' ',p + ' tag=' + tag)
     
-    # Read diagnostics ini file
-    cfg = csdllib.oper.sys.config (cmd.iniFile) # Read config file
+    
     diagVar = cfg['Analysis']['name']
+    print (cfg['Analysis'])
     print (cfg[diagVar])
 
 
