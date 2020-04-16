@@ -8,12 +8,11 @@ from csdllib.oper.sys import msg
 
 #==============================================================================
 def read_cmd_argv (argv):
-
+    ''' Parse command line arguments '''
     parser = argparse.ArgumentParser()
     
     parser.add_argument('-i','--iniFile',     required=True)
     parser.add_argument('-p','--paths',       required=True)
-    
     args = parser.parse_args() 
 
     msg('i', 'autoval.validate.run.py is configured with :')
@@ -50,9 +49,9 @@ def check_comout (comout):
     return 1
 
 #==============================================================================
-def singleRun (cfg):
+def waterlevel (cfg, path):
     """
-    Performs validation of a single given run.
+    Performs waterlevel validation of a single given run.
     Returns diagnostic fields (diagFields) for multirun analysis, if requested
     """
     grid       = []
@@ -74,27 +73,26 @@ def singleRun (cfg):
 #==============================================================================
 if __name__ == "__main__":
     '''
-    Need to collect :: expPaths (paths to experimental outputs)
-                       expTags  (tags for experiments)
+    Generic Validation Driver 
     '''
     cmd = read_cmd_argv (sys.argv[1:])   # Read command line aruments
     cfg = csdllib.oper.sys.config (cmd.iniFile) # Read config file
     
     # Set up validation execution paths, flush tmp directory
-    _workDir = cfg['Analysis']['workdir']
-    _dataDir = cfg['Analysis']['localdatadir']
-    _tmpDir  = cfg['Analysis']['tmpdir']
-    setDir (_workDir)
-    setDir (_dataDir)
-    setDir (_tmpDir, flush=True)
+    workDir = cfg['Analysis']['workdir']
+    dataDir = cfg['Analysis']['localdatadir']
+    tmpDir  = cfg['Analysis']['tmpdir']
+    setDir (workDir)
+    setDir (dataDir)
+    setDir (tmpDir, flush=True)
 
     # Find and validate path(s) to model output(s)
     expPaths = []                        # Define path(s) to experiment(s)
     if os.path.isdir(cmd.paths):  
-        expPaths.append(cmd.paths)       # cmd line argument was a single path
-    elif os.path.isfile(cmd.paths):      # check if this is a list file
-        with open(cmd.paths) as f:       #  cmd line argument was a list 
-            lines = f.readlines()        #   with possible path(s) to run(s)
+        expPaths.append(cmd.paths)       # cmd line argument was a single path.
+    elif os.path.isfile(cmd.paths):      # check if this is a list file.
+        with open(cmd.paths) as f:       # cmd line argument was a list 
+            lines = f.readlines()        #  with possible path(s) to run(s)
             for line in lines:
                 expPaths.append(line.strip())
     
@@ -110,23 +108,24 @@ if __name__ == "__main__":
     expTags = []                         # set up experiment tags
     msg('i','Detected valid directories:')
     for p in expPaths:
-        folders = p.split('/')
+        folders = p.split('/')           # beware of reverse slashes!
         for f in folders:
             if f=='':
                 folders.remove(f)
         tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]
         expTags.append(tag)
         msg (' ',p + ' tag=' + tag)
-    
-    
-    diagVar = cfg['Analysis']['name']
-    print (cfg['Analysis'])
-    print (cfg[diagVar])
 
-
-    # Get data
+    diagVar = cfg['Analysis']['name'].lower() 
+    msg ('i', 'Working on variable=' + diagVar)
 
     # Run diagnostics - individual and across the experiments
+    for n in range(len(expPaths)):
+        tag  = expTags[n]
+        path = expPaths[n] 
+
+        if diagVar == 'waterlevel':
+            stats = waterlevel (cfg, path)
 
     # Save/upload diagnostics reports
 
