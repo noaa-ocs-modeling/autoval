@@ -93,7 +93,9 @@ if __name__ == "__main__":
     
     # Read diagnostics ini file
     cfg = csdllib.oper.sys.config (cmd.iniFile) # Read config file
-    cfg['Analysis']
+    diagVar = cfg['Analysis']['name']
+    print (cfg[diagVar])
+
 
     # Get data
 
