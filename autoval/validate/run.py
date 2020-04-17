@@ -3,6 +3,7 @@
 """
 import sys, os, glob, shutil
 import argparse
+from waterlevel import waterlevel
 import csdllib
 from csdllib.oper.sys import msg
 
@@ -47,28 +48,6 @@ def check_comout (comout):
         msg('w','No netCDF files in ofs path ' + comout + '.')
         return 0
     return 1
-
-#==============================================================================
-def waterlevel (cfg, path):
-    """
-    Performs waterlevel validation of a single given run.
-    Returns diagnostic fields (diagFields) for multirun analysis, if requested
-    """
-    grid       = []
-    diagFields = []
-
-    # 1. Check model Path
-    comout = cfg['Experiment']['path']
-    check_comout (comout)
-    
-    # 2. Parse cfg on what to do
-    
-
-    # 3. Call out validation, save
-    # 4. Call out report generator
-    # 5. Call out plotting
-
-    return grid, diagFields 
 
 #==============================================================================
 if __name__ == "__main__":
@@ -121,8 +100,10 @@ if __name__ == "__main__":
 
     # Run diagnostics - individual and across the experiments
     for n in range(len(expPaths)):
+
         tag  = expTags[n]
         path = expPaths[n] 
+        # Keep obs files local for consequent runs
 
         if diagVar == 'waterlevel':
             stats = waterlevel (cfg, path)
