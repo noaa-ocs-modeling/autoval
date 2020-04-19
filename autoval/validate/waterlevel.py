@@ -67,6 +67,7 @@ def waterlevel (cfg, path):
         for n in range(len(stations)):
             forecast  = model['zeta'][:,n]
             nosid     = stations[n].strip()
+            msg('i','Working on station ' + nosid)
             localFile = os.path.join(
                         cfg['Analysis']['localdatadir'], 
                         'cwl.nos.' + nosid + '.' + \
@@ -78,14 +79,22 @@ def waterlevel (cfg, path):
                 csdllib.data.coops.writeData (obs, localFile)
             else:
                 obs = csdllib.data.coops.readData(localFile)
+            
+            if len(obs['values']) == 0:
+                msg('w','No obs found for station ' + nosid + ', skipping.')
+            else:
+                # Perform analysis 
+                refDates, obsVals, modVals = \
+                    csdllib.methods.interp.retime  (    \
+                        datespan, obs['values'],        \
+                        model['time'], forecast, refStepMinutes=6)
+                print (refDates)
+                print (obsVals)
+                print (modVals)
+                stop()
 
-            # Perform analysis 
-            refDates, obsVals, modVals = \
-                csdllib.methods.interp.retime  (           \
-                    datespan, obs['values'], model['time'],\
-                    forecast, refStepMinutes=6 )
-            metrics = csdllib.methods.statistics.metrics (\
-                obsVals, modVals, refDates)
-            print (metrics)
+                metrics = csdllib.methods.statistics.metrics (\
+                    obsVals, modVals, refDates)
+                print (metrics)
 
     return pointStats
