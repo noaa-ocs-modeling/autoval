@@ -92,7 +92,7 @@ def waterlevel (cfg, path):
                 print (obsVals)
                 print (modVals)
                 stop()
-
+                
                 metrics = csdllib.methods.statistics.metrics (\
                     obsVals, modVals, refDates)
                 print (metrics)
