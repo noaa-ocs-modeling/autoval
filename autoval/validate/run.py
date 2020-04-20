@@ -53,10 +53,10 @@ def check_comout (comout):
 def writeLocalStats(cfg, tag, pointStats, pointIDs):
     outFile = os.path.join(         \
         cfg['Analysis']['workdir'], \
-        tag+ '.'+ cfg['Analysis']['localStatFile'])
+        tag+ '.'+ cfg[cfg['Analysis']['name']]['localstatfile'])
     
     with open(outFile,'w') as f:
-        keys = pointStats.keys()
+        keys = pointStats[0].keys()
         header = ''
         for key in keys:
             header = header + key + ','
