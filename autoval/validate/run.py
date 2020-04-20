@@ -60,12 +60,12 @@ def writeLocalStats(cfg, tag, pointStats, pointIDs):
         header = ''
         for key in keys:
             header = header + key + ','
-        f.write(header + '/n')
+        f.write(header + '\n')
         for n in range(len(pointIDs)):
             line = pointIDs[n] + ','
             for key in keys:
-                line = line + pointStats[key][n] + ','
-            f.write(line + '/n')
+                line = line + pointStats[n][key] + ','
+            f.write(line + '\n')
         
 #==============================================================================
 if __name__ == "__main__":
