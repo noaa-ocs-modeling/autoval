@@ -126,7 +126,7 @@ if __name__ == "__main__":
         if diagVar == 'waterlevel':
             stats, ids = waterlevel (cfg, path)
         expStats.append( stats )
-        writeLocalStats(cfg, tag, stats)
+        writeLocalStats(cfg, tag, stats, ids)
 
     # Save/upload diagnostics reports
 
