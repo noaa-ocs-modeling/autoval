@@ -79,19 +79,14 @@ def waterlevel (cfg, path):
                 csdllib.data.coops.writeData (obs, localFile)
             else:
                 obs = csdllib.data.coops.readData(localFile)
-            
             if len(obs['values']) == 0:
                 msg('w','No obs found for station ' + nosid + ', skipping.')
             else:
                 # Perform analysis 
                 refDates, obsVals, modVals = \
                     csdllib.methods.interp.retime  (    \
-                        datespan, obs['values'],        \
+                        obs['dates'], obs['values'],        \
                         model['time'], forecast, refStepMinutes=6)
-                print (refDates)
-                print (obsVals)
-                print (modVals)
-                stop()
                 
                 metrics = csdllib.methods.statistics.metrics (\
                     obsVals, modVals, refDates)
