@@ -57,7 +57,7 @@ def writeLocalStats(cfg, tag, pointStats, pointIDs):
     
     with open(outFile,'w') as f:
         keys = pointStats[0].keys()
-        header = ''
+        header = 'pointID,'
         for key in keys:
             header = header + key + ','
         f.write(header + '\n')
