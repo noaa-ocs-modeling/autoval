@@ -26,6 +26,7 @@ def waterlevel (cfg, path):
     Returns diagnostic fields (diagFields) for multirun analysis, if requested
     """
     pointStats = []
+    pointIDs   = []
 
     # Point data (time series, hardwired to COOPS tide gauges)
     if cfg['Analysis']['pointdatastats']:
@@ -83,13 +84,13 @@ def waterlevel (cfg, path):
                 msg('w','No obs found for station ' + nosid + ', skipping.')
             else:
                 # Perform analysis 
-                refDates, obsVals, modVals = \
+                refDates, obsVals, modVals =            \
                     csdllib.methods.interp.retime  (    \
-                        obs['dates'], obs['values'],        \
+                        obs ['dates'], obs['values'],    \
                         model['time'], forecast, refStepMinutes=6)
                 
-                metrics = csdllib.methods.statistics.metrics (\
-                    obsVals, modVals, refDates)
-                print (metrics)
+                M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
+            pointStats.append(M)
+            pointIDs.append(nosid)
 
-    return pointStats
+    return pointStats, pointIDs

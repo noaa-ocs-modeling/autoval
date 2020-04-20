@@ -50,6 +50,24 @@ def check_comout (comout):
     return 1
 
 #==============================================================================
+def writeLocalStats(cfg, tag, pointStats, pointIDs):
+    outFile = os.path.join(         \
+        cfg['Analysis']['workdir'], \
+        tag+ '.'+ cfg['Analysis']['localStatFile'])
+    
+    with open(outFile,'w') as f:
+        keys = pointStats.keys()
+        header = ''
+        for key in keys:
+            header = header + key + ','
+        f.write(header + '/n')
+        for n in range(len(pointIDs)):
+            line = pointIDs[n] + ','
+            for key in keys:
+                line = line + pointStats[key][n] + ','
+            f.write(line + '/n')
+        
+#==============================================================================
 if __name__ == "__main__":
     '''
     Generic Validation Driver 
@@ -99,14 +117,16 @@ if __name__ == "__main__":
     msg ('i', 'Working on variable=' + diagVar)
 
     # Run diagnostics - individual and across the experiments
+    expStats = []
     for n in range(len(expPaths)):
 
         tag  = expTags[n]
         path = expPaths[n] 
-        # Keep obs files local for consequent runs
 
         if diagVar == 'waterlevel':
-            stats = waterlevel (cfg, path)
+            stats, ids = waterlevel (cfg, path)
+        expStats.append( stats )
+        writeLocalStats(cfg, tag, stats)
 
     # Save/upload diagnostics reports
 
