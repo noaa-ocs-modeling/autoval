@@ -5,20 +5,9 @@ import os, glob
 import csdllib
 from csdllib.oper.sys import stampToTime, timeToStamp, msg
 from datetime import datetime
+import numpy as np
+from autoval.plot import waterlevel as plotwl
 
-#==============================================================================
-def timeSeriesStats (pointFile, cfg):
-    """
-    Reads model time series
-    Downloads/reads CO-OPS data
-    Computes time series stats on a specified datespan
-    """
-    stats = []
-    model = \
-        csdllib.models.adcirc.readTimeSeries (pointFile, ncVar = 'zeta', verbose=1)
-    print (model)    
-    return stats
-    
 #==============================================================================
 def waterlevel (cfg, path):
     """
@@ -68,7 +57,7 @@ def waterlevel (cfg, path):
         for n in range(len(stations)):
             forecast  = model['zeta'][:,n]
             nosid     = stations[n].strip()
-            msg('i','Working on station ' + nosid)
+            #msg('i','Working on station ' + nosid)
             localFile = os.path.join(
                         cfg['Analysis']['localdatadir'], 
                         'cwl.nos.' + nosid + '.' + \
@@ -80,8 +69,15 @@ def waterlevel (cfg, path):
                 csdllib.data.coops.writeData (obs, localFile)
             else:
                 obs = csdllib.data.coops.readData(localFile)
+            
+            refDates = np.nan
+            obsVals  = np.nan
+            modVals  = np.nan
+
             if len(obs['values']) == 0:
                 msg('w','No obs found for station ' + nosid + ', skipping.')
+            elif len(forecast) == 0:
+                msg('w','No forecast found for station ' + nosid + ', skipping.')
             else:
                 # Perform analysis 
                 refDates, obsVals, modVals =            \
@@ -89,8 +85,12 @@ def waterlevel (cfg, path):
                         obs ['dates'], obs['values'],    \
                         model['time'], forecast, refStepMinutes=6)
                 
-                M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
+            M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
             pointStats.append(M)
             pointIDs.append(nosid)
+
+            if cfg['Analysis']['pointdataplots']:
+                plotwl.pointSeries(cfg,obsVals, modVals, refDates, nosid)
+
 
     return pointStats, pointIDs
