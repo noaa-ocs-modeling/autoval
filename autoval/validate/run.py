@@ -64,7 +64,7 @@ def writeLocalStats(cfg, tag, pointStats, pointIDs):
         for n in range(len(pointIDs)):
             line = pointIDs[n] + ','
             for key in keys:
-                line = line + pointStats[n][key] + ','
+                line = line + str(pointStats[n][key]) + ','
             f.write(line + '\n')
         
 #==============================================================================
