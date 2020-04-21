@@ -6,10 +6,13 @@ import os
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import matplotlib.dates as mdates
+import numpy as np
 
 #==============================================================================
 def pointSeries(cfg, obsVals, modVals, refDates, nosid, tag):
-
+    '''
+    Plots one station.
+    '''
     xlim = [min(refDates), max(refDates)]
     ylim = [cfg['WaterLevel']['pointymin'],cfg['WaterLevel']['pointymax']]
     datums      = 0
@@ -26,6 +29,18 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, tag):
     ax.set_xlabel('DATE/TIME UTC')
     ax.grid(True,which='both')
 
+    peak_obs_val = np.nanmax(obsVals)
+    peak_obs_dat = refDates[np.argmax(obsVals)]
+    if ylim[0] <= peak_obs_val and peak_obs_val <= ylim[1]:
+        ax.plot(peak_obs_dat, peak_obs_val, 'o',
+                markerfacecolor='limegreen', markeredgecolor='k')
+        ax.plot([peak_obs_dat, peak_obs_dat],[ylim[0],peak_obs_val], 
+                '--',c='limegreen')
+        ax.text(peak_obs_dat, 1.06*peak_obs_val, 
+                str(np.round(peak_obs_val,1)) + "m (" + 
+                str(np.round(3.28084*peak_obs_val,1)) +"ft)",
+                color='forestgreen', fontsize=7, weight='bold')
+    
     ax.xaxis.set_major_locator(mdates.DayLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d\n00:00'))
     ax.xaxis.set_minor_locator(MultipleLocator(0.5))
@@ -38,8 +53,8 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, tag):
     plt.title(tag + ' ' + nosid)
     plt.tight_layout()
     
-    figFile = os.path.join( cfg['Analysis']['workdir'],     \
-                            'ts.' + tag+ '.' + nosid + '.png')
+    figFile = os.path.join( \
+        cfg['Analysis']['workdir'], 'ts.'+tag+'.'+nosid+'.png')
     plt.savefig(figFile)
     plt.close()
     

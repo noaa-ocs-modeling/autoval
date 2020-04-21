@@ -1,2 +1,3 @@
 from . import waterlevel
-__all__ = ['waterlevel']
+from . import skill
+__all__ = ['waterlevel','skill']

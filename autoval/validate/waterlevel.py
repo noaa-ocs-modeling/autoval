@@ -3,8 +3,7 @@
 """
 import os, glob, sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))    
-from plot import waterlevel as wl
-
+import plot as plt
 import csdllib
 from csdllib.oper.sys import stampToTime, timeToStamp, msg
 from datetime import datetime
@@ -69,9 +68,9 @@ def waterlevel (cfg, path, tag):
             
             if not os.path.exists(localFile):
                 obs = csdllib.data.coops.getData(nosid, datespan)
-                csdllib.data.coops.writeData (obs, localFile)
+                csdllib.data.coops.writeData    (obs,  localFile)
             else:
-                obs = csdllib.data.coops.readData(localFile)
+                obs = csdllib.data.coops.readData ( localFile )
             
             refDates = np.nan
             obsVals  = np.nan
@@ -93,9 +92,13 @@ def waterlevel (cfg, path, tag):
             pointIDs.append(nosid)
 
             if cfg['Analysis']['pointdataplots']:
+                validPoint = True
                 try:
-                    wl.pointSeries(cfg, obsVals, modVals, refDates, nosid, tag)
+                    plt.waterlevel.pointSeries(cfg, obsVals, modVals, refDates, nosid, tag)
                 except:
+                    validPoint = False
                     pass
-
+            if cfg['Analysis']['pointdataskill'] and validPoint:
+                plt.skill.panel(cfg, M, refDates, nosid, tag)
+                
     return pointStats, pointIDs
