@@ -1,19 +1,22 @@
 """
 @author: Sergey.Vinogradov@noaa.gov
 """
-import os, glob
+import os, glob, sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))    
+from plot import waterlevel as wl
+
 import csdllib
 from csdllib.oper.sys import stampToTime, timeToStamp, msg
 from datetime import datetime
 import numpy as np
-from autoval.plot import waterlevel as plotwl
 
 #==============================================================================
-def waterlevel (cfg, path):
+def waterlevel (cfg, path, tag):
     """
     Performs waterlevel validation of a single given run.
     Returns diagnostic fields (diagFields) for multirun analysis, if requested
     """
+
     pointStats = []
     pointIDs   = []
 
@@ -57,7 +60,7 @@ def waterlevel (cfg, path):
         for n in range(len(stations)):
             forecast  = model['zeta'][:,n]
             nosid     = stations[n].strip()
-            #msg('i','Working on station ' + nosid)
+            msg('i','Working on station ' + nosid)
             localFile = os.path.join(
                         cfg['Analysis']['localdatadir'], 
                         'cwl.nos.' + nosid + '.' + \
@@ -82,7 +85,7 @@ def waterlevel (cfg, path):
                 # Perform analysis 
                 refDates, obsVals, modVals =            \
                     csdllib.methods.interp.retime  (    \
-                        obs ['dates'], obs['values'],    \
+                        obs ['dates'], obs['values'],   \
                         model['time'], forecast, refStepMinutes=6)
                 
             M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
@@ -90,7 +93,9 @@ def waterlevel (cfg, path):
             pointIDs.append(nosid)
 
             if cfg['Analysis']['pointdataplots']:
-                plotwl.pointSeries(cfg,obsVals, modVals, refDates, nosid)
-
+                try:
+                    wl.pointSeries(cfg, obsVals, modVals, refDates, nosid, tag)
+                except:
+                    pass
 
     return pointStats, pointIDs

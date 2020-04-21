@@ -124,7 +124,7 @@ if __name__ == "__main__":
         path = expPaths[n] 
 
         if diagVar == 'waterlevel':
-            stats, ids = waterlevel (cfg, path)
+            stats, ids = waterlevel (cfg, path, tag)
         expStats.append( stats )
         writeLocalStats(cfg, tag, stats, ids)
 
