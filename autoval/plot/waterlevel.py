@@ -9,7 +9,7 @@ import matplotlib.dates as mdates
 import numpy as np
 
 #==============================================================================
-def pointSeries(cfg, obsVals, modVals, refDates, nosid, tag):
+def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag):
     '''
     Plots one station.
     '''
@@ -50,7 +50,7 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, tag):
     ax2.set_ylim(3.28084*ylim[0], 3.28084*ylim[1])
     ax2.plot([],[])
 
-    plt.title(tag + ' ' + nosid)
+    plt.suptitle(tag + ' ' + nosid + ' ' + info['name'] + ', ' + info['state'], fontsize=8)
     plt.tight_layout()
     
     figFile = os.path.join( \

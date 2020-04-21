@@ -18,6 +18,7 @@ def waterlevel (cfg, path, tag):
 
     pointStats = []
     pointIDs   = []
+    pointNames = []
 
     # Point data (time series, hardwired to COOPS tide gauges)
     if cfg['Analysis']['pointdatastats']:
@@ -59,7 +60,8 @@ def waterlevel (cfg, path, tag):
         for n in range(len(stations)):
             forecast  = model['zeta'][:,n]
             nosid     = stations[n].strip()
-            msg('i','Working on station ' + nosid)
+            info      = csdllib.data.coops.getStationInfo (nosid)
+            msg('i','Working on station ' + nosid + ' ' + info['name'])
             localFile = os.path.join(
                         cfg['Analysis']['localdatadir'], 
                         'cwl.nos.' + nosid + '.' + \
@@ -94,7 +96,7 @@ def waterlevel (cfg, path, tag):
             if cfg['Analysis']['pointdataplots']:
                 validPoint = True
                 try:
-                    plt.waterlevel.pointSeries(cfg, obsVals, modVals, refDates, nosid, tag)
+                    plt.waterlevel.pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag)
                 except:
                     validPoint = False
                     pass
