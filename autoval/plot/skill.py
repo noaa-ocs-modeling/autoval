@@ -2,6 +2,7 @@
 @author: Sergey.Vinogradov@noaa.gov
 """
 import os
+import csdllib
 import matplotlib
 matplotlib.use('Agg',warn=False)
 import matplotlib.pyplot as plt
@@ -91,5 +92,29 @@ def panel (cfg, metrics, refDates, nosid, info, tag):
     
     figFile = os.path.join( cfg['Analysis']['workdir'],     \
                             'skill.' + tag+ '.' + nosid + '.png')
+    plt.savefig(figFile)
+    plt.close()
+
+#==============================================================================
+def map (cfg, metrics, nosid, tag):
+    '''
+    Plots a panel with vital metrics values, 
+    along with typical and acceptable ranges.
+    '''
+    # Download / read map plot data
+    # Get coastline
+    coastlineFile = os.path.join(
+        cfg['Analysis']['localdatadir'], 'coastline.dat')    
+    if not os.path.exists(coastlineFile):
+        csdllib.oper.transfer.refresh (cfg['PlotData']['coastlinefile'], coastlineFile)
+    coast = csdllib.plot.map.readCoastline  (coastlineFile)
+
+    lonlim = [-98, -54]
+    latlim = [  5,  47]
+
+    # rmse
+    fig = csdllib.plot.map.set(lonlim, latlim, coast)
+    plt.suptitle(tag + ' RMSE (m)', fontsize=8)
+    figFile = os.path.join( cfg['Analysis']['workdir'], 'mapskill.rmse' + tag+ '.png')
     plt.savefig(figFile)
     plt.close()

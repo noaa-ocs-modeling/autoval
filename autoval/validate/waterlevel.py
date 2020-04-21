@@ -18,7 +18,6 @@ def waterlevel (cfg, path, tag):
 
     pointStats = []
     pointIDs   = []
-    pointNames = []
 
     # Point data (time series, hardwired to COOPS tide gauges)
     if cfg['Analysis']['pointdatastats']:
@@ -56,13 +55,15 @@ def waterlevel (cfg, path, tag):
         msg ( 'i','Datespan for analysis is set to: ' \
             + timeToStamp(datespan[0]) + ' ' + timeToStamp(datespan[1]) )
         
+        # # # Running on stations list
         # Download / read COOPS stations data
         for n in range(len(stations)):
             forecast  = model['zeta'][:,n]
             nosid     = stations[n].strip()
             info      = csdllib.data.coops.getStationInfo (nosid)
             msg('i','Working on station ' + nosid + ' ' + info['name'])
-
+            
+            # Get station's water levels for this timespan, save locally
             localFile = os.path.join(
                         cfg['Analysis']['localdatadir'], 
                         'cwl.nos.' + nosid + '.' + \
@@ -74,6 +75,7 @@ def waterlevel (cfg, path, tag):
             else:
                 obs = csdllib.data.coops.readData ( localFile )
 
+            # Get stations' info, save locally as info.nos.XXXXXXX.dat
             localFile = os.path.join(
                         cfg['Analysis']['localdatadir'], 
                         'info.nos.' + nosid + '.dat')    
@@ -110,7 +112,11 @@ def waterlevel (cfg, path, tag):
                 except:
                     validPoint = False
                     pass
-            if cfg['Analysis']['pointdataskill'] and validPoint: # Plot dashpanels
+            if cfg['Analysis']['pointskillpanel'] and validPoint: # Plot dashpanels
                 plt.skill.panel(cfg, M, refDates, nosid, info, tag)
-                
+        
+        # Plot stats on the map
+        if cfg['Analysis']['pointskillmap']:
+            plt.skill.map (cfg, pointStats, pointIDs, tag)
+
     return pointStats, pointIDs
