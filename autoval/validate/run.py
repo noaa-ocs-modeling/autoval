@@ -53,7 +53,7 @@ def check_comout (comout):
 def writeLocalStats(cfg, tag, pointStats, pointIDs):
     outFile = os.path.join(         \
         cfg['Analysis']['workdir'], \
-        tag+ '.'+ cfg[cfg['Analysis']['name']]['localstatfile'])
+        cfg[cfg['Analysis']['name']]['localstatfile'] + '.' + tag + '.csv.')
     
     with open(outFile,'w') as f:
         keys = pointStats[0].keys()

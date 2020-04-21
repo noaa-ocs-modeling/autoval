@@ -62,18 +62,27 @@ def waterlevel (cfg, path, tag):
             nosid     = stations[n].strip()
             info      = csdllib.data.coops.getStationInfo (nosid)
             msg('i','Working on station ' + nosid + ' ' + info['name'])
+
             localFile = os.path.join(
                         cfg['Analysis']['localdatadir'], 
                         'cwl.nos.' + nosid + '.' + \
                         timeToStamp(datespan[0]) + '-' + \
                         timeToStamp(datespan[1]) + '.dat')    
-            
             if not os.path.exists(localFile):
                 obs = csdllib.data.coops.getData(nosid, datespan)
                 csdllib.data.coops.writeData    (obs,  localFile)
             else:
                 obs = csdllib.data.coops.readData ( localFile )
-            
+
+            localFile = os.path.join(
+                        cfg['Analysis']['localdatadir'], 
+                        'info.nos.' + nosid + '.dat')    
+            if not os.path.exists(localFile):
+                info = csdllib.data.coops.getStationInfo (nosid)
+                csdllib.data.coops.writeStationInfo (info,  localFile)
+            else:
+                info = csdllib.data.coops.readStationInfo ( localFile )
+
             refDates = np.nan
             obsVals  = np.nan
             modVals  = np.nan
@@ -83,24 +92,25 @@ def waterlevel (cfg, path, tag):
             elif len(forecast) == 0:
                 msg('w','No forecast found for station ' + nosid + ', skipping.')
             else:
-                # Perform analysis 
+                # Unify model and data series 
                 refDates, obsVals, modVals =            \
                     csdllib.methods.interp.retime  (    \
                         obs ['dates'], obs['values'],   \
                         model['time'], forecast, refStepMinutes=6)
-                
+            # Compute statistics    
             M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
             pointStats.append(M)
             pointIDs.append(nosid)
 
-            if cfg['Analysis']['pointdataplots']:
+            if cfg['Analysis']['pointdataplots']: # Plot time series
                 validPoint = True
                 try:
-                    plt.waterlevel.pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag)
+                    plt.waterlevel.pointSeries(cfg, 
+                                obsVals, modVals, refDates, nosid, info, tag)
                 except:
                     validPoint = False
                     pass
-            if cfg['Analysis']['pointdataskill'] and validPoint:
-                plt.skill.panel(cfg, M, refDates, nosid, tag)
+            if cfg['Analysis']['pointdataskill'] and validPoint: # Plot dashpanels
+                plt.skill.panel(cfg, M, refDates, nosid, info, tag)
                 
     return pointStats, pointIDs

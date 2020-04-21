@@ -44,7 +44,7 @@ def subplot_blank (ax):
     return ax
 
 #==============================================================================
-def panel (cfg, metrics, refDates, nosid, tag):
+def panel (cfg, metrics, refDates, nosid, info, tag):
     '''
     Plots a panel with vital metrics values, 
     along with typical and acceptable ranges.
@@ -52,7 +52,7 @@ def panel (cfg, metrics, refDates, nosid, tag):
 
     fig, axs = plt.subplots(1,10,figsize=(5.5, 4.5))
     plt.style.use('seaborn-white')
-    plt.suptitle(tag + ' ' + nosid)
+    plt.suptitle(tag + ' ' + nosid + ' ' + info['name'] + ', ' + info['state'], fontsize=8)
 
     #rmse
     pos = 0
