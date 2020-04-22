@@ -32,7 +32,7 @@ def waterlevel (cfg, path, tag):
             msg['w','Found more than 1 point output. Verify your mask!']
             for f in pointsFile:
                 print(f)
-        pointsFile = pointsFile[0]
+        pointsFile = pointsFile[-1] # Taking the latest, in case for estofs
         
         # Read list of stations
         model = \
@@ -60,7 +60,18 @@ def waterlevel (cfg, path, tag):
         for n in range(len(stations)):
             forecast  = model['zeta'][:,n]
             nosid     = stations[n].strip()
-            info      = csdllib.data.coops.getStationInfo (nosid)
+            
+            # Get stations' info, save locally as info.nos.XXXXXXX.dat
+            localFile = os.path.join(
+                        cfg['Analysis']['localdatadir'], 
+                            'info.nos.' + nosid + '.dat')    
+            if not os.path.exists(localFile):
+                info = csdllib.data.coops.getStationInfo (nosid, 
+                                            verbose=1, tmpDir=tmpDir)
+                csdllib.data.coops.writeStationInfo (info, localFile)
+            else:
+                info = csdllib.data.coops.readStationInfo (localFile)            
+            
             msg('i','Working on station ' + nosid + ' ' + info['name'])
             
             # Get station's water levels for this timespan, save locally
@@ -75,15 +86,7 @@ def waterlevel (cfg, path, tag):
             else:
                 obs = csdllib.data.coops.readData ( localFile )
 
-            # Get stations' info, save locally as info.nos.XXXXXXX.dat
-            localFile = os.path.join(
-                        cfg['Analysis']['localdatadir'], 
-                        'info.nos.' + nosid + '.dat')    
-            if not os.path.exists(localFile):
-                info = csdllib.data.coops.getStationInfo (nosid, verbose=0, tmpDir=tmpDir)
-                csdllib.data.coops.writeStationInfo (info,  localFile)
-            else:
-                info = csdllib.data.coops.readStationInfo ( localFile)
+            
 
             refDates = np.nan
             obsVals  = np.nan
