@@ -96,10 +96,9 @@ def panel (cfg, metrics, refDates, nosid, info, tag):
     plt.close()
 
 #==============================================================================
-def map (cfg, metrics, nosid, tag):
+def map (cfg, pointData, tag):
     '''
-    Plots a panel with vital metrics values, 
-    along with typical and acceptable ranges.
+    Plots a map for a specified data
     '''
     # Download / read map plot data
     # Get coastline
@@ -114,7 +113,7 @@ def map (cfg, metrics, nosid, tag):
 
     # rmse
     fig = csdllib.plot.map.set(lonlim, latlim, coast)
-    plt.suptitle(tag + ' RMSE (m)', fontsize=8)
+    plt.suptitle(tag + ' ' + name, fontsize=8)
     figFile = os.path.join( cfg['Analysis']['workdir'], 'mapskill.rmse' + tag+ '.png')
     plt.savefig(figFile)
     plt.close()
