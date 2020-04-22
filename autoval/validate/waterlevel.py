@@ -15,7 +15,7 @@ def waterlevel (cfg, path, tag):
     Performs waterlevel validation of a single given run.
     Returns diagnostic fields (diagFields) for multirun analysis, if requested
     """
-
+    tmpDir     = cfg['Analysis']['tmpdir']
     pointStats = []
     pointIDs   = []
 
@@ -70,7 +70,7 @@ def waterlevel (cfg, path, tag):
                         timeToStamp(datespan[0]) + '-' + \
                         timeToStamp(datespan[1]) + '.dat')    
             if not os.path.exists(localFile):
-                obs = csdllib.data.coops.getData(nosid, datespan)
+                obs = csdllib.data.coops.getData(nosid, datespan, tmpDir=tmpDir)
                 csdllib.data.coops.writeData    (obs,  localFile)
             else:
                 obs = csdllib.data.coops.readData ( localFile )
@@ -80,10 +80,10 @@ def waterlevel (cfg, path, tag):
                         cfg['Analysis']['localdatadir'], 
                         'info.nos.' + nosid + '.dat')    
             if not os.path.exists(localFile):
-                info = csdllib.data.coops.getStationInfo (nosid)
+                info = csdllib.data.coops.getStationInfo (nosid, verbose=0, tmpDir=tmpDir)
                 csdllib.data.coops.writeStationInfo (info,  localFile)
             else:
-                info = csdllib.data.coops.readStationInfo ( localFile )
+                info = csdllib.data.coops.readStationInfo ( localFile)
 
             refDates = np.nan
             obsVals  = np.nan
