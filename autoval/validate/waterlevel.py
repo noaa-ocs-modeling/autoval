@@ -145,12 +145,12 @@ def waterlevel (cfg, path, tag):
 
         # Plot stats on the map
         if cfg['Analysis']['pointskillmap']:
-            plt.skill.map (cfg, lon, lat, mtx, 'rmsd', [0., 1.],  [0.,0.2],tag)
-            plt.skill.map (cfg, lon, lat, mtx, 'bias', [-1., 1.], [-0.2, 0.2], tag)
-            plt.skill.map (cfg, lon, lat, mtx, 'peak', [-1., 1.], [-0.2, 0.2], tag)
+            plt.skill.map (cfg, lon, lat, mtx, 'rmsd', [0., 1.],      [0.,0.2],tag)
+            plt.skill.map (cfg, lon, lat, mtx, 'bias', [-1., 1.],     [-0.2, 0.2], tag)
+            plt.skill.map (cfg, lon, lat, mtx, 'peak', [-1., 1.],     [-0.2, 0.2], tag)
             plt.skill.map (cfg, lon, lat, mtx, 'plag', [-180., 180.], [-30., 30.], tag)
-            plt.skill.map (cfg, lon, lat, mtx, 'skil', [0., 1.], [0.8, 1.], tag)
-            plt.skill.map (cfg, lon, lat, mtx, 'rval', [0., 1.], [0.8, 1.], tag)
-            plt.skill.map (cfg, lon, lat, mtx, 'vexp', [0., 100.], [80., 100.], tag)
+            plt.skill.map (cfg, lon, lat, mtx, 'skil', [0., 1.],      [0.8, 1.], tag)
+            plt.skill.map (cfg, lon, lat, mtx, 'rval', [0., 1.],      [0.8, 1.], tag)
+            plt.skill.map (cfg, lon, lat, mtx, 'vexp', [0., 100.],    [80., 100.], tag)
 
     return mtx, ids
