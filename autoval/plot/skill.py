@@ -120,9 +120,14 @@ def map (cfg, lon, lat, mtx, field, clim, goodRange, tag):
     for n in range(len(lon)):
         val = float(mtx[n][field])
         z.append ( val )
-    indGood = np.where( (goodRange[0] <= z) and (z <= goodRange[1]) )
-    indBad  = np.where( (goodRange[0] >  z) or  (z > goodRange[1]) )
-    
+    z = np.asarray(z, dtype=np.float32)
+    indGood = np.where( (goodRange[0] <= z) & (z <= goodRange[1]) )[0]
+    indBad  = np.where( (goodRange[0] >  z) | (z  > goodRange[1]) )[0]
+    print ('indGood=')
+    print (indGood[0])
+    print ('indBad=')
+    print (indBad[0])
+
     plt.scatter(lon[indGood], lat[indGood], c=z[indGood], s=20)
     plt.scatter(lon[indBad],  lat[indBad],  c=z[indBad],  s=10)
     plt.clim(clim)

@@ -30,6 +30,7 @@ def pointValidation (cfg, path, tag):
         msg['w','Found more than 1 point output. Verify your mask!']
         for f in pointsFile:
             print(f)
+        pointsFile.sort(key=os.path.getmtime)
     pointsFile = pointsFile[-1] # Taking the latest cycle (estofs)
         
     # Read list of stations out of model file

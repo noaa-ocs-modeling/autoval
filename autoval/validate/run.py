@@ -3,6 +3,7 @@
 """
 import sys, os, glob, shutil
 import argparse
+import datetime
 from waterlevel import waterlevel
 import csdllib
 from csdllib.oper.sys import msg
@@ -72,6 +73,7 @@ if __name__ == "__main__":
     '''
     Generic Validation Driver 
     '''
+    msg('time', str(datetime.datetime.utcnow()) + ' UTC')
     cmd = read_cmd_argv (sys.argv[1:])   # Read command line aruments
     cfg = csdllib.oper.sys.config (cmd.iniFile) # Read config file
     
@@ -126,6 +128,7 @@ if __name__ == "__main__":
         if diagVar == 'waterlevel':
             stats, ids = waterlevel (cfg, path, tag)
         expStats.append( stats )
+        
         writeLocalStats(cfg, tag, stats, ids)
 
     # Save/upload diagnostics reports
