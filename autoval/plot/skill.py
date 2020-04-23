@@ -96,24 +96,39 @@ def panel (cfg, metrics, refDates, nosid, info, tag):
     plt.close()
 
 #==============================================================================
-def map (cfg, pointData, tag):
+def map (cfg, lon, lat, mtx, field, clim, goodRange, tag):
+    
     '''
-    Plots a map for a specified data
+    Plots a map for a specified data.
     '''
     # Download / read map plot data
     # Get coastline
     coastlineFile = os.path.join(
         cfg['Analysis']['localdatadir'], 'coastline.dat')    
     if not os.path.exists(coastlineFile):
-        csdllib.oper.transfer.refresh (cfg['PlotData']['coastlinefile'], coastlineFile)
+        csdllib.oper.transfer.download (cfg['PlotData']['coastlinefile'], coastlineFile)
     coast = csdllib.plot.map.readCoastline  (coastlineFile)
 
     lonlim = [-98, -54]
     latlim = [  5,  47]
 
-    # rmse
-    fig = csdllib.plot.map.set(lonlim, latlim, coast)
-    plt.suptitle(tag + ' ' + name, fontsize=8)
-    figFile = os.path.join( cfg['Analysis']['workdir'], 'mapskill.rmse' + tag+ '.png')
+    fig = csdllib.plot.map.set(lonlim, latlim, coast=coast)
+    plt.suptitle(tag + ' ', fontsize=8)
+
+    plt.jet()
+    z       = []
+    for n in range(len(lon)):
+        val = float(mtx[n][field])
+        z.append ( val )
+    indGood = np.where( (goodRange[0] <= z) and (z <= goodRange[1]) )
+    indBad  = np.where( (goodRange[0] >  z) or  (z > goodRange[1]) )
+    
+    plt.scatter(lon[indGood], lat[indGood], c=z[indGood], s=20)
+    plt.scatter(lon[indBad],  lat[indBad],  c=z[indBad],  s=10)
+    plt.clim(clim)
+    plt.colorbar()
+
+    figFile = os.path.join( 
+        cfg['Analysis']['workdir'], 'mapskill.' + field + '.'+ tag+ '.png')
     plt.savefig(figFile)
     plt.close()
