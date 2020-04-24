@@ -23,7 +23,7 @@ def pointValidation (cfg, path, tag):
     masks = fmask.split(',')
     pointsFile = []
     for m in masks:
-        f = glob.glob(path + m)
+        f = glob.glob(path +'*'+ m + '*')
         if len(f):
             pointsFile.append(f[0])
     if len(pointsFile)>1:
@@ -66,19 +66,17 @@ def pointValidation (cfg, path, tag):
         singlePointData = dict ()
         forecast        = model['zeta'][:,n]
         forecast[np.where(forecast<-100.)] = np.nan  # _fillvalue doesnt work
-        nosid           = stations[n].strip()
+        nosid           = csdllib.data.coops.getNOSID(stations[n].strip())
             
         # Get stations' info, save locally as info.nos.XXXXXXX.dat
         localFile = os.path.join(
-                    cfg['Analysis']['localdatadir'], 
-                        'info.nos.' + nosid + '.dat')    
+                    cfg['Analysis']['localdatadir'], 'info.nos.'+nosid+'.dat')
         if not os.path.exists(localFile):
             info = csdllib.data.coops.getStationInfo (nosid, 
                                         verbose=1, tmpDir=tmpDir)
             csdllib.data.coops.writeStationInfo (info, localFile)
         else:
             info = csdllib.data.coops.readStationInfo (localFile)   
-
         lon = float(info['lon'])
         lat = float(info['lat'])
 
