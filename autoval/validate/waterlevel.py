@@ -59,6 +59,7 @@ def pointValidation (cfg, path, tag):
 
         singlePointData = dict ()
         forecast        = model['zeta'][:,n]
+        forecast[np.where(forecast<-100.)] = np.nan  # _fillvalue doesnt work
         nosid           = stations[n].strip()
             
         # Get stations' info, save locally as info.nos.XXXXXXX.dat
@@ -92,7 +93,7 @@ def pointValidation (cfg, path, tag):
 
         if len(obs['values']) == 0:
             msg('w','No obs found for station ' + nosid + ', skipping.')
-        elif len(forecast) == 0:
+        elif len(forecast) == 0 or np.sum(~np.isnan(forecast)) == 0:
             msg('w','No forecast found for station ' + nosid + ', skipping.')
         else:
             # Unify model and data series 

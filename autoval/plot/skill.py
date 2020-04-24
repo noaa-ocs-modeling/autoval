@@ -116,23 +116,42 @@ def map (cfg, lon, lat, mtx, field, clim, goodRange, tag):
     plt.suptitle(tag + ' ', fontsize=8)
 
     plt.jet()
-    z       = []
+    goodx = [] #TODO: optimize this block
+    goody = []
+    goodz = []
+    upx   = []
+    upy   = []
+    upz   = []
+    dnx   = []
+    dny   = []
+    dnz   = []
     for n in range(len(lon)):
-        val = float(mtx[n][field])
-        z.append ( val )
-    z = np.asarray(z, dtype=np.float32)
-    indGood = np.where( (goodRange[0] <= z) & (z <= goodRange[1]) )[0]
-    indBad  = np.where( (goodRange[0] >  z) | (z  > goodRange[1]) )[0]
-    print ('indGood=')
-    print (indGood[0])
-    print ('indBad=')
-    print (indBad[0])
+        z = float(mtx[n][field])
+        if float(goodRange[0]) <= z and z <= float(goodRange[1]):
+            goodx.append ( lon[n] )
+            goody.append ( lat[n] )
+            goodz.append ( z )
+        elif z < float(goodRange[0]):
+            dnx.append ( lon[n] )
+            dny.append ( lat[n] )
+            dnz.append ( z )
+        elif z > float(goodRange[1]):
+            upx.append ( lon[n] )
+            upy.append ( lat[n] )
+            upz.append ( z )
 
-    plt.scatter(lon[indGood], lat[indGood], c=z[indGood], s=20)
-    plt.scatter(lon[indBad],  lat[indBad],  c=z[indBad],  s=10)
-    plt.clim(clim)
-    plt.colorbar()
+    plt.scatter(goodx, goody, c=goodz, marker = 'o', vmin=float(clim[0]), vmax=float(clim[1]), s=20)
+    plt.scatter(dnx,   dny, c= dnz,    marker = 'v', vmin=float(clim[0]), vmax=float(clim[1]), s=10)
+    plt.scatter(upx,   upy, c= upz,    marker = '^', vmin=float(clim[0]), vmax=float(clim[1]), s=10)
+    plt.clim(clim) #?
 
+    cbar = plt.colorbar()
+    cbartix = list(np.sort(np.unique(
+        [0., float(clim[0]), float(goodRange[0]), 
+        float(goodRange[1]), float(clim[1]) ])))
+    cbar.set_ticks     (cbartix)
+    cbar.set_ticklabels(cbartix)
+    
     figFile = os.path.join( 
         cfg['Analysis']['workdir'], 'mapskill.' + field + '.'+ tag+ '.png')
     plt.savefig(figFile)

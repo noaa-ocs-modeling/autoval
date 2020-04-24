@@ -7,6 +7,7 @@ import datetime
 from waterlevel import waterlevel
 import csdllib
 from csdllib.oper.sys import msg
+import numpy as np
 
 #==============================================================================
 def read_cmd_argv (argv):
@@ -54,7 +55,7 @@ def check_comout (comout):
 def writeLocalStats(cfg, tag, pointStats, pointIDs):
     outFile = os.path.join(         \
         cfg['Analysis']['workdir'], \
-        cfg[cfg['Analysis']['name']]['localstatfile'] + '.' + tag + '.csv.')
+        cfg[cfg['Analysis']['name']]['localstatfile'] + '.' + tag + '.csv')
     
     with open(outFile,'w') as f:
         keys = pointStats[0].keys()
@@ -67,7 +68,21 @@ def writeLocalStats(cfg, tag, pointStats, pointIDs):
             for key in keys:
                 line = line + str(pointStats[n][key]) + ','
             f.write(line + '\n')
-        
+
+#==============================================================================
+def computeAvgStats(pointStats):
+
+    keys = pointStats[0].keys()
+    avgStats = {key: None for key in keys}
+
+    for key in keys:
+        stats    = np.empty(len(pointStats))
+        for n in range(len(pointStats)):
+            stats[n] = pointStats[n][key]
+        avgStats[key] = np.nanmean(stats)
+
+    return avgStats
+            
 #==============================================================================
 if __name__ == "__main__":
     '''
@@ -130,8 +145,11 @@ if __name__ == "__main__":
         expStats.append( stats )
         
         writeLocalStats(cfg, tag, stats, ids)
+        avgStats = computeAvgStats (stats)
+        print (avgStats)
 
-    # Save/upload diagnostics reports
+        # Save/upload diagnostics reports
+        #singleReport (cfg, tag), stats, ids)
 
     # Plot graphics
 
