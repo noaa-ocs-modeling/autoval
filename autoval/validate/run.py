@@ -108,10 +108,10 @@ def setDomainLimits(cfg):
     '''
      Set/get bbox
     '''
-    lonMin =  -89.9
-    lonMax =   89.9
-    latMin = -179.9
-    latMax =  179.9
+    lonMin =  -89.99
+    lonMax =   89.99
+    latMin = -179.99
+    latMax =  179.99
     try:
         lonMin = float( cfg['Analysis']['lonmin'])
     except: 
