@@ -40,9 +40,10 @@ def pointValidation (cfg, path, tag):
         msg('w','No stations found')
         
     # Set/get bbox
-    lonlim = []
-    latlim = []
-    
+    lonMin = float( cfg['Analysis']['lonmin'])
+    lonMax = float( cfg['Analysis']['lonmax'])
+    latMin = float( cfg['Analysis']['latmin'])
+    latMax = float( cfg['Analysis']['latmax'])
 
     # Set/get datespan
     dates = model['time']
@@ -78,59 +79,63 @@ def pointValidation (cfg, path, tag):
         else:
             info = csdllib.data.coops.readStationInfo (localFile)   
 
-        lon = info['lon']
-        lat = info['lat']         
+        lon = float(info['lon'])
+        lat = float(info['lat'])
 
-        msg('i','Working on station ' + nosid + ' ' + info['name'])
-            
-        # Get station's water levels for this timespan, save locally
-        localFile = os.path.join(
-                    cfg['Analysis']['localdatadir'], 
-                    'cwl.nos.' + nosid + '.' + \
-                    timeToStamp(datespan[0]) + '-' + \
-                    timeToStamp(datespan[1]) + '.dat')    
-        if not os.path.exists(localFile):
-            obs = csdllib.data.coops.getData(nosid, datespan, tmpDir=tmpDir)
-            csdllib.data.coops.writeData    (obs,  localFile)
-        else:
-            obs = csdllib.data.coops.readData ( localFile )
+        if lonMin <= lon and lon <= lonMax and latMin <= lat and lat <= latMax:
 
-        refDates = np.nan
-        obsVals  = np.nan
-        modVals  = np.nan
+            msg('i','Working on station ' + nosid + ' ' + info['name'])
+            # Get station's water levels for this timespan, save locally
+            localFile = os.path.join(
+                        cfg['Analysis']['localdatadir'], 
+                        'cwl.nos.' + nosid + '.' + \
+                        timeToStamp(datespan[0]) + '-' + \
+                        timeToStamp(datespan[1]) + '.dat')    
+            if not os.path.exists(localFile):
+                obs = csdllib.data.coops.getData(nosid, datespan, tmpDir=tmpDir)
+                csdllib.data.coops.writeData    (obs,  localFile)
+            else:
+                obs = csdllib.data.coops.readData ( localFile )
 
-        if len(obs['values']) == 0:
-            msg('w','No obs found for station ' + nosid + ', skipping.')
-        elif len(forecast) == 0 or np.sum(~np.isnan(forecast)) == 0:
-            msg('w','No forecast found for station ' + nosid + ', skipping.')
-        else:
-            # Unify model and data series 
-            refDates, obsVals, modVals =            \
+            refDates = np.nan
+            obsVals  = np.nan
+            modVals  = np.nan
+
+            if len(obs['values']) == 0:
+                msg('w','No obs found for station ' + nosid + ', skipping.')
+            elif len(forecast) == 0 or np.sum(~np.isnan(forecast)) == 0:
+                msg('w','No forecast found for station ' + nosid + ', skipping.')
+            else:
+                # Unify model and data series 
+               refDates, obsVals, modVals =            \
                 csdllib.methods.interp.retime  (    \
-                    obs ['dates'], obs['values'],   \
-                    model['time'], forecast, refStepMinutes=6)
-        # Compute statistics    
-        M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
+                        obs ['dates'], obs['values'],   \
+                        model['time'], forecast, refStepMinutes=6)
+            # Compute statistics    
+            M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
 
-        singlePointData['id']      = nosid            
-        singlePointData['info']    = info
-        singlePointData['metrics'] = M
+            singlePointData['id']      = nosid            
+            singlePointData['info']    = info
+            singlePointData['metrics'] = M
 
-        pointData.append ( singlePointData )
-        # Plot time series
-        if cfg['Analysis']['pointdataplots']: 
-            validPoint = True
-            try:
-                plt.waterlevel.pointSeries(cfg, 
-                            obsVals, modVals, refDates, nosid, info, tag)
-            except:
-                validPoint = False
+            pointData.append ( singlePointData )
+            # Plot time series
+            if cfg['Analysis']['pointdataplots']: 
+                validPoint = True
+                try:
+                    plt.waterlevel.pointSeries(cfg, 
+                        obsVals, modVals, refDates, nosid, info, tag)
+                except:
+                    validPoint = False
                 pass
 
-        # Plot dashpanels
-        if cfg['Analysis']['pointskillpanel'] and validPoint: 
-            plt.skill.panel(cfg, M, refDates, nosid, info, tag)
-    
+            # Plot dashpanels
+            if cfg['Analysis']['pointskillpanel'] and validPoint: 
+                plt.skill.panel(cfg, M, refDates, nosid, info, tag)
+        else:
+            msg('i','Station ' + nosid + ' is not within the domain. Skipping')
+
+
     # # # Done running on stations list
     return pointData
 

@@ -73,7 +73,7 @@ def writeLocalStats(cfg, tag, pointStats, pointIDs):
 def appendGlobalStats(cfg, tag, avgStats):
     outFile = os.path.join(         \
         cfg['Analysis']['workdir'], \
-        cfg[cfg['Analysis']['name']]['globalstatfile'] + '.' + tag + '.csv')
+        cfg[cfg['Analysis']['name']]['globalstatfile'] + '.csv')
 
     keys = avgStats.keys()
     if not os.path.exists(outFile):
@@ -104,6 +104,54 @@ def computeAvgStats(pointStats):
     return avgStats
             
 #==============================================================================
+def setDomainLimits(cfg):
+    '''
+     Set/get bbox
+    '''
+    lonMin =  -89.9
+    lonMax =   89.9
+    latMin = -179.9
+    latMax =  179.9
+    try:
+        lonMin = float( cfg['Analysis']['lonmin'])
+    except: 
+        pass
+    try:
+        lonMax = float( cfg['Analysis']['lonmax'])
+    except: 
+        pass
+    try:
+        latMin = float( cfg['Analysis']['latmin'])
+    except: 
+        pass
+    try:
+        latMax = float( cfg['Analysis']['latmax'])
+    except: 
+        pass
+    try:
+        domainFile = os.path.join(cfg['Analysis']['localdatadir'], 'domain.ini')
+        csdllib.oper.transfer.download( cfg['Analysis']['domainfile'], 
+                                        domainFile)
+        dom = csdllib.oper.sys.config (domainFile)
+        print (dom)
+        lonMin = float(dom['Limits']['lonmin'])
+        lonMax = float(dom['Limits']['lonmax'])
+        latMin = float(dom['Limits']['latmin'])
+        latMax = float(dom['Limits']['latmax'])
+        msg('i','Domain is read from ' + cfg[diagVar]['domainfile'])
+    except:
+        pass
+    msg('i','Domain limits are '+ str(lonMin) + ', ' + str(lonMax) + 
+                           ', ' + str(latMin) + ', ' + str(latMax))
+
+    cfg['Analysis']['lonmin'] = lonMin
+    cfg['Analysis']['lonmax'] = lonMax
+    cfg['Analysis']['latmin'] = latMin
+    cfg['Analysis']['latmax'] = latMax
+
+    return cfg
+
+#==============================================================================
 if __name__ == "__main__":
     '''
     Generic Validation Driver 
@@ -111,7 +159,8 @@ if __name__ == "__main__":
     msg('time', str(datetime.datetime.utcnow()) + ' UTC')
     cmd = read_cmd_argv (sys.argv[1:])   # Read command line aruments
     cfg = csdllib.oper.sys.config (cmd.iniFile) # Read config file
-    
+    cfg = setDomainLimits(cfg)                  # Set domain limits
+
     # Set up validation execution paths, flush tmp directory
     workDir = cfg['Analysis']['workdir']
     dataDir = cfg['Analysis']['localdatadir']

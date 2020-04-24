@@ -109,8 +109,8 @@ def map (cfg, lon, lat, mtx, field, clim, goodRange, tag):
         csdllib.oper.transfer.download (cfg['PlotData']['coastlinefile'], coastlineFile)
     coast = csdllib.plot.map.readCoastline  (coastlineFile)
 
-    lonlim = [-98, -54]
-    latlim = [  5,  47]
+    lonlim = [ float(cfg['Analysis']['lonmin']), float(cfg['Analysis']['lonmax']) ]
+    latlim = [ float(cfg['Analysis']['latmin']), float(cfg['Analysis']['latmax']) ]
 
     fig = csdllib.plot.map.set(lonlim, latlim, coast=coast)
     plt.suptitle(tag + ' ', fontsize=8)
@@ -140,9 +140,12 @@ def map (cfg, lon, lat, mtx, field, clim, goodRange, tag):
             upy.append ( lat[n] )
             upz.append ( z )
 
-    plt.scatter(goodx, goody, c=goodz, marker = 'o', vmin=float(clim[0]), vmax=float(clim[1]), s=20)
-    plt.scatter(dnx,   dny, c= dnz,    marker = 'v', vmin=float(clim[0]), vmax=float(clim[1]), s=10)
-    plt.scatter(upx,   upy, c= upz,    marker = '^', vmin=float(clim[0]), vmax=float(clim[1]), s=10)
+    plt.scatter(goodx, goody, c=goodz, marker = 'o', edgecolors='w', 
+            vmin=float(clim[0]), vmax=float(clim[1]), s=30,zorder=2)
+    plt.scatter(dnx,   dny, c= dnz,    marker = 'v', 
+            vmin=float(clim[0]), vmax=float(clim[1]), s=10,zorder=2)
+    plt.scatter(upx,   upy, c= upz,    marker = '^', 
+            vmin=float(clim[0]), vmax=float(clim[1]), s=10,zorder=2)
     plt.clim(clim) #?
 
     cbar = plt.colorbar()
