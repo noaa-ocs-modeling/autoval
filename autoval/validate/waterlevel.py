@@ -39,7 +39,9 @@ def pointValidation (cfg, path, tag):
     if len(stations) == 0:
         msg('w','No stations found')
         
-    # Set datespan
+    # Set/get bbox
+    
+    # Set/get datespan
     dates = model['time']
     datespan = [dates[0], dates[-1]] 
     try:
@@ -71,7 +73,10 @@ def pointValidation (cfg, path, tag):
                                         verbose=1, tmpDir=tmpDir)
             csdllib.data.coops.writeStationInfo (info, localFile)
         else:
-            info = csdllib.data.coops.readStationInfo (localFile)            
+            info = csdllib.data.coops.readStationInfo (localFile)   
+
+        lon = info['lon']
+        lat = info['lat']         
 
         msg('i','Working on station ' + nosid + ' ' + info['name'])
             
