@@ -70,6 +70,26 @@ def writeLocalStats(cfg, tag, pointStats, pointIDs):
             f.write(line + '\n')
 
 #==============================================================================
+def appendGlobalStats(cfg, tag, avgStats):
+    outFile = os.path.join(         \
+        cfg['Analysis']['workdir'], \
+        cfg[cfg['Analysis']['name']]['globalstatfile'] + '.' + tag + '.csv')
+
+    keys = avgStats.keys()
+    if not os.path.exists(outFile):
+        with open(outFile,'a+') as f:
+            header = 'experiment,'
+            for key in keys:
+                header = header + key + ','
+            f.write(header + '\n')
+
+    with open(outFile,'a+') as f:
+        line = tag + ','
+        for key in keys:
+            line = line + str(avgStats[key]) + ','
+        f.write(line + '\n')    
+
+#==============================================================================
 def computeAvgStats(pointStats):
 
     keys = pointStats[0].keys()
@@ -145,8 +165,8 @@ if __name__ == "__main__":
         expStats.append( stats )
         
         writeLocalStats(cfg, tag, stats, ids)
-        avgStats = computeAvgStats (stats)
-        print (avgStats)
+        avgStats    = computeAvgStats (stats)
+        appendGlobalStats(cfg, tag, avgStats)
 
         # Save/upload diagnostics reports
         #singleReport (cfg, tag), stats, ids)
