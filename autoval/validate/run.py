@@ -55,7 +55,7 @@ def check_comout (comout):
 def writeLocalStats(cfg, tag, pointStats, pointIDs):
     outFile = os.path.join(         \
         cfg['Analysis']['workdir'], \
-        cfg[cfg['Analysis']['name']]['localstatfile'] + '.' + tag + '.csv')
+        tag+'.' + cfg[cfg['Analysis']['name']]['localstatfile'] + '.csv')
     
     with open(outFile,'w') as f:
         keys = pointStats[0].keys()
@@ -71,6 +71,7 @@ def writeLocalStats(cfg, tag, pointStats, pointIDs):
 
 #==============================================================================
 def appendGlobalStats(cfg, tag, avgStats):
+
     outFile = os.path.join(         \
         cfg['Analysis']['workdir'], \
         cfg[cfg['Analysis']['name']]['globalstatfile'] + '.csv')
@@ -160,6 +161,7 @@ if __name__ == "__main__":
     cmd = read_cmd_argv (sys.argv[1:])   # Read command line aruments
     cfg = csdllib.oper.sys.config (cmd.iniFile) # Read config file
     cfg = setDomainLimits(cfg)                  # Set domain limits
+    cycle = cfg['Forecast']['cycle']            # OFS cycle
 
     # Set up validation execution paths, flush tmp directory
     workDir = cfg['Analysis']['workdir']
@@ -196,6 +198,8 @@ if __name__ == "__main__":
             if f=='':
                 folders.remove(f)
         tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]
+        if len(cycle):
+            tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]+'.'+cycle
         expTags.append(tag)
         msg (' ',p + ' tag=' + tag)
 

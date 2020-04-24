@@ -91,7 +91,7 @@ def panel (cfg, metrics, refDates, nosid, info, tag):
     axs[pos].set_ylabel ('%')
     
     figFile = os.path.join( cfg['Analysis']['workdir'],     \
-                            'skill.' + tag+ '.' + nosid + '.png')
+                            tag + '.skill.' + nosid + '.png')
     plt.savefig(figFile)
     plt.close()
 
@@ -156,6 +156,6 @@ def map (cfg, lon, lat, mtx, field, clim, goodRange, tag):
     cbar.set_ticklabels(cbartix)
     
     figFile = os.path.join( 
-        cfg['Analysis']['workdir'], 'mapskill.' + field + '.'+ tag+ '.png')
+        cfg['Analysis']['workdir'], tag+'.mapskill.' + field + '.png')
     plt.savefig(figFile)
     plt.close()

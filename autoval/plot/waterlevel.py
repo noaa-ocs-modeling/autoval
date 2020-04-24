@@ -54,7 +54,7 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag):
     plt.tight_layout()
     
     figFile = os.path.join( \
-        cfg['Analysis']['workdir'], 'ts.'+tag+'.'+nosid+'.png')
+        cfg['Analysis']['workdir'], tag+ '.ts.'+nosid+'.png')
     plt.savefig(figFile)
     plt.close()
     

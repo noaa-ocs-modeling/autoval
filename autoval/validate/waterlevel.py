@@ -21,9 +21,14 @@ def pointValidation (cfg, path, tag):
     # Choose the model output file
     fmask = cfg['WaterLevel']['pointfilemask']
     masks = fmask.split(',')
+    cycle = ''
+    try:
+        cycle = cfg['Forecast']['cycle']
+    except:
+        pass
     pointsFile = []
     for m in masks:
-        f = glob.glob(path +'*'+ m + '*')
+        f = glob.glob(path + '*' + cycle + '*' + m + '*')
         if len(f):
             pointsFile.append(f[0])
     if len(pointsFile)>1:
@@ -48,6 +53,7 @@ def pointValidation (cfg, path, tag):
     # Set/get datespan
     dates = model['time']
     datespan = [dates[0], dates[-1]] 
+    print (datespan)
     try:
         datespan[0] = stampToTime (cfg['WaterLevel'].get('pointdatesstart'))
     except:
@@ -58,7 +64,7 @@ def pointValidation (cfg, path, tag):
         pass
     msg ( 'i','Datespan for analysis is set to: ' \
             + timeToStamp(datespan[0]) + ' ' + timeToStamp(datespan[1]) )
-        
+    
     # # # Running on stations list
     # Download / read COOPS stations data
     for n in range(len(stations)):
@@ -161,7 +167,7 @@ def waterlevel (cfg, path, tag):
             plt.skill.map (cfg, lon, lat, mtx, 'rmsd', [0., 1.],      [0.,0.2],tag)
             plt.skill.map (cfg, lon, lat, mtx, 'bias', [-1., 1.],     [-0.2, 0.2], tag)
             plt.skill.map (cfg, lon, lat, mtx, 'peak', [-1., 1.],     [-0.2, 0.2], tag)
-            plt.skill.map (cfg, lon, lat, mtx, 'plag', [-180., 180.], [-30., 30.], tag)
+            plt.skill.map (cfg, lon, lat, mtx, 'plag', [-360., 360.], [-30., 30.], tag)
             plt.skill.map (cfg, lon, lat, mtx, 'skil', [0., 1.],      [0.8, 1.], tag)
             plt.skill.map (cfg, lon, lat, mtx, 'rval', [0., 1.],      [0.8, 1.], tag)
             plt.skill.map (cfg, lon, lat, mtx, 'vexp', [0., 100.],    [80., 100.], tag)
