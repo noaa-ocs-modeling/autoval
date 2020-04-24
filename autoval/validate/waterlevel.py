@@ -40,7 +40,10 @@ def pointValidation (cfg, path, tag):
         msg('w','No stations found')
         
     # Set/get bbox
+    lonlim = []
+    latlim = []
     
+
     # Set/get datespan
     dates = model['time']
     datespan = [dates[0], dates[-1]] 
