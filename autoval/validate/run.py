@@ -161,8 +161,11 @@ if __name__ == "__main__":
     cmd = read_cmd_argv (sys.argv[1:])   # Read command line aruments
     cfg = csdllib.oper.sys.config (cmd.iniFile) # Read config file
     cfg = setDomainLimits(cfg)                  # Set domain limits
-    cycle = cfg['Forecast']['cycle']            # OFS cycle
-
+    cycle = ''                                  # OFS cycle
+    try:
+        cycle = cfg['Forecast']['cycle']            
+    except:
+        pass
     # Set up validation execution paths, flush tmp directory
     workDir = cfg['Analysis']['workdir']
     dataDir = cfg['Analysis']['localdatadir']
