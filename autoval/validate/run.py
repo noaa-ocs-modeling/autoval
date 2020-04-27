@@ -4,7 +4,8 @@
 import sys, os, glob, shutil
 import argparse
 import datetime
-from waterlevel import waterlevel
+from waterlevel import waterLevel
+from report.html import singleReport
 import csdllib
 from csdllib.oper.sys import msg
 import numpy as np
@@ -217,7 +218,7 @@ if __name__ == "__main__":
         path = expPaths[n] 
 
         if diagVar == 'waterlevel':
-            stats, ids = waterlevel (cfg, path, tag)
+            stats, ids = waterLevel (cfg, path, tag)
         expStats.append( stats )
         
         writeLocalStats(cfg, tag, stats, ids)
@@ -225,7 +226,7 @@ if __name__ == "__main__":
         appendGlobalStats(cfg, tag, avgStats)
 
         # Save/upload diagnostics reports
-        #singleReport (cfg, tag), stats, ids)
+        singleReport (cfg, tag, stats, ids, avgStats)
 
     # Plot graphics
 

@@ -9,13 +9,21 @@ from csdllib.oper.sys import stampToTime, timeToStamp, msg
 from datetime import datetime
 import numpy as np
 
+#==============================================================================
+def fieldValidation (cfg, path, tag):
+    '''
+    Works on point data
+    '''
+    fieldVal = []
+    msg('e','Not Yet Implemented.')
+    return fieldVal
 
 #==============================================================================
 def pointValidation (cfg, path, tag):
     '''
     Works on point data
     '''
-    pointData  = []
+    pointVal   = []
     tmpDir     = cfg['Analysis']['tmpdir']
     
     # Choose the model output file
@@ -122,7 +130,7 @@ def pointValidation (cfg, path, tag):
             singlePointData['info']    = info
             singlePointData['metrics'] = M
 
-            pointData.append ( singlePointData )
+            pointVal.append ( singlePointData )
             # Plot time series
             if cfg['Analysis']['pointdataplots']: 
                 validPoint = True
@@ -141,22 +149,26 @@ def pointValidation (cfg, path, tag):
 
 
     # # # Done running on stations list
-    return pointData
+    return pointVal
 
 #==============================================================================
-def waterlevel (cfg, path, tag):
+def waterLevel (cfg, path, tag):
     '''
     Performs waterlevel validation of a single given run.
     '''
 
+    # Field data analysis
+    if cfg['Analysis']['fielddataplots']:
+        fieldVal = fieldValidation (cfg, path, tag)
+
     # Point data (time series, hardwired to COOPS tide gauges)
     if cfg['Analysis']['pointdatastats']:
-        pointData = pointValidation (cfg, path, tag)
+        pointVal = pointValidation (cfg, path, tag)
         lon = []
         lat = []
         ids = []
         mtx = []
-        for point in pointData:
+        for point in pointVal:
             lon.append ( point['info']['lon'] )
             lat.append ( point['info']['lat'] )
             ids.append ( point['info']['nosid'])
@@ -171,5 +183,5 @@ def waterlevel (cfg, path, tag):
             plt.skill.map (cfg, lon, lat, mtx, 'skil', [0., 1.],      [0.8, 1.], tag)
             plt.skill.map (cfg, lon, lat, mtx, 'rval', [0., 1.],      [0.8, 1.], tag)
             plt.skill.map (cfg, lon, lat, mtx, 'vexp', [0., 100.],    [80., 100.], tag)
-
+            plt.skill.map (cfg, lon, lat, mtx, 'npts', [0., 1000.],   [240.,1000.], tag)
     return mtx, ids
