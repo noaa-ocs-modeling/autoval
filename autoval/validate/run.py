@@ -135,7 +135,7 @@ def setDomainLimits(cfg):
         pass
     try:
         domainFile = os.path.join(cfg['Analysis']['localdatadir'], 'domain.ini')
-        csdllib.oper.transfer.download( cfg['Analysis']['domainfile'], 
+        csdllib.oper.transfer.refresh( cfg['Analysis']['domainfile'], 
                                         domainFile)
         dom = csdllib.oper.sys.config (domainFile)
         print (dom)
