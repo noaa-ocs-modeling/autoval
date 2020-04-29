@@ -164,14 +164,14 @@ def waterLevel (cfg, path, tag):
     # Point data (time series, hardwired to COOPS tide gauges)
     if cfg['Analysis']['pointdatastats']:
         pointVal = pointValidation (cfg, path, tag)
-        lon = []
-        lat = []
-        ids = []
+        lon  = []
+        lat  = []
+        info = []
         mtx = []
         for point in pointVal:
             lon.append ( point['info']['lon'] )
             lat.append ( point['info']['lat'] )
-            ids.append ( point['info']['nosid'])
+            info.append ( point['info'])
             mtx.append ( point['metrics'] )
 
         # Plot stats on the map
@@ -184,4 +184,4 @@ def waterLevel (cfg, path, tag):
             plt.skill.map (cfg, lon, lat, mtx, 'rval', [0., 1.],      [0.8, 1.], tag)
             plt.skill.map (cfg, lon, lat, mtx, 'vexp', [0., 100.],    [80., 100.], tag)
             plt.skill.map (cfg, lon, lat, mtx, 'npts', [0., 1000.],   [240.,1000.], tag)
-    return mtx, ids
+    return mtx, info

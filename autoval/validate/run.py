@@ -53,7 +53,10 @@ def check_comout (comout):
     return 1
 
 #==============================================================================
-def writeLocalStats(cfg, tag, pointStats, pointIDs):
+def writeLocalStats(cfg, tag, pointStats, info):
+    pointIDs = []
+    for n in range(len(info)):
+        pointIDs.append( info[n]['nosid'])
     outFile = os.path.join(         \
         cfg['Analysis']['workdir'], \
         tag+'.' + cfg[cfg['Analysis']['name']]['localstatfile'] + '.csv')
@@ -218,15 +221,15 @@ if __name__ == "__main__":
         path = expPaths[n] 
 
         if diagVar == 'waterlevel':
-            stats, ids = waterLevel (cfg, path, tag)
+            stats, info = waterLevel (cfg, path, tag)
         expStats.append( stats )
         
-        writeLocalStats(cfg, tag, stats, ids)
+        writeLocalStats(cfg, tag, stats, info)
         avgStats    = computeAvgStats (stats)
         appendGlobalStats(cfg, tag, avgStats)
 
         # Save/upload diagnostics reports
-        singleReport (cfg, tag, stats, ids, avgStats)
+        singleReport (cfg, tag, info, stats, avgStats)
 
     # Plot graphics
 

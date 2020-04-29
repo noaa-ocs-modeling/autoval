@@ -3,9 +3,29 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body {font-family: Arial;}
+  body {
+    font-family: Verdana; 
+    font-size: 8 px;
+  }
+  h2 {
+    font-family: Verdana; 
+    font-size: 9 px;
+  }
+  h3 {
+    font-family: Arial; 
+    font-size: 8 px;
+  }
 
-/* Style the tab */
+  table {
+    font-family: Verdana; 
+    font-size: 9 px;
+  }
+  p {
+    font-family: Verdana;
+    font-size: 8 px;
+  }
+
+  /* Style the tab */
 .tab {
   overflow: hidden;
   border: 1px solid #ccc;
@@ -21,7 +41,7 @@ body {font-family: Arial;}
   cursor: pointer;
   padding: 5px 10px;
   transition: 0.3s;
-  font-size: 12px;
+  font-size: 8px;
 }
 
 /* Change background color of buttons on hover */
@@ -42,17 +62,26 @@ body {font-family: Arial;}
   border-top: none;
 }
 </style>
+
 </head>
 <body>
 
 <h2>__expname__ </h2>
-<p>Click on the buttons inside the tabbed menu:</p>
+<p>Single experiment report.</p>
+<br>
+<!--InsertDate-->
+<br>
+<p>Time series metrics.</p>
 
 <div class="tab">
    <!--InsertTabLink-->
 </div>
-
 <!--InsertTabContent-->
+
+<br><hr><br>
+<!--InsertAvgStatsTable-->
+<br><hr><br>
+<!--InsertTimeSeries-->
 
 <script>
 function openMap(evt, mapName) {

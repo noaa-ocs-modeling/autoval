@@ -4,6 +4,8 @@
 import os
 import csdllib
 import re
+import numpy as np
+from .metricsDescription import waterlevel 
 
 #==============================================================================
 def tabLink (tabName, isDefault=False):
@@ -28,7 +30,57 @@ def tabContent(tabName, tabDescription, imgPath):
     return lines
 
 #==============================================================================
-def singleReport (cfg, tag, stats, ids, avgStats):
+def csv2html (fod, avgStats):
+    fod.write('<table width=\"800\" cellspacing=\"2\" cellpadding=\"2\" border=\"0\">\n')
+    fod.write('<tr>\n')
+    for key in avgStats:
+        fod.write('<td bgcolor=\"#ccccff\">\n')
+        fod.write(key+'\n')
+        fod.write('</td>\n')
+    fod.write('</tr>\n<tr>\n')
+    for key in avgStats:
+        fod.write('<td>\n')
+        fod.write( str(np.round(avgStats[key],2)) + '\n')
+        fod.write('</td>\n')
+    fod.write('</tr>') 
+    fod.write('</table>\n')
+
+#==============================================================================
+def timeSeriesPanel (fod, cfg, tag, nosid, name, state):
+
+    tspng = os.path.join(   cfg['Analysis']['workdir'],
+                            tag + '.ts.' + str(nosid) + '.png')
+    mxpng = os.path.join(   cfg['Analysis']['workdir'],
+                            tag + '.skill.' + str(nosid) + '.png')
+
+    fod.write('<table width=\"700\" cellspacing=\"2\" cellpadding=\"2\" border=\"0\">\n')
+    fod.write('<tr>\n')
+    fod.write('<td colspan = \"2\">' + str(nosid)+': ' + name + ' ' + state +  '</td>\n')
+    fod.write('</tr>\n')
+    fod.write('<tr>\n')
+    fod.write('<td>\n')
+    fod.write('<a href=\"' + 
+                tspng + '\"><img src=\"' + tspng + 
+                '\" alt=\"\" height=\"250\" border=\"0\"></a>\n')
+    fod.write('</td>\n')
+    fod.write('<td>\n')
+    fod.write('<a href=\"' + 
+                mxpng + '\"><img src=\"' + mxpng + 
+                '\" alt=\"\" height=\"250\" border=\"0\"></a>\n')
+    fod.write('</td>\n')
+    fod.write('</tr>') 
+    fod.write('</table>\n')
+
+#==============================================================================
+def singleReport (cfg, tag, info, stats, avgStats):
+
+    ids    = []
+    names  = []
+    states = []
+    for i in info:
+        ids.append(i['nosid'])
+        names.append(i['name'])
+        states.append(i['state'])
 
     reportDir = cfg['Analysis']['reportdir']
     diagVar   = cfg['Analysis']['name']
@@ -43,7 +95,30 @@ def singleReport (cfg, tag, stats, ids, avgStats):
     fod = open(outFile, 'w')
     with open(local,"r") as fid:
         for line in fid:
-            if '<!--InsertTabLink-->' in line:
+            if '<!--InsertDate-->' in line:
+                fod.write(expDescr + '<br>\n')
+                fod.write('Generated: ' +csdllib.oper.sys.timeStamp() + '<br>\n')
+
+            elif '<!--InsertThumbnails-->' in line:
+                fod.write('<table style=\"width:800\">\n')
+                fod.write('<tr>\n')
+                for key in avgStats:
+                    fod.write('<td>\n')
+                    fod.write(key+'\n')
+                    fod.write('</td>\n')
+                fod.write('</tr>\n<tr>\n')
+
+                for key in avgStats:
+                    fod.write('<td>\n')
+                    imgPath = os.path.join(
+                                cfg['Analysis']['workdir'],
+                                tag + '.mapskill.' + key + '.png')
+                    fod.write( '<a href=\"' + imgPath + '\"><img src=\"' + imgPath + '\" alt=\"\" width=\"100\" border=\"0\"></a>'+'\n')
+                    fod.write('</td>\n')
+                fod.write('</tr>') 
+                fod.write('</table>\n')
+
+            elif '<!--InsertTabLink-->' in line:
                 for key in avgStats:
                     print (key)
                     isDefault = False
@@ -53,14 +128,32 @@ def singleReport (cfg, tag, stats, ids, avgStats):
                         n =+ 1
                     lines = tabLink(key, isDefault)
                     fod.write(lines+'\n')
+
             elif '<!--InsertTabContent-->' in line:
                 for key in avgStats:
                     imgPath = os.path.join(
                                 cfg['Analysis']['workdir'],
                                 tag + '.mapskill.' + key + '.png')
-                    lines = tabContent(key, str(key), imgPath)
+                    lines = tabContent(key, waterlevel(key), imgPath)
                     for l in lines:
                         fod.write(l)
+
+            elif '<!--InsertAvgStatsTable-->' in line:
+                fod.write('Average time-series statistics:\n')
+                csv2html (fod, avgStats)
+
+            elif '<!--InsertTimeSeries-->' in line:
+                fod.write('Individual time-series statistics:\n')
+                fod.write('<hr>\n')
+                for n in range(len(ids)):
+                    if not np.isnan( stats[n]['rmsd']):
+                        fod.write('<br>\n')
+                        nosid = ids[n]
+                        name  = names[n]
+                        state = states[n]
+                        timeSeriesPanel (fod, cfg, tag, nosid, name, state)
+                        csv2html (fod, stats[n])
+                        fod.write('<hr>\n')
             else:
                 line = re.sub('__expname__', tag, line)
                 line = re.sub('__expdesc__', cfg['Analysis']['experimentdescr'], line)

@@ -1,2 +1,4 @@
 from . import html
-__all__ = ['html']
+from . import metricsDescription
+
+__all__ = ['html','metricsDescription']

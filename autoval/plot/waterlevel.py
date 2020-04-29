@@ -31,6 +31,15 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag):
 
     peak_obs_val = np.nanmax(obsVals)
     peak_obs_dat = refDates[np.argmax(obsVals)]
+    peak_mod_val = np.nanmax(modVals)
+    peak_mod_dat = refDates[np.argmax(modVals)]
+  
+    if ylim[0] <= peak_mod_val and peak_mod_val <= ylim[1]:
+        ax.plot(peak_mod_dat, peak_mod_val, 'o',
+                markerfacecolor='b', markeredgecolor='k')
+        ax.plot([peak_mod_dat, peak_mod_dat],[ylim[0],peak_mod_val], 
+                '--',c='b')
+    
     if ylim[0] <= peak_obs_val and peak_obs_val <= ylim[1]:
         ax.plot(peak_obs_dat, peak_obs_val, 'o',
                 markerfacecolor='limegreen', markeredgecolor='k')
