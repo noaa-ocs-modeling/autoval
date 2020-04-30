@@ -83,13 +83,13 @@ def appendGlobalStats(cfg, tag, avgStats):
     keys = avgStats.keys()
     if not os.path.exists(outFile):
         with open(outFile,'a+') as f:
-            header = 'experiment,'
+            header = 'experiment, date,'
             for key in keys:
                 header = header + key + ','
             f.write(header + '\n')
 
     with open(outFile,'a+') as f:
-        line = tag + ','
+        line = tag + ',' + csdllib.oper.sys.timeStamp() + ','
         for key in keys:
             line = line + str(avgStats[key]) + ','
         f.write(line + '\n')    
@@ -180,8 +180,8 @@ if __name__ == "__main__":
 
     # Find and validate path(s) to model output(s)
     expPaths = []                        # Define path(s) to experiment(s)
-    if os.path.isdir(cmd.paths):  
-        expPaths.append(cmd.paths)       # cmd line argument was a single path.
+    if os.path.isdir(cmd.paths):   # cmd line argument was a single path.
+        expPaths.append(os.path.join(cmd.paths,'')) 
     elif os.path.isfile(cmd.paths):      # check if this is a list file.
         with open(cmd.paths) as f:       # cmd line argument was a list 
             lines = f.readlines()        #  with possible path(s) to run(s)

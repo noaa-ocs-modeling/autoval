@@ -9,7 +9,8 @@ import matplotlib.dates as mdates
 import numpy as np
 
 #==============================================================================
-def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag):
+def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag, 
+                forecastDates = None, forecast = None):
     '''
     Plots one station.
     '''
@@ -17,12 +18,17 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag):
     ylim = [cfg['WaterLevel']['pointymin'],cfg['WaterLevel']['pointymax']]
     datums      = 0
     floodlevels = 0
+    if forecastDates is not None:
+            xlim[1] = forecastDates[-1]
 
     fig, ax, ax2 = csdllib.plot.series.set(xlim, ylim, datums, floodlevels)
     ax = csdllib.plot.series.add(ax, refDates, obsVals, color='lime',label='OBS',lw=2)
-    ax = csdllib.plot.series.add(ax, refDates, modVals, color='b',label='MOD',lw=1)
-    
+    ax = csdllib.plot.series.add(ax, refDates, modVals, color='b',label='MOD',lw=2)
     ax.legend(bbox_to_anchor=(0.8, 0.82), loc='center left',prop={'size':6})
+    if forecast is not None:
+        ax = csdllib.plot.series.add(ax, forecastDates, forecast, 
+             color='b',label='FCST',lw=1)
+        
     ax.text(xlim[0],ylim[1]+0.05,'NOAA / OCEAN SERVICE')
     ax.set_ylabel ('WATER LEVELS, meters MSL')
     ax2.set_ylabel('WATER LEVELS, feet MSL')
@@ -33,7 +39,18 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag):
     peak_obs_dat = refDates[np.argmax(obsVals)]
     peak_mod_val = np.nanmax(modVals)
     peak_mod_dat = refDates[np.argmax(modVals)]
-  
+    if forecast is not None:
+        peak_fst_val = np.nanmax(forecast)
+        peak_fst_dat = forecastDates[np.argmax(forecast)]
+        if ylim[0] <= peak_fst_val and peak_fst_val <= ylim[1]:
+            ax.plot(peak_fst_dat, peak_fst_val, 'o',
+                markerfacecolor='b', markeredgecolor='b')
+            ax.plot([peak_fst_dat, peak_fst_dat],[ylim[0],peak_fst_val], 
+                '--',c='b')
+            ax.text(peak_fst_dat, 1.06*peak_fst_val, 
+                str(np.round(peak_fst_val,1)) + "m",
+                color='darkblue', fontsize=7, weight='bold')
+
     if ylim[0] <= peak_mod_val and peak_mod_val <= ylim[1]:
         ax.plot(peak_mod_dat, peak_mod_val, 'o',
                 markerfacecolor='b', markeredgecolor='k')
@@ -49,7 +66,7 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag):
                 str(np.round(peak_obs_val,1)) + "m (" + 
                 str(np.round(3.28084*peak_obs_val,1)) +"ft)",
                 color='forestgreen', fontsize=7, weight='bold')
-    
+ 
     ax.xaxis.set_major_locator(mdates.DayLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d\n00:00'))
     ax.xaxis.set_minor_locator(MultipleLocator(0.5))

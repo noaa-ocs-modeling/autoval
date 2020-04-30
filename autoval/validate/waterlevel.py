@@ -66,7 +66,6 @@ def pointValidation (cfg, path, tag):
     # Set/get datespan
     dates = model['time']
     datespan = [dates[0], dates[-1]] 
-    print (datespan)
     try:
         datespan[0] = stampToTime (cfg['WaterLevel'].get('pointdatesstart'))
     except:
@@ -141,7 +140,8 @@ def pointValidation (cfg, path, tag):
                 validPoint = True
                 try:
                     plt.waterlevel.pointSeries(cfg, 
-                        obsVals, modVals, refDates, nosid, info, tag)
+                        obsVals, modVals, refDates, nosid, info, tag, 
+                        model['time'], forecast)
                 except:
                     validPoint = False
                 pass

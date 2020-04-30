@@ -107,16 +107,16 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                 fod.write('Generated: ' +csdllib.oper.sys.timeStamp() + '<br>\n')
 
             elif '<!--InsertDateSpan-->' in line:
-                fod.write('<br>DateSpan:<br>\n')
+                fod.write('<br>Date Span for analysis:<br>\n')
                 fod.write('' + 
-                    csdllib.oper.sys.timeToStamp (datespan[0]) + '-' + 
+                    csdllib.oper.sys.timeToStamp (datespan[0]) + ' ... ' + 
                     csdllib.oper.sys.timeToStamp (datespan[0]) + '<br>\n')
 
             elif '<!--InsertBBox-->' in line:
                 fod.write('<br>BBox:<br>\n')
-                fod.write('[' + str(cfg['Analysis']['lonmin']) + '-' + 
+                fod.write('Longitudes: [' + str(cfg['Analysis']['lonmin']) + ' ... ' + 
                                 str(cfg['Analysis']['lonmax']) + ']<br>\n')
-                fod.write('[' + str(cfg['Analysis']['latmin']) + '-' + 
+                fod.write('Latitudes : [' + str(cfg['Analysis']['latmin']) + ' ... ' + 
                                 str(cfg['Analysis']['latmax']) + ']<br>\n')
 
             elif '<!--InsertThumbnails-->' in line:
