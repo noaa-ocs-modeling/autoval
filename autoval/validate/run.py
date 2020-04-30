@@ -221,7 +221,8 @@ if __name__ == "__main__":
         path = expPaths[n] 
 
         if diagVar == 'waterlevel':
-            stats, info = waterLevel (cfg, path, tag)
+            stats, info, datespan, tag = waterLevel (cfg, path, tag)
+            expTags[n] = tag # in case if OFS cycle was detected
         expStats.append( stats )
         
         writeLocalStats(cfg, tag, stats, info)
@@ -229,7 +230,7 @@ if __name__ == "__main__":
         appendGlobalStats(cfg, tag, avgStats)
 
         # Save/upload diagnostics reports
-        singleReport (cfg, tag, info, stats, avgStats)
+        singleReport (cfg, tag, info, datespan, stats, avgStats)
 
     # Plot graphics
 

@@ -72,8 +72,10 @@ def timeSeriesPanel (fod, cfg, tag, nosid, name, state):
     fod.write('</table>\n')
 
 #==============================================================================
-def singleReport (cfg, tag, info, stats, avgStats):
-
+def singleReport (cfg, tag, info, datespan, stats, avgStats):
+    '''
+    singleReport (cfg, tag, info, datespan, stats, avgStats)
+    '''
     ids    = []
     names  = []
     states = []
@@ -85,6 +87,11 @@ def singleReport (cfg, tag, info, stats, avgStats):
     reportDir = cfg['Analysis']['reportdir']
     diagVar   = cfg['Analysis']['name']
     expDescr  = cfg['Analysis']['experimentdescr']
+    
+    lonMin = float( cfg['Analysis']['lonmin'])
+    lonMax = float( cfg['Analysis']['lonmax'])
+    latMin = float( cfg['Analysis']['latmin'])
+    latMax = float( cfg['Analysis']['latmax'])
 
     outFile   = os.path.join( reportDir, tag + '.htm')
     csdllib.oper.sys.msg('i','Creating report in ' + outFile)
@@ -98,6 +105,19 @@ def singleReport (cfg, tag, info, stats, avgStats):
             if '<!--InsertDate-->' in line:
                 fod.write(expDescr + '<br>\n')
                 fod.write('Generated: ' +csdllib.oper.sys.timeStamp() + '<br>\n')
+
+            elif '<!--InsertDateSpan-->' in line:
+                fod.write('<br>DateSpan:<br>\n')
+                fod.write('' + 
+                    csdllib.oper.sys.timeToStamp (datespan[0]) + '-' + 
+                    csdllib.oper.sys.timeToStamp (datespan[0]) + '<br>\n')
+
+            elif '<!--InsertBBox-->' in line:
+                fod.write('<br>BBox:<br>\n')
+                fod.write('[' + str(cfg['Analysis']['lonmin']) + '-' + 
+                                str(cfg['Analysis']['lonmax']) + ']<br>\n')
+                fod.write('[' + str(cfg['Analysis']['latmin']) + '-' + 
+                                str(cfg['Analysis']['latmax']) + ']<br>\n')
 
             elif '<!--InsertThumbnails-->' in line:
                 fod.write('<table style=\"width:800\">\n')

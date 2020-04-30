@@ -37,15 +37,20 @@ def pointValidation (cfg, path, tag):
     pointsFile = []
     for m in masks:
         f = glob.glob(path + '*' + cycle + '*' + m + '*')
-        if len(f):
-            pointsFile.append(f[0])
+        for fil in f:
+            pointsFile.append(fil)
     if len(pointsFile)>1:
-        msg['w','Found more than 1 point output. Verify your mask!']
+        msg('w','Found more than 1 point output. Verify your mask!')
         for f in pointsFile:
             print(f)
         pointsFile.sort(key=os.path.getmtime)
     pointsFile = pointsFile[-1] # Taking the latest cycle (estofs)
-        
+    # Update tag with the detected OFS cycle
+    for cycle in ['t00z','t06z','t12z','t18z']:
+        if cycle in pointsFile:
+            tag = tag + '.' + cycle
+            msg('i','Tag updated: ' + tag)
+
     # Read list of stations out of model file
     model    = csdllib.models.adcirc.readTimeSeries (pointsFile)
     stations = model['stations']
@@ -149,7 +154,7 @@ def pointValidation (cfg, path, tag):
 
 
     # # # Done running on stations list
-    return pointVal
+    return pointVal, datespan, tag
 
 #==============================================================================
 def waterLevel (cfg, path, tag):
@@ -163,7 +168,7 @@ def waterLevel (cfg, path, tag):
 
     # Point data (time series, hardwired to COOPS tide gauges)
     if cfg['Analysis']['pointdatastats']:
-        pointVal = pointValidation (cfg, path, tag)
+        pointVal, datespan, tag = pointValidation (cfg, path, tag)
         lon  = []
         lat  = []
         info = []
@@ -184,4 +189,4 @@ def waterLevel (cfg, path, tag):
             plt.skill.map (cfg, lon, lat, mtx, 'rval', [0., 1.],      [0.8, 1.], tag)
             plt.skill.map (cfg, lon, lat, mtx, 'vexp', [0., 100.],    [80., 100.], tag)
             plt.skill.map (cfg, lon, lat, mtx, 'npts', [0., 1000.],   [240.,1000.], tag)
-    return mtx, info
+    return mtx, info, datespan, tag
