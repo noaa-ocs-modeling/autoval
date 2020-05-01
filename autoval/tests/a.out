@@ -1,7 +1,0 @@
-## ESTOFS ATL config file
-[Limits]
-LonMin     =-98.0
-LonMax     =-54.0
-LatMin     =  5.0
-LatMax     = 47.0
-

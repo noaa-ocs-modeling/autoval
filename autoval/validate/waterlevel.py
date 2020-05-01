@@ -46,10 +46,11 @@ def pointValidation (cfg, path, tag):
         pointsFile.sort(key=os.path.getmtime)
     pointsFile = pointsFile[-1] # Taking the latest cycle (estofs)
     # Update tag with the detected OFS cycle
-    for cycle in ['t00z','t06z','t12z','t18z']:
-        if cycle in pointsFile:
-            tag = tag + '.' + cycle
-            msg('i','Tag updated: ' + tag)
+    if cycle == '':
+        for cycle in ['t00z','t06z','t12z','t18z']:
+            if cycle in pointsFile:
+                tag = tag + '.' + cycle
+                msg('i','Tag updated: ' + tag)
 
     # Read list of stations out of model file
     model    = csdllib.models.adcirc.readTimeSeries (pointsFile)
