@@ -133,19 +133,19 @@ def setDomainLimits(cfg):
         latMax = float( cfg['Analysis']['latmax'])
     except: 
         pass
-    try:
+    #try:
+    if True:
         domainFile = os.path.join(cfg['Analysis']['localdatadir'], 'domain.ini')
-        csdllib.oper.transfer.refresh( cfg['Analysis']['domainfile'], 
-                                        domainFile)
+        csdllib.oper.transfer.refresh( cfg['Analysis']['domainfile'], domainFile)
         dom = csdllib.oper.sys.config (domainFile)
         print (dom)
         lonMin = float(dom['Limits']['lonmin'])
         lonMax = float(dom['Limits']['lonmax'])
         latMin = float(dom['Limits']['latmin'])
         latMax = float(dom['Limits']['latmax'])
-        msg('i','Domain is read from ' + cfg[diagVar]['domainfile'])
-    except:
-        pass
+        msg('i','Domain is read from ' + cfg['Analysis']['domainfile'])
+    #except:
+    #    pass
     msg('i','Domain limits are '+ str(lonMin) + ', ' + str(lonMax) + 
                            ', ' + str(latMin) + ', ' + str(latMax))
 

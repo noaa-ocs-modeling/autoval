@@ -107,10 +107,10 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                 fod.write('Generated: ' +csdllib.oper.sys.timeStamp() + '<br>\n')
 
             elif '<!--InsertDateSpan-->' in line:
-                fod.write('<br>Date Span for analysis:<br>\n')
+                fod.write('<br>Date span for analysis:<br>\n')
                 fod.write('' + 
                     csdllib.oper.sys.timeToStamp (datespan[0]) + ' ... ' + 
-                    csdllib.oper.sys.timeToStamp (datespan[0]) + '<br>\n')
+                    csdllib.oper.sys.timeToStamp (datespan[-1]) + '<br>\n')
 
             elif '<!--InsertBBox-->' in line:
                 fod.write('<br>BBox:<br>\n')
