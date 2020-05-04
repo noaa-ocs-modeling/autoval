@@ -52,10 +52,12 @@ def timeSeriesPanel (fod, cfg, tag, nosid, name, state):
                             tag + '.ts.' + str(nosid) + '.png')
     mxpng = os.path.join(   cfg['Analysis']['workdir'],
                             tag + '.skill.' + str(nosid) + '.png')
+    lcpng = os.path.join(   cfg['Analysis']['workdir'],
+                            tag + '.loc.' + str(nosid) + '.png')
 
     fod.write('<table width=\"700\" cellspacing=\"2\" cellpadding=\"2\" border=\"0\">\n')
     fod.write('<tr>\n')
-    fod.write('<td colspan = \"2\">' + str(nosid)+': ' + name + ' ' + state +  '</td>\n')
+    fod.write('<td colspan = \"3\">' + str(nosid)+': ' + name + ' ' + state +  '</td>\n')
     fod.write('</tr>\n')
     fod.write('<tr>\n')
     fod.write('<td>\n')
@@ -63,6 +65,13 @@ def timeSeriesPanel (fod, cfg, tag, nosid, name, state):
                 tspng + '\"><img src=\"' + tspng + 
                 '\" alt=\"\" height=\"250\" border=\"0\"></a>\n')
     fod.write('</td>\n')
+
+    fod.write('<td>\n')
+    fod.write('<a href=\"' + 
+                lcpng + '\"><img src=\"' + lcpng + 
+                '\" alt=\"\" height=\"250\" border=\"0\"></a>\n')
+    fod.write('</td>\n')
+
     fod.write('<td>\n')
     fod.write('<a href=\"' + 
                 mxpng + '\"><img src=\"' + mxpng + 

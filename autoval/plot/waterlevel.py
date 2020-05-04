@@ -9,6 +9,36 @@ import matplotlib.dates as mdates
 import numpy as np
 
 #==============================================================================
+def stationMap(cfg, nosid, info, tag):
+    '''
+    Plots one stations map 
+    '''
+    figFile = os.path.join( \
+        cfg['Analysis']['workdir'], tag+ '.loc.'+nosid+'.png')
+
+    if os.path.exists(figFile):
+        return
+
+    xo = info['lon']
+    yo = info['lat']
+    dx = 1.8
+    dy = 1.8
+
+    coastlineFile = os.path.join(
+        cfg['Analysis']['localdatadir'], 'coastline.dat')    
+    if not os.path.exists(coastlineFile):
+        csdllib.oper.transfer.download (cfg['PlotData']['coastlinefile'], coastlineFile)
+    coast = csdllib.plot.map.readCoastline  (coastlineFile)
+
+    fig = csdllib.plot.map.set([xo-dx, xo+dx], [yo-dy, yo+dy], fig_w=3.0, coast=coast)
+    plt.suptitle(info['name'] + ' ' + info['state'], fontsize=8)
+
+    plt.scatter(xo, yo, c='r', marker = 'o', edgecolors='k', s=30,zorder=2)
+    plt.text(xo+0.01*dx, yo+0.01*dy, str(info['nosid']), color='darkblue', fontsize=7, weight='bold',zorder=2)
+
+    plt.savefig(figFile)
+    plt.close()
+#==============================================================================
 def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag, 
                 forecastDates = None, forecast = None):
     '''
