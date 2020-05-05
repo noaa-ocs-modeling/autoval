@@ -10,13 +10,55 @@ from datetime import datetime
 import numpy as np
 
 #==============================================================================
-def fieldValidation (cfg, path, tag):
+def selectOutputFile (cfg, path, tag, fmasks):
+    '''
+    Selects the file to read, and updates experiment tag if needed
+    '''
+    masks = fmasks.split(',')
+    cycle = ''
+    try:
+        cycle = cfg['Forecast']['cycle']
+    except:
+        pass
+    outputFile = []
+    for m in masks:
+        f = glob.glob(path + '*' + cycle + '*' + m + '*')
+        for fil in f:
+            outputFile.append(fil)
+    if len(outputFile)>1:
+        msg('w','Found more than 1 output detected. Verify your mask!')
+        for f in outputFile:
+            print(f)
+        outputFile.sort(key=os.path.getmtime)
+    outputFile = outputFile[-1] # Taking the latest cycle (estofs)
+    # Update tag with the detected OFS cycle
+    if cycle == '':
+        for cycle in ['t00z','t06z','t12z','t18z']:
+            if cycle in outputFile:
+                tag = tag + '.' + cycle
+                msg('i','Tag updated: ' + tag)
+
+    return outputFile, tag
+
+#==============================================================================
+def fieldValidation (cfg, path, tag, grid):
     '''
     Works on point data
     '''
     fieldVal = []
-    msg('e','Not Yet Implemented.')
-    return fieldVal
+    diagVar  = cfg['Analysis']['name']
+
+    # Choose the model output file
+    fmask = cfg[diagVar]['fieldfilemask']
+    fieldFile, tag = selectOutputFile (cfg, path, tag, fmask)
+    model    = csdllib.models.adcirc.readSurfaceField (fieldFile, 
+                            cfg[diagVar]['fieldfilevariable'])
+    if True: # Plot maxele
+        maxele  = csdllib.models.adcirc.computeMax (model['value'])
+        plt.field.map (cfg, grid, maxele, tag)
+        stop()
+
+    return fieldVal, grid, tag
 
 #==============================================================================
 def pointValidation (cfg, path, tag):
@@ -25,32 +67,11 @@ def pointValidation (cfg, path, tag):
     '''
     pointVal   = []
     tmpDir     = cfg['Analysis']['tmpdir']
-    
+    diagVar    = cfg['Analysis']['name']
+
     # Choose the model output file
-    fmask = cfg['WaterLevel']['pointfilemask']
-    masks = fmask.split(',')
-    cycle = ''
-    try:
-        cycle = cfg['Forecast']['cycle']
-    except:
-        pass
-    pointsFile = []
-    for m in masks:
-        f = glob.glob(path + '*' + cycle + '*' + m + '*')
-        for fil in f:
-            pointsFile.append(fil)
-    if len(pointsFile)>1:
-        msg('w','Found more than 1 point output. Verify your mask!')
-        for f in pointsFile:
-            print(f)
-        pointsFile.sort(key=os.path.getmtime)
-    pointsFile = pointsFile[-1] # Taking the latest cycle (estofs)
-    # Update tag with the detected OFS cycle
-    if cycle == '':
-        for cycle in ['t00z','t06z','t12z','t18z']:
-            if cycle in pointsFile:
-                tag = tag + '.' + cycle
-                msg('i','Tag updated: ' + tag)
+    fmask = cfg[diagVar]['pointfilemask']
+    pointsFile, tag = selectOutputFile (cfg, path, tag, fmask)
 
     # Read list of stations out of model file
     model    = csdllib.models.adcirc.readTimeSeries (pointsFile)
@@ -68,11 +89,11 @@ def pointValidation (cfg, path, tag):
     dates = model['time']
     datespan = [dates[0], dates[-1]] 
     try:
-        datespan[0] = stampToTime (cfg['WaterLevel'].get('pointdatesstart'))
+        datespan[0] = stampToTime (cfg[diagVar].get('pointdatesstart'))
     except:
         pass
     try:
-        datespan[1] = stampToTime (cfg['WaterLevel'].get('pointdatesend'))
+        datespan[1] = stampToTime (cfg[diagVar].get('pointdatesend'))
     except:
         pass
     msg ( 'i','Datespan for analysis is set to: ' \
@@ -185,7 +206,14 @@ def waterLevel (cfg, path, tag):
 
     # Field data analysis
     if cfg['Analysis']['fielddataplots']:
-        fieldVal = fieldValidation (cfg, path, tag)
+        # Get the grid
+        gridFile = os.path.join(
+            cfg['Analysis']['localdatadir'], 'fort.14')    
+        if not os.path.exists(gridFile):
+            csdllib.oper.transfer.download (cfg['Analysis']['gridfile'], gridFile)
+        grid = csdllib.models.adcirc.readGrid  (gridFile)
+
+        fieldVal, tag = fieldValidation (cfg, path, tag, grid)
 
     # Point data (time series, hardwired to COOPS tide gauges)
     if cfg['Analysis']['pointdatastats']:

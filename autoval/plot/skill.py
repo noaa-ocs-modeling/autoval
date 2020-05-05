@@ -11,7 +11,9 @@ import numpy as np
 
 #==============================================================================
 def subplot (ax, val, name, plotRange, goodRange):
-
+    '''
+    Dashpanel subplots
+    '''
     ax.set_xlim([-1, 2])
     ax.set_ylim(plotRange)
     ax.set_xticklabels([])
