@@ -52,6 +52,8 @@ def panel (cfg, metrics, refDates, nosid, info, tag):
     Plots a panel with vital metrics values, 
     along with typical and acceptable ranges.
     '''
+    imgDir  = os.path.join( cfg['Analysis']['reportdir'], 
+                            cfg['Analysis']['imgdir'])
 
     fig, axs = plt.subplots(1,10,figsize=(5.5, 4.5))
     plt.style.use('seaborn-white')
@@ -92,7 +94,7 @@ def panel (cfg, metrics, refDates, nosid, info, tag):
     axs[pos] = subplot(axs[pos],metrics['vexp'],'VAREXP',[0, 100], [80,100])
     axs[pos].set_ylabel ('%')
     
-    figFile = os.path.join( cfg['Analysis']['workdir'],     \
+    figFile = os.path.join( imgDir,     \
                             tag + '.skill.' + nosid + '.png')
     plt.savefig(figFile)
     plt.close()
@@ -105,6 +107,9 @@ def map (cfg, lon, lat, mtx, field, clim, goodRange, tag):
     '''
     # Download / read map plot data
     # Get coastline
+    imgDir  = os.path.join( cfg['Analysis']['reportdir'], 
+                            cfg['Analysis']['imgdir'])
+
     coastlineFile = os.path.join(
         cfg['Analysis']['localdatadir'], 'coastline.dat')    
     if not os.path.exists(coastlineFile):
@@ -158,6 +163,6 @@ def map (cfg, lon, lat, mtx, field, clim, goodRange, tag):
     cbar.set_ticklabels(cbartix)
     
     figFile = os.path.join( 
-        cfg['Analysis']['workdir'], tag+'.mapskill.' + field + '.png')
+        imgDir, tag+'.mapskill.' + field + '.png')
     plt.savefig(figFile)
     plt.close()

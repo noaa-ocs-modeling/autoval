@@ -97,6 +97,8 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
     diagVar   = cfg['Analysis']['name']
     expDescr  = cfg['Analysis']['experimentdescr']
     
+    print('html.singleReport. imgDir = ' + cfg['Analysis']['imgdir'])
+
     lonMin = float( cfg['Analysis']['lonmin'])
     lonMax = float( cfg['Analysis']['lonmax'])
     latMin = float( cfg['Analysis']['latmin'])
@@ -128,6 +130,38 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                 fod.write('Latitudes : [' + str(cfg['Analysis']['latmin']) + ' ... ' + 
                                 str(cfg['Analysis']['latmax']) + ']<br>\n')
 
+            
+            elif '<!--InsertMapTabLink-->' in line:
+                lines = tabLink('Full Domain', isDefault)
+                fod.write(lines+'\n')
+                for zoom in range(1,5):
+                    lines = tabLink(str(zoom), False)
+                    fod.write(lines+'\n')
+
+            elif '<!--InsertMapTabContent-->' in line:
+                imgPath = os.path.join(
+                    cfg['Analysis']['imgdir'],
+                    tag + '.map.max.png')
+                lines = tabContent(key, 'Full', imgPath)
+                for l in lines:
+                    fod.write(l)
+                for zoom in range(1,5):
+                    imgPath = os.path.join(
+                        cfg['Analysis']['imgdir'],
+                        tag + '.map.max.' + str(zoom) + '.png')
+                    lines = tabContent(key, str(zoom), imgPath)
+                    for l in lines:
+                        fod.write(l)
+
+                for key in avgStats:
+                    imgPath = os.path.join(
+                                cfg['Analysis']['imgdir'],
+                                tag + '.mapskill.' + key + '.png')
+                    lines = tabContent(key, waterlevel(key), imgPath)
+                    for l in lines:
+                        fod.write(l)
+            
+
             elif '<!--InsertThumbnails-->' in line:
                 fod.write('<table style=\"width:800\">\n')
                 fod.write('<tr>\n')
@@ -140,14 +174,14 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                 for key in avgStats:
                     fod.write('<td>\n')
                     imgPath = os.path.join(
-                                cfg['Analysis']['workdir'],
+                                cfg['Analysis']['imgdir'],
                                 tag + '.mapskill.' + key + '.png')
                     fod.write( '<a href=\"' + imgPath + '\"><img src=\"' + imgPath + '\" alt=\"\" width=\"100\" border=\"0\"></a>'+'\n')
                     fod.write('</td>\n')
                 fod.write('</tr>') 
                 fod.write('</table>\n')
 
-            elif '<!--InsertTabLink-->' in line:
+            elif '<!--InsertSkillTabLink-->' in line:
                 for key in avgStats:
                     print (key)
                     isDefault = False
@@ -158,10 +192,10 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                     lines = tabLink(key, isDefault)
                     fod.write(lines+'\n')
 
-            elif '<!--InsertTabContent-->' in line:
+            elif '<!--InsertSkillTabContent-->' in line:
                 for key in avgStats:
                     imgPath = os.path.join(
-                                cfg['Analysis']['workdir'],
+                                cfg['Analysis']['imgdir'],
                                 tag + '.mapskill.' + key + '.png')
                     lines = tabContent(key, waterlevel(key), imgPath)
                     for l in lines:

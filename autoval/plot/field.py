@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np 
 
 #==============================================================================
-def map (cfg, grid, field, tag):
+def map (cfg, grid, field, clim, tag, title=None, fig_w=8.0):
     '''
     Plots a map for a triangulated surface data.
     '''
@@ -26,21 +26,26 @@ def map (cfg, grid, field, tag):
     latlim = [ float(cfg['Analysis']['latmin']), float(cfg['Analysis']['latmax']) ]
 
     # Get clim
-    diagVar = cfg['Analysis']['name'] 
-    clim = [ float(cfg[diagVar]['maxfieldymin']), 
-             float(cfg[diagVar]['maxfieldymax']) ]
 
     field[np.where(field<clim[0])] = np.nan
     field[np.where(field>clim[1])] = np.nan
 
-    fig = csdllib.plot.map.set(lonlim, latlim, coast=coast)
+    fig = csdllib.plot.map.set(lonlim, latlim, coast=coast, fig_w=fig_w)
     csdllib.plot.map.addField (grid, field, clim = clim, zorder=0, plotMax = True)
     plt.suptitle(tag + ' ', fontsize=8)    
-    figFile = os.path.join( 
-        cfg['Analysis']['workdir'], tag+'.map.max.png')
+    if title:
+        plt.title(title)
+    
+#==============================================================================
+def contour (cfg, grid, field, clim):
+    #levels = np.arange(-10,10,1)
+    csdllib.plot.map.addContour (grid, field, clim)
+
+#==============================================================================
+def save (figFile):
     plt.savefig(figFile)
     plt.close()
-
-    #==============================================================================
-    def movie (cfg, grid, field, tag):
-        return
+    
+#==============================================================================
+#def movie (cfg, grid, field, tag):
+#    tmpDir = cfg['Analysis']['tmpdir']

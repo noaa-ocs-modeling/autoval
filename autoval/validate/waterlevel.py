@@ -9,6 +9,16 @@ from csdllib.oper.sys import stampToTime, timeToStamp, msg
 from datetime import datetime
 import numpy as np
 
+
+#==============================================================================
+def detectCycle (tag):
+    cycle = ''
+    masks = ['t00z', 't06z', 't12z', 't18z']
+    for mask in masks:
+        if mask in tag:
+            cycle = mask
+    return cycle
+
 #==============================================================================
 def selectOutputFile (cfg, path, tag, fmasks):
     '''
@@ -19,7 +29,11 @@ def selectOutputFile (cfg, path, tag, fmasks):
     try:
         cycle = cfg['Forecast']['cycle']
     except:
-        pass
+        pass 
+    if cycle == '':   
+        cycle = detectCycle (tag)
+    print ('tag=' + tag)
+    print ('cycle=' + cycle)
     outputFile = []
     for m in masks:
         f = glob.glob(path + '*' + cycle + '*' + m + '*')
@@ -41,10 +55,30 @@ def selectOutputFile (cfg, path, tag, fmasks):
     return outputFile, tag
 
 #==============================================================================
+def multi_plot (cfg, tag, grid, model, clim, n):
+    '''
+    Possible multiprocessing execution. 
+    '''
+    figFile = os.path.join( 
+                    cfg['Analysis']['tmpdir'], 
+                    tag+'.mov.'+ str(n).zfill(3) + '.png')
+
+    plt.field.map( cfg, grid, model['value'][n,:], 
+                              clim, tag, title=
+                               str(n).zfill(3) + ' ' + 
+                               timeToStamp(model['time'][n]),
+                               fig_w = 8.0)
+    plt.field.save(figFile)
+
+#==============================================================================
 def fieldValidation (cfg, path, tag, grid):
     '''
     Works on point data
     '''
+    imgDir  = os.path.join( cfg['Analysis']['reportdir'], 
+                            cfg['Analysis']['imgdir'])
+    tmpDir  = cfg['Analysis']['tmpdir']
+
     fieldVal = []
     diagVar  = cfg['Analysis']['name']
 
@@ -55,8 +89,48 @@ def fieldValidation (cfg, path, tag, grid):
                             cfg[diagVar]['fieldfilevariable'])
     if True: # Plot maxele
         maxele  = csdllib.models.adcirc.computeMax (model['value'])
-        plt.field.map (cfg, grid, maxele, tag)
-        stop()
+        clim = [ float(cfg[diagVar]['maxfieldymin']), 
+                 float(cfg[diagVar]['maxfieldymax']) ]
+        plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Elevation')
+        #plt.field.contour(cfg, grid, maxele, clim) 
+        figFile = os.path.join(imgDir, tag+'.map.max.png')
+        plt.field.save (figFile)
+
+        #Zoom levels, 1 to 4
+        for zoom in range(1,5):
+            print('Working on zoom ' + str(zoom))
+            try:
+                iniFile = cfg['Zoom'+str(zoom)]['domainfile']
+                lonlim, latlim = csdllib.plot.map.ini(iniFile, 
+                             local=os.path.join(tmpDir, 'mapfile.ini'))
+                cfgzoom = cfg
+                cfgzoom['Analysis']['lonmin'] = lonlim[0]
+                cfgzoom['Analysis']['lonmax'] = lonlim[1]
+                cfgzoom['Analysis']['latmin'] = latlim[0]
+                cfgzoom['Analysis']['latmax'] = latlim[1]
+                plt.field.map (cfgzoom, grid, maxele, clim, tag, 'Maximal Elevation')
+                figFile = os.path.join(imgDir, tag+'.map.max.'+ str(zoom)+'.png')
+                plt.field.save (figFile)
+            except:
+                pass
+
+    if cfg['Analysis']['fieldevolution']: # Do the movie
+        if os.system('which convert') == 0:
+            clim = [ float(cfg[diagVar]['fieldymin']), 
+                     float(cfg[diagVar]['fieldymax']) ]
+            
+            for n in range(len(model['time'])):
+                msg('i','Working on ' + str(n))
+                multi_plot(cfg, tag, grid, model, clim, n)
+
+            gifFile = os.path.join( imgDir, tag + '.gif')
+            cmd = "convert -delay 20 -loop 1 " + \
+                   os.path.join(cfg['Analysis']['tmpdir'], tag+'*.mov*.png') + \
+                   " " + gifFile
+            os.system(cmd)
+
+        else:
+            msg('e','You need Convert installed on your system.')
 
     return fieldVal, grid, tag
 
@@ -68,6 +142,8 @@ def pointValidation (cfg, path, tag):
     pointVal   = []
     tmpDir     = cfg['Analysis']['tmpdir']
     diagVar    = cfg['Analysis']['name']
+    imgDir  = os.path.join( cfg['Analysis']['reportdir'], 
+                            cfg['Analysis']['imgdir'])
 
     # Choose the model output file
     fmask = cfg[diagVar]['pointfilemask']
@@ -213,7 +289,7 @@ def waterLevel (cfg, path, tag):
             csdllib.oper.transfer.download (cfg['Analysis']['gridfile'], gridFile)
         grid = csdllib.models.adcirc.readGrid  (gridFile)
 
-        fieldVal, tag = fieldValidation (cfg, path, tag, grid)
+        fieldVal, grid, tag = fieldValidation (cfg, path, tag, grid)
 
     # Point data (time series, hardwired to COOPS tide gauges)
     if cfg['Analysis']['pointdatastats']:

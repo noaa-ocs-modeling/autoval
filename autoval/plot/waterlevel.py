@@ -44,6 +44,9 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag,
     '''
     Plots one station.
     '''
+    imgDir  = os.path.join( cfg['Analysis']['reportdir'], 
+                            cfg['Analysis']['imgdir'])
+
     xlim = [min(refDates), max(refDates)]
     ylim = [cfg['WaterLevel']['pointymin'],cfg['WaterLevel']['pointymax']]
     datums      = 0
@@ -110,7 +113,7 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag,
     plt.tight_layout()
     
     figFile = os.path.join( \
-        cfg['Analysis']['workdir'], tag+ '.ts.'+nosid+'.png')
+        imgDir, tag+ '.ts.'+nosid+'.png')
     plt.savefig(figFile)
     plt.close()
     

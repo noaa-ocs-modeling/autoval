@@ -137,7 +137,6 @@ def setDomainLimits(cfg):
         domainFile = os.path.join(cfg['Analysis']['localdatadir'], 'domain.ini')
         csdllib.oper.transfer.refresh( cfg['Analysis']['domainfile'], domainFile)
         dom = csdllib.oper.sys.config (domainFile)
-        print (dom)
         lonMin = float(dom['Limits']['lonmin'])
         lonMax = float(dom['Limits']['lonmax'])
         latMin = float(dom['Limits']['latmin'])
@@ -173,8 +172,12 @@ if __name__ == "__main__":
     workDir = cfg['Analysis']['workdir']
     dataDir = cfg['Analysis']['localdatadir']
     tmpDir  = cfg['Analysis']['tmpdir']
+    wwwDir  = cfg['Analysis']['reportdir']
+    imgDir  = os.path.join(wwwDir, cfg['Analysis']['imgdir'])
     setDir (workDir)
     setDir (dataDir)
+    setDir (wwwDir)
+    setDir (imgDir)
     setDir (tmpDir, flush=True)
 
     # Find and validate path(s) to model output(s)
