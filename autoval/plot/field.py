@@ -44,6 +44,7 @@ def contour (cfg, grid, field, clim):
 #==============================================================================
 def save (figFile):
     plt.savefig(figFile)
+    csdllib.oper.sys.msg ('i','Saving figure ' + figFile)    
     plt.close()
     
 #==============================================================================

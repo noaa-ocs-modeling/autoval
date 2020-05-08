@@ -8,7 +8,7 @@ import csdllib
 from csdllib.oper.sys import stampToTime, timeToStamp, msg
 from datetime import datetime
 import numpy as np
-
+import copy
 
 #==============================================================================
 def detectCycle (tag):
@@ -103,12 +103,13 @@ def fieldValidation (cfg, path, tag, grid):
                 iniFile = cfg['Zoom'+str(zoom)]['domainfile']
                 lonlim, latlim = csdllib.plot.map.ini(iniFile, 
                              local=os.path.join(tmpDir, 'mapfile.ini'))
-                cfgzoom = cfg
+                cfgzoom = copy.deepcopy(cfg)
                 cfgzoom['Analysis']['lonmin'] = lonlim[0]
                 cfgzoom['Analysis']['lonmax'] = lonlim[1]
                 cfgzoom['Analysis']['latmin'] = latlim[0]
                 cfgzoom['Analysis']['latmax'] = latlim[1]
-                plt.field.map (cfgzoom, grid, maxele, clim, tag, 'Maximal Elevation')
+                plt.field.map (cfgzoom, grid, maxele, clim, tag, 
+                               'Maximal Elevation', fig_w=5.0)
                 figFile = os.path.join(imgDir, tag+'.map.max.'+ str(zoom)+'.png')
                 plt.field.save (figFile)
             except:
@@ -288,7 +289,6 @@ def waterLevel (cfg, path, tag):
         if not os.path.exists(gridFile):
             csdllib.oper.transfer.download (cfg['Analysis']['gridfile'], gridFile)
         grid = csdllib.models.adcirc.readGrid  (gridFile)
-
         fieldVal, grid, tag = fieldValidation (cfg, path, tag, grid)
 
     # Point data (time series, hardwired to COOPS tide gauges)

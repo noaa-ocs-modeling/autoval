@@ -30,6 +30,20 @@ def tabContent(tabName, tabDescription, imgPath):
     return lines
 
 #==============================================================================
+def mainMap (imgPath):
+    lines = []
+    line = '  <a href=\"_map.png_\"><img src=\"_map.png_\" alt=\"\" width=\"800\" border=\"0\"></a>'
+    lines.append( re.sub('_map.png_',imgPath, line) )
+    return lines
+
+#==============================================================================
+def auxMap (imgPath):
+    lines = []
+    line = '  <a href=\"_map.png_\"><img src=\"_map.png_\" alt=\"\" width=\"400\" border=\"0\"></a>'
+    lines.append( re.sub('_map.png_',imgPath, line) )
+    return lines
+
+#==============================================================================
 def csv2html (fod, avgStats):
     fod.write('<table width=\"800\" cellspacing=\"2\" cellpadding=\"2\" border=\"0\">\n')
     fod.write('<tr>\n')
@@ -48,11 +62,11 @@ def csv2html (fod, avgStats):
 #==============================================================================
 def timeSeriesPanel (fod, cfg, tag, nosid, name, state):
 
-    tspng = os.path.join(   cfg['Analysis']['workdir'],
+    tspng = os.path.join(   cfg['Analysis']['imgdir'],
                             tag + '.ts.' + str(nosid) + '.png')
-    mxpng = os.path.join(   cfg['Analysis']['workdir'],
+    mxpng = os.path.join(   cfg['Analysis']['imgdir'],
                             tag + '.skill.' + str(nosid) + '.png')
-    lcpng = os.path.join(   cfg['Analysis']['workdir'],
+    lcpng = os.path.join(   cfg['Analysis']['imgdir'],
                             tag + '.loc.' + str(nosid) + '.png')
 
     fod.write('<table width=\"700\" cellspacing=\"2\" cellpadding=\"2\" border=\"0\">\n')
@@ -99,11 +113,6 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
     
     print('html.singleReport. imgDir = ' + cfg['Analysis']['imgdir'])
 
-    lonMin = float( cfg['Analysis']['lonmin'])
-    lonMax = float( cfg['Analysis']['lonmax'])
-    latMin = float( cfg['Analysis']['latmin'])
-    latMax = float( cfg['Analysis']['latmax'])
-
     outFile   = os.path.join( reportDir, tag + '.htm')
     csdllib.oper.sys.msg('i','Creating report in ' + outFile)
 
@@ -131,75 +140,54 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                                 str(cfg['Analysis']['latmax']) + ']<br>\n')
 
             
-            elif '<!--InsertMapTabLink-->' in line:
-                lines = tabLink('Full Domain', isDefault)
-                fod.write(lines+'\n')
-                for zoom in range(1,5):
-                    lines = tabLink(str(zoom), False)
-                    fod.write(lines+'\n')
-
-            elif '<!--InsertMapTabContent-->' in line:
-                imgPath = os.path.join(
-                    cfg['Analysis']['imgdir'],
+            elif '<!--InsertMainFieldMap-->' in line:
+                imgPath = os.path.join(cfg['Analysis']['imgdir'],
                     tag + '.map.max.png')
-                lines = tabContent(key, 'Full', imgPath)
+                lines = mainMap(imgPath)
                 for l in lines:
                     fod.write(l)
+
+            elif '<!--InsertZoomMaps-->' in line:
+                
+                c = 0
                 for zoom in range(1,5):
-                    imgPath = os.path.join(
-                        cfg['Analysis']['imgdir'],
-                        tag + '.map.max.' + str(zoom) + '.png')
-                    lines = tabContent(key, str(zoom), imgPath)
-                    for l in lines:
-                        fod.write(l)
-
-                for key in avgStats:
-                    imgPath = os.path.join(
-                                cfg['Analysis']['imgdir'],
-                                tag + '.mapskill.' + key + '.png')
-                    lines = tabContent(key, waterlevel(key), imgPath)
-                    for l in lines:
-                        fod.write(l)
-            
-
-            elif '<!--InsertThumbnails-->' in line:
-                fod.write('<table style=\"width:800\">\n')
-                fod.write('<tr>\n')
-                for key in avgStats:
+                    imgPath = os.path.join(cfg['Analysis']['imgdir'],
+                        tag + '.zoom.' + str(zoom) +'.png')
+                    c += 1
                     fod.write('<td>\n')
-                    fod.write(key+'\n')
+                    fod.write( '<a href=\"' + imgPath + '\"><img src=\"' + imgPath + '\" alt=\"\" width=\"400\" border=\"0\"></a>'+'\n')
                     fod.write('</td>\n')
-                fod.write('</tr>\n<tr>\n')
-
-                for key in avgStats:
-                    fod.write('<td>\n')
-                    imgPath = os.path.join(
-                                cfg['Analysis']['imgdir'],
-                                tag + '.mapskill.' + key + '.png')
-                    fod.write( '<a href=\"' + imgPath + '\"><img src=\"' + imgPath + '\" alt=\"\" width=\"100\" border=\"0\"></a>'+'\n')
-                    fod.write('</td>\n')
+                    if np.mod(c,2) == 0:
+                        fod.write('</tr>\n<tr>\n')
                 fod.write('</tr>') 
                 fod.write('</table>\n')
 
-            elif '<!--InsertSkillTabLink-->' in line:
+            elif '<!--InsertSkillMaps-->' in line:
+                fod.write('<table style=\"width:800\">\n')
+                fod.write('<tr>\n')
+                c = 0
                 for key in avgStats:
-                    print (key)
-                    isDefault = False
-                    n = 0
-                    if n==0:
-                        isDefault = True
-                        n =+ 1
-                    lines = tabLink(key, isDefault)
-                    fod.write(lines+'\n')
+                    c += 1
+                    fod.write('<td>\n')
+                    fod.write(key+'\n')
+                    fod.write('</td>\n')
+                    if np.mod(c,2) == 0:
+                        fod.write('</tr>\n<tr>\n')
+                fod.write('</tr>\n<tr>\n')
 
-            elif '<!--InsertSkillTabContent-->' in line:
+                c = 0
                 for key in avgStats:
+                    c =+ 1
+                    fod.write('<td>\n')
                     imgPath = os.path.join(
                                 cfg['Analysis']['imgdir'],
                                 tag + '.mapskill.' + key + '.png')
-                    lines = tabContent(key, waterlevel(key), imgPath)
-                    for l in lines:
-                        fod.write(l)
+                    fod.write( '<a href=\"' + imgPath + '\"><img src=\"' + imgPath + '\" alt=\"\" width=\"400\" border=\"0\"></a>'+'\n')
+                    fod.write('</td>\n')
+                    if np.mod(c,2) == 0:
+                        fod.write('</tr>\n<tr>\n')
+                fod.write('</tr>') 
+                fod.write('</table>\n')
 
             elif '<!--InsertAvgStatsTable-->' in line:
                 fod.write('Average time-series statistics:\n')
