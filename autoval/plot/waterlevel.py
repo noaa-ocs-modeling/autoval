@@ -10,12 +10,15 @@ import numpy as np
 
 #==============================================================================
 def stationMap(cfg, nosid, info, tag):
-    '''
+    '''  
     Plots one stations map 
     '''
+    imgDir  = os.path.join( cfg['Analysis']['reportdir'], 
+                            cfg['Analysis']['imgdir'])
+
     figFile = os.path.join( \
-        cfg['Analysis']['imgdir'], tag+ '.loc.'+nosid+'.png')
-    print('figFile=' + figFile)
+        imgDir, tag+ '.loc.'+nosid+'.png')
+    #print('figFile=' + figFile)
 
     if os.path.exists(figFile):
         return
@@ -45,9 +48,9 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag,
     '''
     Plots one station.
     '''
-    #imgDir  = os.path.join( cfg['Analysis']['reportdir'], 
-    #                        cfg['Analysis']['imgdir'])
-    imgDir  = cfg['Analysis']['imgdir']
+    imgDir  = os.path.join( cfg['Analysis']['reportdir'], 
+                            cfg['Analysis']['imgdir'])
+    #imgDir  = cfg['Analysis']['imgdir']
 
     xlim = [min(refDates), max(refDates)]
     ylim = [cfg['WaterLevel']['pointymin'],cfg['WaterLevel']['pointymax']]

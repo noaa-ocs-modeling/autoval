@@ -258,6 +258,7 @@ def pointValidation (cfg, path, tag):
                             model['time'], forecast)
                     except:
                         validStation = False
+                        msg('w','Station ' + nosid + 'was not plotted.')
                     pass
 
                 # Plot dashpanels
