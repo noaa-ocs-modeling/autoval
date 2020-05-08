@@ -17,7 +17,7 @@ def stationMap(cfg, nosid, info, tag):
                             cfg['Analysis']['imgdir'])
 
     figFile = os.path.join( \
-        imgDir, tag+ '.loc.'+nosid+'.png')
+        imgDir, 'loc.'+nosid+'.png')
     #print('figFile=' + figFile)
 
     if os.path.exists(figFile):

@@ -13,7 +13,7 @@ myCode=${mount}"/GitHub/autoval/autoval/validate/run.py"
 PYTHONPATH=${mount}"/GitHub/csdllib"
 
 # Specify the INI file
-iniFile=${mount}"/GitHub/autoval/autoval/tests/al182012.und120.cwl.ini"
+iniFile=${mount}"/GitHub/autoval/autoval/tests/al182012.hsofs.cwl.ini"
 
 # Execute
 if test -z $1 
