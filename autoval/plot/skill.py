@@ -153,7 +153,7 @@ def map (cfg, lon, lat, mtx, field, clim, goodRange, tag):
             vmin=float(clim[0]), vmax=float(clim[1]), s=10,zorder=2)
     plt.scatter(upx,   upy, c= upz,    marker = '^', 
             vmin=float(clim[0]), vmax=float(clim[1]), s=10,zorder=2)
-    plt.clim(clim) #?
+    plt.clim(clim) 
 
     cbar = plt.colorbar()
     cbartix = list(np.sort(np.unique(

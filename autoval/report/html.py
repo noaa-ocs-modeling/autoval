@@ -111,8 +111,6 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
     diagVar   = cfg['Analysis']['name']
     expDescr  = cfg['Analysis']['experimentdescr']
     
-    print('html.singleReport. imgDir = ' + cfg['Analysis']['imgdir'])
-
     outFile   = os.path.join( reportDir, tag + '.htm')
     csdllib.oper.sys.msg('i','Creating report in ' + outFile)
 
@@ -152,7 +150,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                 c = 0
                 for zoom in range(1,5):
                     imgPath = os.path.join(cfg['Analysis']['imgdir'],
-                        tag + '.zoom.' + str(zoom) +'.png')
+                        tag + '.map.max.' + str(zoom) +'.png')
                     c += 1
                     fod.write('<td>\n')
                     fod.write( '<a href=\"' + imgPath + '\"><img src=\"' + imgPath + '\" alt=\"\" width=\"400\" border=\"0\"></a>'+'\n')
@@ -169,16 +167,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                 for key in avgStats:
                     c += 1
                     fod.write('<td>\n')
-                    fod.write(key+'\n')
-                    fod.write('</td>\n')
-                    if np.mod(c,2) == 0:
-                        fod.write('</tr>\n<tr>\n')
-                fod.write('</tr>\n<tr>\n')
-
-                c = 0
-                for key in avgStats:
-                    c =+ 1
-                    fod.write('<td>\n')
+                    fod.write(key+'<br>\n')
                     imgPath = os.path.join(
                                 cfg['Analysis']['imgdir'],
                                 tag + '.mapskill.' + key + '.png')
@@ -186,8 +175,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                     fod.write('</td>\n')
                     if np.mod(c,2) == 0:
                         fod.write('</tr>\n<tr>\n')
-                fod.write('</tr>') 
-                fod.write('</table>\n')
+                fod.write('</tr>\n<hr>\n')
 
             elif '<!--InsertAvgStatsTable-->' in line:
                 fod.write('Average time-series statistics:\n')
