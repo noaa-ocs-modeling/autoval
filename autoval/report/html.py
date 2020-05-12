@@ -67,7 +67,7 @@ def timeSeriesPanel (fod, cfg, tag, nosid, name, state):
     mxpng = os.path.join(   cfg['Analysis']['imgdir'],
                             tag + '.skill.' + str(nosid) + '.png')
     lcpng = os.path.join(   cfg['Analysis']['imgdir'],
-                            tag + '.loc.' + str(nosid) + '.png')
+                            'loc.' + str(nosid) + '.png')
 
     fod.write('<table width=\"700\" cellspacing=\"2\" cellpadding=\"2\" border=\"0\">\n')
     fod.write('<tr>\n')
