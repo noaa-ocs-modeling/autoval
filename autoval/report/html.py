@@ -112,6 +112,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
     expDescr  = cfg['Analysis']['experimentdescr']
     
     outFile   = os.path.join( reportDir, tag + '.htm')
+
     csdllib.oper.sys.msg('i','Creating report in ' + outFile)
 
     local = os.path.join(cfg['Analysis']['tmpdir'],'template.htm')
@@ -208,7 +209,12 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
         remote_csv = cfg['Upload']['remote_csv']
                 
         # Upload htm file
-        csdllib.oper.transfer.upload(outFile, user+'@'+host, remote_htm)
+        try:
+            remotefile = cfg['Upload']['remotefile']
+            csdllib.oper.transfer.upload(outFile, user+'@'+host, remotefile)
+        except:
+            csdllib.oper.transfer.upload(outFile, user+'@'+host, remote_htm)
+
         # Upload pertinent tagged graphics
         imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], tag + '*.png')
         csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
