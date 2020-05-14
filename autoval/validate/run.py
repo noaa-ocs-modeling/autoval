@@ -78,7 +78,7 @@ def appendGlobalStats(cfg, tag, avgStats):
 
     outFile = os.path.join(         \
         cfg['Analysis']['workdir'], \
-        cfg[cfg['Analysis']['name']]['globalstatfile'] + '.csv')
+        cfg[cfg['Analysis']['name']]['globalstatfile'])
 
     keys = avgStats.keys()
     if not os.path.exists(outFile):

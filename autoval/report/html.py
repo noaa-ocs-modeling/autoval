@@ -203,15 +203,22 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
     try:
         host   = cfg['Upload']['host']
         user   = cfg['Upload']['user']
-        remote = cfg['Upload']['remote']
+        remote_htm = cfg['Upload']['remote_htm']
+        remote_img = cfg['Upload']['remote_img']
+        remote_csv = cfg['Upload']['remote_csv']
+                
         # Upload htm file
-        csdllib.oper.transfer.upload(outFile, user+'@'+host, remote)
+        csdllib.oper.transfer.upload(outFile, user+'@'+host, remote_htm)
         # Upload pertinent tagged graphics
         imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], tag + '*.png')
-        csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote + './img/.')
+        csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
         # Upload pertinent untagged graphics
         imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], 'loc*.png')
-        csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote + './img/.')
+        csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
+        # Upload pertinent csv file
+        csvPaths = os.path.join(cfg['Analysis']['workdir'], cfg[diagVar]['globalstatfile'])
+        csdllib.oper.transfer.upload(csvPaths, user+'@'+host, remote_csv )
+
     except:
         csdllib.oper.sys.msg('w','Report has not been uploaded')
 
