@@ -199,5 +199,19 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                 fod.write(line)
     fod.close()
 
-    # read time series, create state anchors, generate rows = ts + panel
+    # Try to upload
+    try:
+        host   = cfg['Upload']['host']
+        user   = cfg['Upload']['user']
+        remote = cfg['Upload']['remote']
+        # Upload htm file
+        csdllib.oper.transfer.upload(outFile, user+'@'+host, remote)
+        # Upload pertinent tagged graphics
+        imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], tag + '*.png')
+        csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote + './img/.')
+        # Upload pertinent untagged graphics
+        imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], 'loc*.png')
+        csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote + './img/.')
+    except:
+        csdllib.oper.sys.msg('w','Report has not been uploaded')
 
