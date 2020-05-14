@@ -287,8 +287,7 @@ def waterLevel (cfg, path, tag):
         # Get the grid
         gridFile = os.path.join(
             cfg['Analysis']['localdatadir'], 'fort.14')    
-        if not os.path.exists(gridFile):
-            csdllib.oper.transfer.download (cfg['Analysis']['gridfile'], gridFile)
+        csdllib.oper.transfer.refresh (cfg['Analysis']['gridfile'], gridFile)
         grid = csdllib.models.adcirc.readGrid  (gridFile)
         fieldVal, grid, tag = fieldValidation (cfg, path, tag, grid)
 

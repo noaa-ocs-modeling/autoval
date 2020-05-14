@@ -1,3 +1,3 @@
 /Users/svinogra/estofs/dev/2012Sandy/hsofs/hotstart/
-/Intentionally/Incorrect/Folder
 /Users/svinogra/estofs/dev/2012Sandy/und120m/hotstart/
+/Intentionally/Invalid/Folder/WillBeIgnored/
