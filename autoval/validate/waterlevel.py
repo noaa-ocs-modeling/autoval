@@ -89,6 +89,8 @@ def fieldValidation (cfg, path, tag, grid):
                             cfg[diagVar]['fieldfilevariable'])
     if True: # Plot maxele
         maxele  = csdllib.models.adcirc.computeMax (model['value'])
+        lons  = model['lon']
+        print('maxele lonlim = ' + str(np.min(lons)) + ' ' + str(np.max(lons)))
         clim = [ float(cfg[diagVar]['maxfieldymin']), 
                  float(cfg[diagVar]['maxfieldymax']) ]
         plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Elevation')

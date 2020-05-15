@@ -24,7 +24,7 @@ def map (cfg, grid, field, clim, tag, title=None, fig_w=8.0):
     # Check limits of the grid?
     lonlim = [ float(cfg['Analysis']['lonmin']), float(cfg['Analysis']['lonmax']) ]
     latlim = [ float(cfg['Analysis']['latmin']), float(cfg['Analysis']['latmax']) ]
-
+    print('Grid lon lim' + str(lonlim[0]) + ' ' + str(lonlim[1]) )
     # Get clim
 
     field[np.where(field<clim[0])] = np.nan
