@@ -209,6 +209,12 @@ if __name__ == "__main__":
         tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]
         if len(cycle):
             tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]+'.'+cycle
+        try:
+            mainTag = cfg['Analysis']['tag']
+            tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]+'.'+ mainTag+'.'+cycle
+        except:
+            pass
+
         expTags.append(tag)
         msg (' ',p + ' tag=' + tag)
 
