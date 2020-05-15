@@ -201,19 +201,24 @@ if __name__ == "__main__":
     
     expTags = []                         # set up experiment tags
     msg('i','Detected valid directories:')
+    mainTag = ''
+    try:
+        mainTag = cfg['Analysis']['tag']
+    except:
+        pass
+
     for p in expPaths:
         folders = p.split('/')           # beware of reverse slashes!
         for f in folders:
             if f=='':
                 folders.remove(f)
         tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]
+        if len(mainTag):
+            tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]+'.'+ mainTag
         if len(cycle):
             tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]+'.'+cycle
-        try:
-            mainTag = cfg['Analysis']['tag']
-            tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]+'.'+ mainTag+'.'+cycle
-        except:
-            pass
+            if len(mainTag):
+                tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]+'.'+ mainTag+'.' + cycle
 
         expTags.append(tag)
         msg (' ',p + ' tag=' + tag)
