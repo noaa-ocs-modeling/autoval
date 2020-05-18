@@ -27,8 +27,8 @@ def map (cfg, grid, field, clim, tag, title=None, fig_w=8.0):
     print('Grid lon lim' + str(lonlim[0]) + ' ' + str(lonlim[1]) )
     # Get clim
 
-    field[np.where(field<clim[0])] = np.nan
-    field[np.where(field>clim[1])] = np.nan
+    field[np.where(field<clim[0])] = clim[0] #np.nan
+    field[np.where(field>clim[1])] = clim[1] #np.nan
 
     fmin = np.nanmin(field)
     fmax = np.nanmax(field)
