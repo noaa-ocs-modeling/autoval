@@ -59,7 +59,7 @@ def writeLocalStats(cfg, tag, pointStats, info):
         pointIDs.append( info[n]['nosid'])
     outFile = os.path.join(         \
         cfg['Analysis']['workdir'], \
-        tag+'.' + cfg[cfg['Analysis']['name']]['localstatfile'] + '.csv')
+        tag+'.' + cfg[cfg['Analysis']['name']]['localstatfile'])
     
     with open(outFile,'w') as f:
         keys = pointStats[0].keys()
