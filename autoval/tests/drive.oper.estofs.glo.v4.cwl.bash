@@ -10,7 +10,7 @@ myCode="/gpfs/hps3/nos/noscrub/nwprod/autoval/autoval/validate/run.py"
 PYTHONPATH="/gpfs/hps3/nos/noscrub/nwprod/csdllib"
 
 # Specify the INI file
-iniFile="/gpfs/hps3/nos/noscrub/nwprod/autoval/autoval/tests/oper.estofs-glo.v4.cwl.ini"
+#iniFile="/gpfs/hps3/nos/noscrub/nwprod/autoval/autoval/tests/oper.estofs-glo.v4.cwl.ini"
 
 # Execute
 if test -z $1 
