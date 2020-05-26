@@ -182,6 +182,8 @@ def pointValidation (cfg, path, tag):
     # Download / read COOPS stations data
     for n in range(len(stations)):
 
+        msg('i', 'Working on station : ' + stations[n].strip())
+        
         validStation    = True
         singlePointData = dict ()
         forecast        = model['zeta'][:,n]
@@ -273,6 +275,10 @@ def pointValidation (cfg, path, tag):
 
             else:
                 msg('i','Station ' + nosid + ' is not within the domain. Skipping')
+        
+        else: # No obs but the model output is OK
+
+            pass
 
 
     # # # Done running on stations list
