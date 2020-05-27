@@ -60,7 +60,8 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag,
             xlim[1] = forecastDates[-1]
 
     fig, ax, ax2 = csdllib.plot.series.set(xlim, ylim, datums, floodlevels)
-    ax = csdllib.plot.series.add(ax, refDates, obsVals, color='lime',label='OBS',lw=2)
+    if obsVals is not None:
+        ax = csdllib.plot.series.add(ax, refDates, obsVals, color='lime',label='OBS',lw=2)
     ax = csdllib.plot.series.add(ax, refDates, modVals, color='b',label='MOD',lw=2)
     ax.legend(bbox_to_anchor=(0.8, 0.82), loc='center left',prop={'size':6})
     if forecast is not None:
@@ -73,8 +74,9 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag,
     ax.set_xlabel('DATE/TIME UTC')
     ax.grid(True,which='both')
 
-    peak_obs_val = np.nanmax(obsVals)
-    peak_obs_dat = refDates[np.argmax(obsVals)]
+    if obsVals is not None:
+        peak_obs_val = np.nanmax(obsVals)
+        peak_obs_dat = refDates[np.argmax(obsVals)]
     peak_mod_val = np.nanmax(modVals)
     peak_mod_dat = refDates[np.argmax(modVals)]
     if forecast is not None:
@@ -95,7 +97,7 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag,
         ax.plot([peak_mod_dat, peak_mod_dat],[ylim[0],peak_mod_val], 
                 '--',c='b')
     
-    if ylim[0] <= peak_obs_val and peak_obs_val <= ylim[1]:
+    if obsVals is not None and ylim[0] <= peak_obs_val and peak_obs_val <= ylim[1]:
         ax.plot(peak_obs_dat, peak_obs_val, 'o',
                 markerfacecolor='limegreen', markeredgecolor='k')
         ax.plot([peak_obs_dat, peak_obs_dat],[ylim[0],peak_obs_val], 

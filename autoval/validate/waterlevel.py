@@ -142,18 +142,16 @@ def pointValidation (cfg, path, tag):
     '''
     Works on point data
     '''
-    pointVal   = []
+    pointSkill   = []
     tmpDir     = cfg['Analysis']['tmpdir']
     diagVar    = cfg['Analysis']['name']
-    imgDir  = os.path.join( cfg['Analysis']['reportdir'], 
-                            cfg['Analysis']['imgdir'])
 
     # Choose the model output file
     fmask = cfg[diagVar]['pointfilemask']
-    pointsFile, tag = selectOutputFile (cfg, path, tag, fmask)
+    outputFile, tag = selectOutputFile (cfg, path, tag, fmask)
 
     # Read list of stations out of model file
-    model    = csdllib.models.adcirc.readTimeSeries (pointsFile)
+    model    = csdllib.models.adcirc.readTimeSeries (outputFile)
     stations = model['stations']
     if len(stations) == 0:
         msg('w','No stations found')
@@ -178,111 +176,132 @@ def pointValidation (cfg, path, tag):
     msg ( 'i','Datespan for analysis is set to: ' \
             + timeToStamp(datespan[0]) + ' ' + timeToStamp(datespan[1]) )
     
-    # # # Running on stations list
-    # Download / read COOPS stations data
-    for n in range(len(stations)):
+    # Download stations list (external)
+    stationsFile  = os.path.join(
+                    cfg['Analysis']['localdatadir'], 'stations.txt') 
+    csdllib.oper.transfer.download (cfg['PlotData']['stationslist'], stationsFile)
+    try:
+        stationsList = csdllib.models.adcirc.readStationsList (stationsFile)
+    except:
+        msg('w','No external stations list file available.')
 
-        msg('i', 'Working on station : ' + stations[n].strip())
+    ### Running on stations list
+
+    for n in range(len(stations)):
+        msg('i', 'Working on station : ' + str(n).zfill(5) + 
+                                     ' ' + stations[n].strip())
         
-        validStation    = True
-        singlePointData = dict ()
-        forecast        = model['zeta'][:,n]
+        myPointData = dict () 
+        isVirtual   = False  # 'virtual' station has no obs counterpart
+
+        forecast = model['zeta'][:,n]
         forecast[np.where(forecast<-100.)] = np.nan  # _fillvalue doesnt work
-        nosid           = csdllib.data.coops.getNOSID(stations[n].strip())
+
+        # Try to obtain NOS ID
+        nosid       = csdllib.data.coops.getNOSID ( stations[n].strip() )
+
         if nosid is None:
-            validStation = False
-        
-        if validStation:    
-            # Get stations' info, save locally as info.nos.XXXXXXX.dat
+            isVirtual = True # add attempts to get UH or GLOSS ids here
+        else:
+
+            # Try to get stations' info, save locally as info.nos.XXXXXXX.dat
             localFile = os.path.join(
-                cfg['Analysis']['localdatadir'], 'info.nos.'+nosid+'.dat')
+                    cfg['Analysis']['localdatadir'], 'info.nos.'+nosid+'.dat')
             if not os.path.exists(localFile):
                 info = csdllib.data.coops.getStationInfo (nosid, 
-                                        verbose=1, tmpDir=tmpDir)
-                
+                                    verbose=1, tmpDir=tmpDir)
                 if info is None:
                     msg('w','No info found for station ' + nosid)
-                    validStation = False
-
-                if validStation:
+                    isVirtual = True
+                else:
                     csdllib.data.coops.writeStationInfo (info, localFile)
             else:
-                if validStation:
-                    info = csdllib.data.coops.readStationInfo (localFile)   
+                info = csdllib.data.coops.readStationInfo (localFile)   
 
-            if validStation:
-                lon = float(info['lon'])
-                lat = float(info['lat'])
+        if isVirtual:
+            info          = dict()
+            info['nosid'] = 'UN'+str(n).zfill(5)
+            info['lon']   =  stationsList['lon'][n]
+            info['lat']   =  stationsList['lat'][n]
+            info['name']  =  stationsList['name'][n]
+            info['state'] = 'UN'
+            msg('w','Station is not NOAA gauge. Using id=' + info['nosid'])
 
-            if validStation and                         \
-                lonMin <= lon and lon <= lonMax and     \
-                latMin <= lat and lat <= latMax:
+        if  lonMin <= info['lon'] and info['lon'] <= lonMax and     \
+            latMin <= info['lat'] and info['lat'] <= latMax:
+    
+            # plot time series
+            if cfg['Analysis']['pointdataplots']: 
 
-                msg('i','Working on station ' + nosid + ' ' + info['name'])
-                # Get station's water levels for this timespan, save locally
-                localFile = os.path.join(
-                        cfg['Analysis']['localdatadir'], 
-                        'cwl.nos.' + nosid + '.' + \
-                        timeToStamp(datespan[0]) + '-' + \
-                        timeToStamp(datespan[1]) + '.dat')    
-                if not os.path.exists(localFile):
-                    obs = csdllib.data.coops.getData(nosid, datespan, tmpDir=tmpDir)
-                    csdllib.data.coops.writeData    (obs,  localFile)
-                else:
-                    obs = csdllib.data.coops.readData ( localFile )
+                if not isVirtual:
+                    # Get station's water levels for this timespan, save locally
+                    localFile = os.path.join(
+                            cfg['Analysis']['localdatadir'], 
+                            'cwl.nos.' + nosid + '.' + \
+                            timeToStamp(datespan[0]) + '-' + \
+                            timeToStamp(datespan[1]) + '.dat')    
+                    
+                    if not os.path.exists(localFile):
+                        obs = csdllib.data.coops.getData(nosid, datespan, tmpDir=tmpDir)
+                        csdllib.data.coops.writeData    (obs,  localFile)
+                    else:
+                        obs = csdllib.data.coops.readData ( localFile )
 
-                refDates = np.nan
-                obsVals  = np.nan
-                modVals  = np.nan
+                    refDates = np.nan
+                    obsVals  = np.nan
+                    modVals  = np.nan
 
-                if len(obs['values']) == 0:
-                    msg('w','No obs found for station ' + nosid + ', skipping.')
-                elif len(forecast) == 0 or np.sum(~np.isnan(forecast)) == 0:
-                    msg('w','No forecast found for station ' + nosid + ', skipping.')
-                else:
-                    # Unify model and data series 
-                    refDates, obsVals, modVals =            \
+                    if len(obs['values']) == 0:
+                        msg('w','No obs found for station ' + nosid + ', skipping.')
+                        isVirtual = True
+                    elif len(forecast) == 0 or np.sum(~np.isnan(forecast)) == 0:
+                        msg('w','No forecast found for station ' + nosid + ', skipping.')
+                    else:
+                        # Unify model and data series 
+                        refDates, obsVals, modVals =            \
                         csdllib.methods.interp.retime  (    \
                         obs ['dates'], obs['values'],   \
                         model['time'], forecast, refStepMinutes=6)
-                # Compute statistics    
-                M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
+                    # Compute statistics    
+                    M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
 
-                singlePointData['id']      = nosid            
-                singlePointData['info']    = info
-                singlePointData['metrics'] = M
+                    myPointData['id']      = nosid            
+                    myPointData['info']    = info
+                    myPointData['metrics'] = M
 
-                pointVal.append ( singlePointData )
-                # Plot time series
-                if cfg['Analysis']['pointdataplots']: 
-                    
+                    pointSkill.append ( myPointData )
+
                     try:
                         plt.waterlevel.pointSeries(cfg, 
                             obsVals, modVals, refDates, nosid, info, tag, 
                             model['time'], forecast)
                     except:
-                        validStation = False
-                        msg('w','Station ' + nosid + 'was not plotted.')
+                        isVirtual = True
                     pass
 
-                # Plot dashpanels
-                if cfg['Analysis']['pointskillpanel'] and validStation: 
-                    plt.skill.panel(cfg, M, refDates, nosid, info, tag)
+                if isVirtual:
+                    try:
+                        plt.waterlevel.pointSeries(cfg, 
+                            None, forecast, model['time'], 
+                            info['nosid'], info, tag, 
+                            model['time'], forecast)                    
+                    except:
+                        msg('w','Virtual station ' + nosid + ' was not plotted.')
+                        pass
 
-                # Plot submaps of station locations
-                if cfg['Analysis']['pointlocationmap'] and validStation: 
-                    plt.waterlevel.stationMap(cfg, nosid, info, tag)
+            # plot station map
+            if cfg['Analysis']['pointlocationmap']: 
+                plt.waterlevel.stationMap(cfg, info['nosid'], info, tag)
 
-            else:
-                msg('i','Station ' + nosid + ' is not within the domain. Skipping')
-        
-        else: # No obs but the model output is OK
+            # Plot dashpanels
+            if cfg['Analysis']['pointskillpanel'] and not isVirtual: 
+                plt.skill.panel(cfg, M, refDates, nosid, info, tag)
 
-            pass
-
+        else:
+            msg('i','Station ' + nosid + ' is not within the domain. Skipping')
 
     # # # Done running on stations list
-    return pointVal, datespan, tag
+    return pointSkill, datespan, tag
 
 #==============================================================================
 def waterLevel (cfg, path, tag):
@@ -299,14 +318,14 @@ def waterLevel (cfg, path, tag):
         grid = csdllib.models.adcirc.readGrid  (gridFile)
         fieldVal, grid, tag = fieldValidation (cfg, path, tag, grid)
 
-    # Point data (time series, hardwired to COOPS tide gauges)
+    # Point data (time series)
     if cfg['Analysis']['pointdatastats']:
-        pointVal, datespan, tag = pointValidation (cfg, path, tag)
+        pointSkill, datespan, tag = pointValidation (cfg, path, tag)
         lon  = []
         lat  = []
         info = []
         mtx = []
-        for point in pointVal:
+        for point in pointSkill:
             lon.append ( point['info']['lon'] )
             lat.append ( point['info']['lat'] )
             info.append ( point['info'])
