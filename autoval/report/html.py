@@ -186,7 +186,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                 fod.write('Individual time-series statistics:\n')
                 fod.write('<hr>\n')
                 for n in range(len(ids)):
-                    if not np.isnan( stats[n]['rmsd']):
+                    if True: #not np.isnan( stats[n]['rmsd']):
                         fod.write('<br>\n')
                         nosid = ids[n]
                         name  = names[n]

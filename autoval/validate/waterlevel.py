@@ -280,6 +280,13 @@ def pointValidation (cfg, path, tag):
                     pass
 
                 if isVirtual:
+                    # Compute statistics    
+                    M = csdllib.methods.statistics.metrics (np.nan, np.nan, np.nan)
+                    myPointData['id']      = nosid            
+                    myPointData['info']    = info
+                    myPointData['metrics'] = M
+                    pointSkill.append ( myPointData )
+
                     try:
                         plt.waterlevel.pointSeries(cfg, 
                             None, forecast, model['time'], 
