@@ -180,10 +180,10 @@ def pointValidation (cfg, path, tag):
     stationsFile  = os.path.join(
                     cfg['Analysis']['localdatadir'], 'stations.txt') 
     csdllib.oper.transfer.download (cfg['PlotData']['stationslist'], stationsFile)
-    try:
-        stationsList = csdllib.models.adcirc.readStationsList (stationsFile)
-    except:
-        msg('w','No external stations list file available.')
+    #try:
+    #    stationsList = csdllib.models.adcirc.readStationsList (stationsFile)
+    #except:
+    #    msg('w','No external stations list file available.')
 
     ### Running on stations list
 
@@ -221,9 +221,9 @@ def pointValidation (cfg, path, tag):
         if isVirtual:
             info          = dict()
             info['nosid'] = 'UN'+str(n).zfill(5)
-            info['lon']   =  stationsList['lon'][n]
-            info['lat']   =  stationsList['lat'][n]
-            info['name']  =  stationsList['name'][n]
+            info['lon']   =  model['lon'][n]
+            info['lat']   =  model['lat'][n]
+            info['name']  =  model['name'][n]
             info['state'] = 'UN'
             msg('w','Station is not NOAA gauge. Using id=' + info['nosid'])
 
