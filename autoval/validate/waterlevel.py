@@ -305,7 +305,7 @@ def pointValidation (cfg, path, tag):
                 plt.skill.panel(cfg, M, refDates, nosid, info, tag)
 
         else:
-            msg('i','Station ' + nosid + ' is not within the domain. Skipping')
+            msg('i','Station ' + info['nosid'] + ' is not within the domain. Skipping')
 
     # # # Done running on stations list
     return pointSkill, datespan, tag
