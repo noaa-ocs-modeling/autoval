@@ -223,7 +223,7 @@ def pointValidation (cfg, path, tag):
             info['nosid'] = 'UN'+str(n).zfill(5)
             info['lon']   =  model['lon'][n]
             info['lat']   =  model['lat'][n]
-            info['name']  =  model['name'][n]
+            info['name']  =  model['stations'][n]
             info['state'] = 'UN'
             msg('w','Station is not NOAA gauge. Using id=' + info['nosid'])
 
