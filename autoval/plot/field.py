@@ -27,11 +27,18 @@ def map (cfg, grid, field, clim, tag, title=None, fig_w=8.0):
     print('Grid lon lim' + str(lonlim[0]) + ' ' + str(lonlim[1]) )
     # Get clim
 
+    #fmin = np.nanmin(field)
+    #fmax = np.nanmax(field)
+    fmin = np.nanmin(field[np.where(
+        lonlim[0]<=grid['lon'] and grid['lon']<=lonlim[1] and
+        latlim[0]<=grid['lat'] and grid['lat']<=latlim[1] )])
+    fmax = np.nanmax(field[np.where(
+        lonlim[0]<=grid['lon'] and grid['lon']<=lonlim[1] and
+        latlim[0]<=grid['lat'] and grid['lat']<=latlim[1] )])
+        
     field[np.where(field<clim[0])] = clim[0] #np.nan
     field[np.where(field>clim[1])] = clim[1] #np.nan
 
-    fmin = np.nanmin(field)
-    fmax = np.nanmax(field)
     csdllib.oper.sys.msg('i','Field min/max=' + str(fmin) + '/' + str(fmax))
 
     fig = csdllib.plot.map.set(lonlim, latlim, coast=coast, fig_w=fig_w)
