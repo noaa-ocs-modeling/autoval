@@ -176,18 +176,8 @@ def pointValidation (cfg, path, tag):
     msg ( 'i','Datespan for analysis is set to: ' \
             + timeToStamp(datespan[0]) + ' ' + timeToStamp(datespan[1]) )
     
-    # Download stations list (external)
-    stationsFile  = os.path.join(
-                    cfg['Analysis']['localdatadir'], 'stations.txt') 
-    csdllib.oper.transfer.download (cfg['PlotData']['stationslist'], stationsFile)
-    #try:
-    #    stationsList = csdllib.models.adcirc.readStationsList (stationsFile)
-    #except:
-    #    msg('w','No external stations list file available.')
-
-    ### Running on stations list
-
     for n in range(len(stations)):
+        
         msg('i', 'Working on station : ' + str(n).zfill(5) + 
                                      ' ' + stations[n].strip())
         
