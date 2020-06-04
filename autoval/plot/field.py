@@ -29,15 +29,15 @@ def map (cfg, grid, field, clim, tag, title=None, fig_w=8.0):
 
     #fmin = np.nanmin(field)
     #fmax = np.nanmax(field)
-    fmin = np.nanmin(field[np.where(all([  lonlim[0]  <= grid['lon'], 
+    fmin = np.nanmin(field[all([  lonlim[0]  <= grid['lon'], 
                                            grid['lon']<= lonlim[1],
                                            latlim[0]  <= grid['lat'], 
-                                           grid['lat']<= latlim[1] ]))])
+                                           grid['lat']<= latlim[1] ])]
 
-    fmax = np.nanmax(field[np.where(all([  lonlim[0]  <= grid['lon'], 
+    fmax = np.nanmax(field[all([  lonlim[0]  <= grid['lon'], 
                                            grid['lon']<= lonlim[1],
                                            latlim[0]  <= grid['lat'], 
-                                           grid['lat']<= latlim[1] ]))])
+                                           grid['lat']<= latlim[1] ])]
         
     field[np.where(field<clim[0])] = clim[0] #np.nan
     field[np.where(field>clim[1])] = clim[1] #np.nan
