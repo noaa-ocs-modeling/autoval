@@ -9,4 +9,4 @@ myCode="/gpfs/hps3/nos/noscrub/nwprod/autoval/autoval/validate/stationsList.py"
 # Set PYTHONPATH to csdllib
 PYTHONPATH="/gpfs/hps3/nos/noscrub/nwprod/csdllib"
 
-PYTHONPATH=${PYTHONPATH} ${pyPath} -W ignore ${myCode} $1
+PYTHONPATH=${PYTHONPATH} ${pyPath} -W ignore ${myCode} ${1}
