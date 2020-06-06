@@ -219,6 +219,8 @@ def pointValidation (cfg, path, tag):
             info['state'] = 'UN'
             msg('w','Station is not NOAA gauge. Using id=' + info['nosid'])
 
+        # Check lon/lats
+        print(str(info['lon']))
         if  lonMin <= info['lon'] and info['lon'] <= lonMax and     \
             latMin <= info['lat'] and info['lat'] <= latMax:
     
