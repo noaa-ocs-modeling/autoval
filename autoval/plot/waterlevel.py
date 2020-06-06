@@ -18,8 +18,6 @@ def stationMap(cfg, nosid, info, tag):
 
     figFile = os.path.join( \
         imgDir, 'loc.'+nosid+'.png')
-    #print('figFile=' + figFile)
-
     if os.path.exists(figFile):
         return
 
@@ -50,7 +48,6 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag,
     '''
     imgDir  = os.path.join( cfg['Analysis']['reportdir'], 
                             cfg['Analysis']['imgdir'])
-    #imgDir  = cfg['Analysis']['imgdir']
 
     xlim = [min(refDates), max(refDates)]
     ylim = [cfg['WaterLevel']['pointymin'],cfg['WaterLevel']['pointymax']]
@@ -120,7 +117,8 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag,
     plt.tight_layout()
     
     figFile = os.path.join( \
-        imgDir, tag+ '.ts.'+nosid+'.png')
+        imgDir, 'ts.'+nosid+'.png')
+#        imgDir, tag+ '.ts.'+nosid+'.png')
     plt.savefig(figFile)
     plt.close()
     

@@ -95,7 +95,8 @@ def fieldValidation (cfg, path, tag, grid):
                  float(cfg[diagVar]['maxfieldymax']) ]
         plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Elevation')
         #plt.field.contour(cfg, grid, maxele, clim) 
-        figFile = os.path.join(imgDir, tag+'.map.max.png')
+        #figFile = os.path.join(imgDir, tag+'.map.max.png')
+        figFile = os.path.join(imgDir, 'map.max.png')
         plt.field.save (figFile)
 
         #Zoom levels, 1 to 4
@@ -112,7 +113,8 @@ def fieldValidation (cfg, path, tag, grid):
                 cfgzoom['Analysis']['latmax'] = latlim[1]
                 plt.field.map (cfgzoom, grid, maxele, clim, tag, 
                                'Maximal Elevation', fig_w=5.0)
-                figFile = os.path.join(imgDir, tag+'.map.max.'+ str(zoom)+'.png')
+                #figFile = os.path.join(imgDir, tag+'.map.max.'+ str(zoom)+'.png')
+                figFile = os.path.join(imgDir, 'map.max.'+ str(zoom)+'.png')
                 plt.field.save (figFile)
             except:
                 pass
