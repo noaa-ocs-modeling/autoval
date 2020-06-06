@@ -10,4 +10,4 @@ if __name__ == "__main__":
              + str(m['lat'][n]) + ' ' \
              + str(m['stations'][n])
         print ( info )
-    print ('Total of ' + str(n) + ' stations in ' + ncFile)
+    print ('Total of ' + str(n+1) + ' stations in ' + ncFile)

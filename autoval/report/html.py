@@ -63,12 +63,13 @@ def csv2html (fod, avgStats):
 def timeSeriesPanel (fod, cfg, tag, nosid, name, state):
 
     tspng = os.path.join(   cfg['Analysis']['imgdir'],
-                            tag + '.ts.' + str(nosid) + '.png')
+                            'ts.' + str(nosid) + '.png')
+#                            tag + '.ts.' + str(nosid) + '.png')
     mxpng = os.path.join(   cfg['Analysis']['imgdir'],
-                            tag + '.skill.' + str(nosid) + '.png')
+                            'skill.' + str(nosid) + '.png')
+#                            tag + '.skill.' + str(nosid) + '.png')
     lcpng = os.path.join(   cfg['Analysis']['imgdir'],
                             'loc.' + str(nosid) + '.png')
-
     fod.write('<table width=\"700\" cellspacing=\"2\" cellpadding=\"2\" border=\"0\">\n')
     fod.write('<tr>\n')
     fod.write('<td colspan = \"3\">' + str(nosid)+': ' + name + ' ' + state +  '</td>\n')
@@ -111,7 +112,8 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
     diagVar   = cfg['Analysis']['name']
     expDescr  = cfg['Analysis']['experimentdescr']
     
-    outFile   = os.path.join( reportDir, tag + '.htm')
+    outFile   = os.path.join( reportDir, 'index.htm')
+    #outFile   = os.path.join( reportDir, tag + '.htm')
 
     csdllib.oper.sys.msg('i','Creating report in ' + outFile)
 
@@ -141,7 +143,8 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
             
             elif '<!--InsertMainFieldMap-->' in line:
                 imgPath = os.path.join(cfg['Analysis']['imgdir'],
-                    tag + '.map.max.png')
+                    'map.max.png')
+                #    tag + '.map.max.png')
                 lines = mainMap(imgPath)
                 for l in lines:
                     fod.write(l)
@@ -151,7 +154,8 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                 c = 0
                 for zoom in range(1,5):
                     imgPath = os.path.join(cfg['Analysis']['imgdir'],
-                        tag + '.map.max.' + str(zoom) +'.png')
+                        'map.max.' + str(zoom) +'.png')
+                    #    tag + '.map.max.' + str(zoom) +'.png')
                     c += 1
                     fod.write('<td>\n')
                     fod.write( '<a href=\"' + imgPath + '\"><img src=\"' + imgPath + '\" alt=\"\" width=\"400\" border=\"0\"></a>'+'\n')
@@ -171,7 +175,8 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                     fod.write(key+'<br>\n')
                     imgPath = os.path.join(
                                 cfg['Analysis']['imgdir'],
-                                tag + '.mapskill.' + key + '.png')
+                                'mapskill.' + key + '.png')
+                    #            tag + '.mapskill.' + key + '.png')
                     fod.write( '<a href=\"' + imgPath + '\"><img src=\"' + imgPath + '\" alt=\"\" width=\"400\" border=\"0\"></a>'+'\n')
                     fod.write('</td>\n')
                     if np.mod(c,2) == 0:
@@ -216,7 +221,8 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
             csdllib.oper.transfer.upload(outFile, user+'@'+host, remote_htm)
 
         # Upload pertinent tagged graphics
-        imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], tag + '*.png')
+        imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], '*.png')
+        #imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], tag + '*.png')
         csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
         # Upload pertinent untagged graphics
         imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], 'loc*.png')
