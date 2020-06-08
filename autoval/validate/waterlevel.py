@@ -95,11 +95,11 @@ def fieldValidation (cfg, path, tag, grid):
         clim = [ float(cfg[diagVar]['maxfieldymin']), 
                  float(cfg[diagVar]['maxfieldymax']) ]
         
-        if diagVar is 'waterlevel':
+        if diagVar == 'waterlevel':
             plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Elevation')
             figFile = os.path.join(imgDir, 'map.max.png')
 
-        if diagVar is 'windvelocity':
+        if diagVar == 'windvelocity':
             plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Wind Velocity')
             figFile = os.path.join(imgDir, 'map.maxwvel.png')
 
@@ -118,12 +118,12 @@ def fieldValidation (cfg, path, tag, grid):
                 cfgzoom['Analysis']['latmin'] = latlim[0]
                 cfgzoom['Analysis']['latmax'] = latlim[1]
                 #figFile = os.path.join(imgDir, tag+'.map.max.'+ str(zoom)+'.png')
-                if diagVar is 'waterlevel':
+                if diagVar == 'waterlevel':
                     plt.field.map (cfgzoom, grid, maxele, clim, tag, 
                                'Maximal Elevation', fig_w=5.0)
                     figFile = os.path.join(imgDir, 'map.max.'+ str(zoom)+'.png')
                 
-                if diagVar is 'windVelocity':
+                if diagVar == 'windVelocity':
                     plt.field.map (cfgzoom, grid, maxele, clim, tag, 
                                'Maximal Wind Velocity', fig_w=5.0)
                     figFile = os.path.join(imgDir, 'map.maxwvel.'+ str(zoom)+'.png')
