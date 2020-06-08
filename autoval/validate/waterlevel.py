@@ -81,6 +81,7 @@ def fieldValidation (cfg, path, tag, grid):
 
     fieldVal = []
     diagVar  = cfg['Analysis']['name']
+    print diagVar
 
     # Choose the model output file
     fmask = cfg[diagVar]['fieldfilemask']
