@@ -28,19 +28,20 @@ def map (cfg, grid, field, clim, tag, title=None, fig_w=8.0):
     print('Grid lat lim' + str(latlim[0]) + ' ' + str(latlim[1]) )
 
     # Get clim
-
-    #fmin = np.nanmin(field)
-    #fmax = np.nanmax(field)
-    fmin = np.nanmin(field[ (lonlim[0]  <= grid['lon']) & 
+    try:
+        fmin = np.nanmin(field[ (lonlim[0]  <= grid['lon']) & 
                             (grid['lon']<= lonlim[1])   &
                             (latlim[0]  <= grid['lat']) & 
                             (grid['lat']<= latlim[1] ) ])
 
-    fmax = np.nanmax(field[ (lonlim[0]  <= grid['lon']) & 
+        fmax = np.nanmax(field[ (lonlim[0]  <= grid['lon']) & 
                             (grid['lon']<= lonlim[1])   &
                             (latlim[0]  <= grid['lat']) & 
                             (grid['lat']<= latlim[1] ) ])
-        
+    except:
+        fmin = np.nanmin(field)
+        fmax = np.nanmax(field)
+    
     #field[np.where(field<clim[0])] = clim[0] #np.nan
     #field[np.where(field>clim[1])] = clim[1] #np.nan
 
