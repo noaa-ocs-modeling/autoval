@@ -124,7 +124,7 @@ def fieldValidation (cfg, path, tag, grid):
                                'Maximal Elevation', fig_w=5.0)
                     figFile = os.path.join(imgDir, 'map.max.'+ str(zoom)+'.png')
                 
-                if diagVar.lower() == 'windVelocity':
+                if diagVar.lower() == 'windvelocity':
                     plt.field.map (cfgzoom, grid, maxele, clim, tag, 
                                'Maximal Wind Velocity', fig_w=5.0)
                     figFile = os.path.join(imgDir, 'map.maxwvel.'+ str(zoom)+'.png')
