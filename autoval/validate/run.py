@@ -237,7 +237,7 @@ if __name__ == "__main__":
         expTags[n] = tag # in case if OFS cycle was detected
         
         expStats.append( stats )
-        
+        avgStats = []
         if cfg['Analysis']['pointdatastats']:            
                 writeLocalStats(cfg, tag, stats, info)
                 avgStats    = computeAvgStats (stats)

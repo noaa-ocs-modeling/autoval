@@ -113,6 +113,25 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
     diagVar   = cfg['Analysis']['name']
     expDescr  = cfg['Analysis']['experimentdescr']
     
+# Try to upload
+    try:
+        host   = cfg['Upload']['host']
+        user   = cfg['Upload']['user']
+        remote_htm = cfg['Upload']['remote_htm']
+        remote_img = cfg['Upload']['remote_img']
+        remote_csv = cfg['Upload']['remote_csv']
+                
+        # Upload pertinent tagged graphics
+        imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], '*.png')
+        #imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], tag + '*.png')
+        csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
+        # Upload pertinent untagged graphics
+        imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], 'loc*.png')
+        csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
+ 
+    except:
+        csdllib.oper.sys.msg('w','Report has not been uploaded')
+
     outFile   = os.path.join( reportDir, 'index.htm')
     #outFile   = os.path.join( reportDir, tag + '.htm')
 
@@ -206,31 +225,16 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                 fod.write(line)
     fod.close()
 
-    # Try to upload
+    # Upload htm file
     try:
-        host   = cfg['Upload']['host']
-        user   = cfg['Upload']['user']
-        remote_htm = cfg['Upload']['remote_htm']
-        remote_img = cfg['Upload']['remote_img']
-        remote_csv = cfg['Upload']['remote_csv']
-                
-        # Upload htm file
-        try:
-            remotefile = cfg['Upload']['remotefile']
-            csdllib.oper.transfer.upload(outFile, user+'@'+host, remotefile)
-        except:
-            csdllib.oper.transfer.upload(outFile, user+'@'+host, remote_htm)
+        remotefile = cfg['Upload']['remotefile']
+        csdllib.oper.transfer.upload(outFile, user+'@'+host, remotefile)
+    except:
+        csdllib.oper.transfer.upload(outFile, user+'@'+host, remote_htm)
 
-        # Upload pertinent tagged graphics
-        imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], '*.png')
-        #imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], tag + '*.png')
-        csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
-        # Upload pertinent untagged graphics
-        imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], 'loc*.png')
-        csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
+    try:
         # Upload pertinent csv file
         csvPaths = os.path.join(cfg['Analysis']['workdir'], cfg[diagVar]['globalstatfile'])
         csdllib.oper.transfer.upload(csvPaths, user+'@'+host, remote_csv )
-
     except:
-        csdllib.oper.sys.msg('w','Report has not been uploaded')
+        pass
