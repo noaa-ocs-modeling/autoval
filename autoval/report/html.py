@@ -6,6 +6,7 @@ import csdllib
 import re
 import numpy as np
 from .metricsDescription import waterlevel 
+from plot import field as plf
 
 #==============================================================================
 def tabLink (tabName, isDefault=False):
@@ -233,4 +234,3 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
 
     except:
         csdllib.oper.sys.msg('w','Report has not been uploaded')
-

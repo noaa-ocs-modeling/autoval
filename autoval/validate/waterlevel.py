@@ -87,16 +87,22 @@ def fieldValidation (cfg, path, tag, grid):
     fieldFile, tag = selectOutputFile (cfg, path, tag, fmask)
     model    = csdllib.models.adcirc.readSurfaceField (fieldFile, 
                             cfg[diagVar]['fieldfilevariable'])
+    
     if True: # Plot maxele
         maxele  = csdllib.models.adcirc.computeMax (model['value'])
         lons  = model['lon']
         print('maxele lonlim = ' + str(np.min(lons)) + ' ' + str(np.max(lons)))
         clim = [ float(cfg[diagVar]['maxfieldymin']), 
                  float(cfg[diagVar]['maxfieldymax']) ]
-        plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Elevation')
-        #plt.field.contour(cfg, grid, maxele, clim) 
-        #figFile = os.path.join(imgDir, tag+'.map.max.png')
-        figFile = os.path.join(imgDir, 'map.max.png')
+        
+        if diagVar is 'waterlevel':
+            plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Elevation')
+            figFile = os.path.join(imgDir, 'map.max.png')
+
+        if diagVar is 'windvelocity':
+            plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Wind Velocity')
+            figFile = os.path.join(imgDir, 'map.maxwvel.png')
+
         plt.field.save (figFile)
 
         #Zoom levels, 1 to 4
@@ -111,13 +117,29 @@ def fieldValidation (cfg, path, tag, grid):
                 cfgzoom['Analysis']['lonmax'] = lonlim[1]
                 cfgzoom['Analysis']['latmin'] = latlim[0]
                 cfgzoom['Analysis']['latmax'] = latlim[1]
-                plt.field.map (cfgzoom, grid, maxele, clim, tag, 
-                               'Maximal Elevation', fig_w=5.0)
                 #figFile = os.path.join(imgDir, tag+'.map.max.'+ str(zoom)+'.png')
-                figFile = os.path.join(imgDir, 'map.max.'+ str(zoom)+'.png')
+                if diagVar is 'waterlevel':
+                    plt.field.map (cfgzoom, grid, maxele, clim, tag, 
+                               'Maximal Elevation', fig_w=5.0)
+                    figFile = os.path.join(imgDir, 'map.max.'+ str(zoom)+'.png')
+                
+                if diagVar is 'windVelocity':
+                    plt.field.map (cfgzoom, grid, maxele, clim, tag, 
+                               'Maximal Wind Velocity', fig_w=5.0)
+                    figFile = os.path.join(imgDir, 'map.maxwvel.'+ str(zoom)+'.png')
+       
                 plt.field.save (figFile)
             except:
                 pass
+        
+        #maxele  = csdllib.models.adcirc.read   (model['value'])
+        #lons  = model['lon']
+        #print('maxele lonlim = ' + str(np.min(lons)) + ' ' + str(np.max(lons)))
+        #clim = [ float(cfg[diagVar]['maxfieldymin']), 
+        #         float(cfg[diagVar]['maxfieldymax']) ]
+        #plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Elevation')
+        #figFile = os.path.join(imgDir, 'map.max.png')
+        #plt.field.save (figFile)
 
     if cfg['Analysis']['fieldevolution']: # Do the movie
         if os.system('which convert') == 0:
