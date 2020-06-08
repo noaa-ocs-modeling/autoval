@@ -89,7 +89,7 @@ def fieldValidation (cfg, path, tag, grid):
     model    = csdllib.models.adcirc.readSurfaceField (fieldFile, 
                             cfg[diagVar]['fieldfilevariable'])
     
-    if True: # Plot maxele
+    if cfg['Analysis']['fielddataplots'] == 1: # Plot maxele
         maxele  = csdllib.models.adcirc.computeMax (model['value'])
         lons  = model['lon']
         print('maxele lonlim = ' + str(np.min(lons)) + ' ' + str(np.max(lons)))
@@ -132,15 +132,18 @@ def fieldValidation (cfg, path, tag, grid):
                 plt.field.save (figFile)
             except:
                 pass
-        
-        #maxele  = csdllib.models.adcirc.read   (model['value'])
-        #lons  = model['lon']
-        #print('maxele lonlim = ' + str(np.min(lons)) + ' ' + str(np.max(lons)))
-        #clim = [ float(cfg[diagVar]['maxfieldymin']), 
-        #         float(cfg[diagVar]['maxfieldymax']) ]
-        #plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Elevation')
-        #figFile = os.path.join(imgDir, 'map.max.png')
-        #plt.field.save (figFile)
+    if cfg['Analysis']['fieldextremeplots'] == 1:   
+        maxele  = csdllib.models.adcirc.read   (model['value'])
+        lons  = model['lon']
+        clim = [ float(cfg[diagVar]['maxfieldymin']), 
+                 float(cfg[diagVar]['maxfieldymax']) ]
+        if diagVar.lower() == 'waterlevel':
+            plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Elevation')
+            figFile = os.path.join(imgDir, 'map.max.png')
+        if diagVar.lower() == 'windvelocity':
+            plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Wind Velocity')
+            figFile = os.path.join(imgDir, 'map.maxwvel.png')
+        plt.field.save (figFile)
 
     if cfg['Analysis']['fieldevolution']: # Do the movie
         if os.system('which convert') == 0:
