@@ -133,11 +133,11 @@ def fieldValidation (cfg, path, tag, grid):
             except:
                 pass
     
-    if cfg['Analysis']['fieldmaxplots'] == 1:   
+    if cfg['Analysis']['maxfieldplots'] == 1:   
         fmask = cfg[diagVar]['maxfieldfilemask']
         fieldFile, tag = selectOutputFile (cfg, path, tag, fmask)
         model    = csdllib.models.adcirc.readSurfaceField (fieldFile, 
-                            cfg[diagVar]['fieldfilevariable'])
+                            cfg[diagVar]['maxfieldvariable'])
         maxele  = csdllib.models.adcirc.read   (model['value'])
 
         lons  = model['lon']
@@ -343,7 +343,7 @@ def waterLevel (cfg, path, tag):
     '''
 
     # Field data analysis
-    if cfg['Analysis']['fielddataplots'] or cfg['Analysis']['fieldmaxplots']:
+    if cfg['Analysis']['fielddataplots'] or cfg['Analysis']['maxfieldplots']:
         # Get the grid
         gridFile = os.path.join(
             cfg['Analysis']['localdatadir'], 'fort.14')    
