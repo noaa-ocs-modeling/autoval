@@ -101,6 +101,7 @@ def fieldValidation (cfg, path, tag, grid):
             figFile = os.path.join(imgDir, 'map.max.png')
 
         if diagVar.lower() == 'windvelocity':
+            maxele = 1.94384*maxele  # mps to knots
             plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Wind Velocity')
             figFile = os.path.join(imgDir, 'map.maxwvel.png')
 
@@ -147,6 +148,7 @@ def fieldValidation (cfg, path, tag, grid):
             plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Elevation')
             figFile = os.path.join(imgDir, 'map.max.png')
         if diagVar.lower() == 'windvelocity':
+            maxele = 1.94384*maxele  # mps to knots
             plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Wind Velocity')
             figFile = os.path.join(imgDir, 'map.maxwvel.png')
         plt.field.save (figFile)
