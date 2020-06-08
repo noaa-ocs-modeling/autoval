@@ -138,7 +138,7 @@ def fieldValidation (cfg, path, tag, grid):
         fieldFile, tag = selectOutputFile (cfg, path, tag, fmask)
         model    = csdllib.models.adcirc.readSurfaceField (fieldFile, 
                             cfg[diagVar]['maxfieldvariable'])
-        maxele  = csdllib.models.adcirc.read   (model['value'])
+        maxele  = model['value']
 
         lons  = model['lon']
         clim = [ float(cfg[diagVar]['maxfieldymin']), 
