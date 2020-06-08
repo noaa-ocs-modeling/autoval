@@ -238,9 +238,10 @@ if __name__ == "__main__":
         
         expStats.append( stats )
         
-        writeLocalStats(cfg, tag, stats, info)
-        avgStats    = computeAvgStats (stats)
-        appendGlobalStats(cfg, tag, avgStats)
+        if cfg['Analysis']['pointdatastats']:            
+                writeLocalStats(cfg, tag, stats, info)
+                avgStats    = computeAvgStats (stats)
+                appendGlobalStats(cfg, tag, avgStats)
 
         # Save/upload diagnostics reports
         singleReport (cfg, tag, info, datespan, stats, avgStats)
