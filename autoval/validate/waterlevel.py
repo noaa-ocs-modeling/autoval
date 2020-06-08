@@ -343,6 +343,9 @@ def waterLevel (cfg, path, tag):
     '''
     Performs waterlevel validation of a single given run.
     '''
+    mtx      = []
+    info     = []
+    datespan = []
 
     # Field data analysis
     if cfg['Analysis']['fielddataplots'] or cfg['Analysis']['maxfieldplots']:
@@ -358,8 +361,7 @@ def waterLevel (cfg, path, tag):
         pointSkill, datespan, tag = pointValidation (cfg, path, tag)
         lon  = []
         lat  = []
-        info = []
-        mtx = []
+        
         for point in pointSkill:
             lon.append ( point['info']['lon'] )
             lat.append ( point['info']['lat'] )
