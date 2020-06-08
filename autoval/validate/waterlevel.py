@@ -337,7 +337,7 @@ def waterLevel (cfg, path, tag):
     '''
 
     # Field data analysis
-    if cfg['Analysis']['fielddataplots']:
+    if cfg['Analysis']['fielddataplots'] or cfg['Analysis']['fieldextremeplots']:
         # Get the grid
         gridFile = os.path.join(
             cfg['Analysis']['localdatadir'], 'fort.14')    
