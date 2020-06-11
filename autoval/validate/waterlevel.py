@@ -107,7 +107,29 @@ def fieldValidation (cfg, path, tag, grid):
 
         plt.field.save (figFile)
 
-        #Zoom levels, 1 to 4
+    
+    if cfg['Analysis']['maxfieldplots'] == 1:   
+        fmask = cfg[diagVar]['maxfieldfilemask']
+        fieldFile, tag = selectOutputFile (cfg, path, tag, fmask)
+        model    = csdllib.models.adcirc.readSurfaceField (fieldFile, 
+                            cfg[diagVar]['maxfieldvariable'])
+        maxele  = model['value']
+
+        lons  = model['lon']
+        clim = [ float(cfg[diagVar]['maxfieldymin']), 
+                 float(cfg[diagVar]['maxfieldymax']) ]
+        if diagVar.lower() == 'waterlevel':
+            plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Elevation')
+            figFile = os.path.join(imgDir, 'map.max.png')
+        if diagVar.lower() == 'windvelocity':
+            maxele = 1.94384*maxele  # mps to knots
+            plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Wind Velocity')
+            figFile = os.path.join(imgDir, 'map.maxwvel.png')
+        plt.field.save (figFile)
+
+    #Zoom levels, 1 to 4
+    if cfg['Analysis']['maxfieldplots'] == 1 or cfg['Analysis']['fielddataplots'] == 1:   
+    
         for zoom in range(1,5):
             print('Working on zoom ' + str(zoom))
             try:
@@ -134,25 +156,6 @@ def fieldValidation (cfg, path, tag, grid):
             except:
                 pass
     
-    if cfg['Analysis']['maxfieldplots'] == 1:   
-        fmask = cfg[diagVar]['maxfieldfilemask']
-        fieldFile, tag = selectOutputFile (cfg, path, tag, fmask)
-        model    = csdllib.models.adcirc.readSurfaceField (fieldFile, 
-                            cfg[diagVar]['maxfieldvariable'])
-        maxele  = model['value']
-
-        lons  = model['lon']
-        clim = [ float(cfg[diagVar]['maxfieldymin']), 
-                 float(cfg[diagVar]['maxfieldymax']) ]
-        if diagVar.lower() == 'waterlevel':
-            plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Elevation')
-            figFile = os.path.join(imgDir, 'map.max.png')
-        if diagVar.lower() == 'windvelocity':
-            maxele = 1.94384*maxele  # mps to knots
-            plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Wind Velocity')
-            figFile = os.path.join(imgDir, 'map.maxwvel.png')
-        plt.field.save (figFile)
-
     if cfg['Analysis']['fieldevolution']: # Do the movie
         if os.system('which convert') == 0:
             clim = [ float(cfg[diagVar]['fieldymin']), 
