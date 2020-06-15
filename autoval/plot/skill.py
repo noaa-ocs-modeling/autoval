@@ -120,8 +120,8 @@ def map (cfg, lon, lat, mtx, field, clim, goodRange, tag):
     lonlim = [ float(cfg['Analysis']['lonmin']), float(cfg['Analysis']['lonmax']) ]
     latlim = [ float(cfg['Analysis']['latmin']), float(cfg['Analysis']['latmax']) ]
 
-    fig = csdllib.plot.map.set(lonlim, latlim, coast=coast)
-    plt.suptitle(tag + ' ', fontsize=8)
+    fig = csdllib.plot.map.set(lonlim, latlim, coast=coast,fig_w=10.0)
+    plt.suptitle(tag + ' ', fontsize=7)
 
     plt.jet()
     goodx = [] #TODO: optimize this block
@@ -149,11 +149,11 @@ def map (cfg, lon, lat, mtx, field, clim, goodRange, tag):
             upz.append ( z )
 
     plt.scatter(goodx, goody, c=goodz, marker = 'o', edgecolors='w', 
-            vmin=float(clim[0]), vmax=float(clim[1]), s=30,zorder=2)
+            vmin=float(clim[0]), vmax=float(clim[1]), s=30,zorder=3)
     plt.scatter(dnx,   dny, c= dnz,    marker = 'v', 
-            vmin=float(clim[0]), vmax=float(clim[1]), s=10,zorder=2)
+            vmin=float(clim[0]), vmax=float(clim[1]), s=15,zorder=3)
     plt.scatter(upx,   upy, c= upz,    marker = '^', 
-            vmin=float(clim[0]), vmax=float(clim[1]), s=10,zorder=2)
+            vmin=float(clim[0]), vmax=float(clim[1]), s=15,zorder=3)
     plt.clim(clim) 
 
     cbar = plt.colorbar()

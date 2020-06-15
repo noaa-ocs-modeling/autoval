@@ -49,9 +49,9 @@ def map (cfg, grid, field, clim, tag, title=None, fig_w=8.0):
 
     fig = csdllib.plot.map.set(lonlim, latlim, coast=coast, fig_w=fig_w)
     csdllib.plot.map.addField (grid, field, clim = clim, zorder=0, plotMax = True, lonlim = lonlim, latlim = latlim)
-    plt.suptitle(tag + ' ', fontsize=8)    
+    plt.suptitle(tag + ' ', fontsize=7)    
     if title:
-        plt.title(title)
+        plt.title(title,fontsize=8)
     
 #==============================================================================
 def contour (cfg, grid, field, clim):
