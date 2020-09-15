@@ -72,6 +72,7 @@ def writeLocalStats(cfg, tag, pointStats, info):
             for key in keys:
                 line = line + str(pointStats[n][key]) + ','
             f.write(line + '\n')
+        f.close()
 
 #==============================================================================
 def appendGlobalStats(cfg, tag, avgStats):
@@ -87,12 +88,13 @@ def appendGlobalStats(cfg, tag, avgStats):
             for key in keys:
                 header = header + key + ','
             f.write(header + '\n')
-
+            f.close()
     with open(outFile,'a+') as f:
         line = tag + ',' + csdllib.oper.sys.timeStamp() + ','
         for key in keys:
             line = line + str(avgStats[key]) + ','
         f.write(line + '\n')    
+        f.close()
 
 #==============================================================================
 def computeAvgStats(pointStats):
@@ -187,6 +189,7 @@ if __name__ == "__main__":
     elif os.path.isfile(cmd.paths):      # check if this is a list file.
         with open(cmd.paths) as f:       # cmd line argument was a list 
             lines = f.readlines()        #  with possible path(s) to run(s)
+            f.close()
             for line in lines:
                 expPaths.append(line.strip())
     

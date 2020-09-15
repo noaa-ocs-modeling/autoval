@@ -39,6 +39,7 @@ def stationMap(cfg, nosid, info, tag):
     plt.text(xo+0.01*dx, yo+0.01*dy, str(info['nosid']), color='darkblue', fontsize=7, weight='bold',zorder=2)
 
     plt.savefig(figFile)
+    plt.close(fig)
     plt.close()
 #==============================================================================
 def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag, 
@@ -120,6 +121,7 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag,
         imgDir, 'ts.'+nosid+'.png')
 #        imgDir, tag+ '.ts.'+nosid+'.png')
     plt.savefig(figFile)
+    plt.close(fig)
     plt.close()
     
     return

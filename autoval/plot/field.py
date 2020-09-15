@@ -49,9 +49,9 @@ def map (cfg, grid, field, clim, tag, title=None, fig_w=8.0):
 
     fig = csdllib.plot.map.set(lonlim, latlim, coast=coast, fig_w=fig_w)
     csdllib.plot.map.addField (grid, field, clim = clim, zorder=0, plotMax = True, lonlim = lonlim, latlim = latlim)
-    plt.suptitle(tag + ' ', fontsize=7)    
+    plt.suptitle(tag + ' ', fontsize=8)    
     if title:
-        plt.title(title,fontsize=8)
+        plt.title(title)
     
 #==============================================================================
 def contour (cfg, grid, field, clim):
@@ -62,7 +62,7 @@ def contour (cfg, grid, field, clim):
 def save (figFile):
     plt.savefig(figFile)
     csdllib.oper.sys.msg ('i','Saving figure ' + figFile)    
-    plt.close()
+    plt.close("all")
     
 #==============================================================================
 #def movie (cfg, grid, field, tag):

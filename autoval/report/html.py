@@ -223,6 +223,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                 line = re.sub('__expname__', tag, line)
                 line = re.sub('__expdesc__', cfg['Analysis']['experimentdescr'], line)
                 fod.write(line)
+        fid.close()
     fod.close()
 
     # Upload htm file

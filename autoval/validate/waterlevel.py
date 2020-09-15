@@ -38,12 +38,14 @@ def selectOutputFile (cfg, path, tag, fmasks):
     for m in masks:
         f = glob.glob(path + '*' + cycle + '*' + m + '*')
         for fil in f:
+            print(fil)
             outputFile.append(fil)
     if len(outputFile)>1:
         msg('w','Found more than 1 output detected. Verify your mask!')
         for f in outputFile:
             print(f)
         outputFile.sort(key=os.path.getmtime)
+    print (outputFile)
     outputFile = outputFile[-1] # Taking the latest cycle (estofs)
     # Update tag with the detected OFS cycle
     if cycle == '':
@@ -257,10 +259,9 @@ def pointValidation (cfg, path, tag):
             msg('w','Station is not NOAA gauge. Using id=' + info['nosid'])
 
         # Check lon/lats
-        if info['lon'] < -180:
+        if info['lon'] < -180 and lonMax - lonMin > 359.:
             info['lon'] = 360.+info['lon']
         print(str(info['lon']))
-
         if  lonMin <= info['lon'] and info['lon'] <= lonMax and     \
             latMin <= info['lat'] and info['lat'] <= latMax:
     
