@@ -1,4 +1,3 @@
-#This is a test change
 import setuptools
 conf = setuptools.config.read_configuration('./setup.cfg')
 meta = conf['metadata']
