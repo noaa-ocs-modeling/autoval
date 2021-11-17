@@ -361,7 +361,7 @@ def pointValidation (cfg, path, tag):
     '''
 
     #Multiple Thread Processing for operational purposes
-    num_stations = 100 #len(stations)
+    num_stations = len(stations)
     tupleArgs = []
     for i in range(num_stations):
         tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan))
