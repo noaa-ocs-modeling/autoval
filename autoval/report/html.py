@@ -7,6 +7,7 @@ import re
 import numpy as np
 from .metricsDescription import waterlevel 
 from plot import field as plf
+from bokeh.embed import components
 
 #==============================================================================
 def tabLink (tabName, isDefault=False):
@@ -60,6 +61,7 @@ def csv2html (fod, avgStats):
     fod.write('</tr>') 
     fod.write('</table>\n')
 
+    
 #==============================================================================
 def timeSeriesPanel (fod, cfg, tag, nosid, name, state):
 
@@ -97,10 +99,48 @@ def timeSeriesPanel (fod, cfg, tag, nosid, name, state):
     fod.write('</table>\n')
 
 #==============================================================================
-def singleReport (cfg, tag, info, datespan, stats, avgStats):
+def timeSeriesPanelInteractive (fod, cfg, tag, nosid, name, state, tsPlot):
+
+#    tspng = os.path.join(   cfg['Analysis']['imgdir'],
+#                            'ts.' + str(nosid) + '.png')
+#                            tag + '.ts.' + str(nosid) + '.png')
+    mxpng = os.path.join(   cfg['Analysis']['imgdir'],
+                            'skill.' + str(nosid) + '.png')
+#                            tag + '.skill.' + str(nosid) + '.png')
+    lcpng = os.path.join(   cfg['Analysis']['imgdir'],
+                            'loc.' + str(nosid) + '.png')
+    fod.write('<table width=\"700\" cellspacing=\"2\" cellpadding=\"2\" border=\"0\">\n')
+    fod.write('<tr>\n')
+    fod.write('<td colspan = \"3\">' + str(nosid)+': ' + name + ' ' + state +  '</td>\n')
+    fod.write('</tr>\n')
+    fod.write('<tr>\n')
+    fod.write('<td>\n')
+    fod.write(tsPlot)
+    #fod.write('<a href=\"' + 
+    #            tspng + '\"><img src=\"' + tspng + 
+    #            '\" alt=\"\" height=\"250\" border=\"0\"></a>\n')
+    fod.write('</td>\n')
+
+    fod.write('<td>\n')
+    fod.write('<a href=\"' + 
+                lcpng + '\"><img src=\"' + lcpng + 
+                '\" alt=\"\" height=\"250\" border=\"0\"></a>\n')
+    fod.write('</td>\n')
+
+    fod.write('<td>\n')
+    fod.write('<a href=\"' + 
+                mxpng + '\"><img src=\"' + mxpng + 
+                '\" alt=\"\" height=\"250\" border=\"0\"></a>\n')
+    fod.write('</td>\n')
+    fod.write('</tr>') 
+    fod.write('</table>\n')
+    
+#==============================================================================
+def singleReport (cfg, tag, info, datespan, stats, avgStats, tsPlots):
     '''
     singleReport (cfg, tag, info, datespan, stats, avgStats)
     '''
+    
     ids    = []
     names  = []
     states = []
@@ -112,7 +152,9 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
     reportDir = cfg['Analysis']['reportdir']
     diagVar   = cfg['Analysis']['name']
     expDescr  = cfg['Analysis']['experimentdescr']
-    
+
+    script, divs = components(tsPlots)
+       
 # Try to upload
     try:
         host   = cfg['Upload']['host']
@@ -120,7 +162,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
         remote_htm = cfg['Upload']['remote_htm']
         remote_img = cfg['Upload']['remote_img']
         remote_csv = cfg['Upload']['remote_csv']
-                
+        '''        
         # Upload pertinent tagged graphics
         imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], '*.png')
         #imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], tag + '*.png')
@@ -128,10 +170,11 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
         # Upload pertinent untagged graphics
         imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], 'loc*.png')
         csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
+        '''
  
     except:
         csdllib.oper.sys.msg('w','Report has not been uploaded')
-
+    
     outFile   = os.path.join( reportDir, 'index.htm')
     #outFile   = os.path.join( reportDir, tag + '.htm')
 
@@ -139,7 +182,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
 
     local = os.path.join(cfg['Analysis']['tmpdir'],'template.htm')
     csdllib.oper.transfer.download (cfg[diagVar]['pointtemplate'], local) 
-
+    
     fod = open(outFile, 'w')
     with open(local,"r") as fid:
         for line in fid:
@@ -216,9 +259,12 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                         nosid = ids[n]
                         name  = names[n]
                         state = states[n]
-                        timeSeriesPanel (fod, cfg, tag, nosid, name, state)
+                        timeSeriesPanelInteractive (fod, cfg, tag, nosid, name, state, divs[ids[n]])
                         csv2html (fod, stats[n])
                         fod.write('<hr>\n')
+            elif '<!--InsertTSPlotScript-->' in line:
+                fod.write('<script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.4.1.min.js"></script>')
+                fod.write(script)
             else:
                 line = re.sub('__expname__', tag, line)
                 line = re.sub('__expdesc__', cfg['Analysis']['experimentdescr'], line)
@@ -232,10 +278,11 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
         csdllib.oper.transfer.upload(outFile, user+'@'+host, remotefile)
     except:
         csdllib.oper.transfer.upload(outFile, user+'@'+host, remote_htm)
-
+    '''
     try:
         # Upload pertinent csv file
         csvPaths = os.path.join(cfg['Analysis']['workdir'], cfg[diagVar]['globalstatfile'])
         csdllib.oper.transfer.upload(csvPaths, user+'@'+host, remote_csv )
     except:
         pass
+    '''

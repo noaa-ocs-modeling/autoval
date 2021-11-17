@@ -7,6 +7,14 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import matplotlib.dates as mdates
 import numpy as np
+#import bokeh
+from bokeh.plotting import ColumnDataSource, figure
+from bokeh.models import HoverTool
+from bokeh.embed import components
+from bokeh.models.annotations import Label
+from bokeh.models import LinearAxis, Range1d
+from bokeh.models import DatetimeTickFormatter
+from csdllib.oper.sys import stampToTime, timeToStamp, msg
 
 #==============================================================================
 def stationMap(cfg, nosid, info, tag):
@@ -41,6 +49,107 @@ def stationMap(cfg, nosid, info, tag):
     plt.savefig(figFile)
     plt.close(fig)
     plt.close()
+
+#==============================================================================
+def pointSeriesInteractive(cfg, obsVals, modVals, refDates, nosid, info, tag, 
+                forecastDates = None, forecast = None):
+    '''
+    Plots one station.
+    '''
+    imgDir  = os.path.join( cfg['Analysis']['reportdir'], 
+                            cfg['Analysis']['imgdir'])
+
+    xlim = [min(refDates), max(refDates)]
+    ylim = [cfg['WaterLevel']['pointymin'],cfg['WaterLevel']['pointymax']]
+    datums      = 0
+    floodlevels = 0
+    if forecastDates is not None:
+        xlim[1] = forecastDates[-1]
+    
+    plotTitle = tag + ' ' + nosid + ' ' + info['name'] + ', ' + info['state']
+    plot = figure(width=778, height=250, #, tools=[hover, 'wheel_zoom','save'], #tooltips=TOOLTIPS,
+                  title=plotTitle)
+    plot.xaxis.formatter = DatetimeTickFormatter(hours=["%m/%d\n%H:%M"],
+                                                 days=["%m/%d\n%H:%M"],
+                                                 months=["%m/%d\n%H:%M"],
+                                                 years=["%m/%d\n%H:%M"]
+                                                 )
+    plot.title.text_font_size = "8px"
+    plot.title.align = 'center'
+    plot.yaxis.axis_label='WATER LEVELS, meters MSL'
+    plot.xaxis.axis_label='DATE/TIME UTC'
+    plot.x_range=Range1d(xlim[0], xlim[1])
+    plot.y_range=Range1d(ylim[0], ylim[1])
+
+    #For the axis in feet
+    plot.extra_y_ranges={ "y_column2_range": Range1d(start=ylim[0]*3.28084, end=ylim[1]*3.28084)}
+    plot.add_layout(LinearAxis(y_range_name="y_column2_range", axis_label="WATER LEVELS, feet MSL"), "right")
+    
+    if obsVals is not None:
+        dataSource = ColumnDataSource(data={
+            'x':refDates,
+            'modVals':modVals,
+            'obsVals':obsVals,
+        })
+        plot.line(name="obsLine", x='x', y='obsVals', color="lime", source=dataSource, legend_label="OBS", line_width=2)
+        obsToolTips = [
+            ("Date","@x{%m/%d %H:%M}"),
+            ("Observation", "@obsVals{1.2f}m")
+        ]
+
+        obsHover = HoverTool(names=["obsLine"], tooltips=obsToolTips,
+                             formatters={"@x":"datetime", "obsVals":"printf"}
+        )
+        plot.add_tools(obsHover)
+    else:
+        dataSource = ColumnDataSource(data={
+            'x':refDates,
+            'modVals':modVals
+        })
+    lenModVals = len(modVals)
+    
+    plot.line(name="modLine", x='x', y='modVals', color="blue",  source=dataSource, legend_label="MOD", line_width=2)
+    modToolTips = [
+        ("Date","@x{%m/%d %H:%M}"),
+        ("Model", "@modVals{1.2f}m")
+    ]
+
+    modHover = HoverTool(names=["modLine"], tooltips=modToolTips,
+                         formatters={"@x":"datetime", "modVals":"printf"}
+    )
+    plot.add_tools(modHover)
+
+    if forecast is not None:
+        dataSourceForecast = ColumnDataSource(data={
+            'xf':forecastDates[lenModVals:],
+            'forVals':forecast[lenModVals:],
+        })
+        
+        forLine = plot.line(name="forLine",x='xf', y='forVals', color="blue",  source=dataSourceForecast, line_width=1)
+        forToolTips = [
+            ("Date","@xf{%m/%d %H:%M}"),
+            ("Forecast", "@forVals{1.2f}m")
+        ]
+        
+        forHover = HoverTool(names=["forLine"], tooltips=forToolTips,
+                             formatters={"@xf":"datetime", "forVals":"printf"}
+        )
+        plot.add_tools(forHover)
+        
+    label = Label(x=xlim[0], y=ylim[1], x_offset=0, y_offset=0.05, text="NOAA / OCEAN SERVICE", text_font_size="8pt")
+
+    plot.legend.label_text_font_size = '8px'
+    plot.legend.glyph_height = 4
+    
+    plot.legend.label_height = 4
+    plot.legend.location = "bottom_right"
+    plot.legend.orientation = "horizontal" 
+
+    # Implementing label in our plot
+    plot.add_layout(label, 'above')
+
+    return plot
+    
 #==============================================================================
 def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag, 
                 forecastDates = None, forecast = None):

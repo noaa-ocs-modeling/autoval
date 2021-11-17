@@ -9,8 +9,12 @@ from csdllib.oper.sys import stampToTime, timeToStamp, msg
 from datetime import datetime
 import numpy as np
 import copy
-import multiprocessing
+from multiprocessing.dummy import Pool
+#import multiprocessing
 import gc
+from bokeh.plotting import ColumnDataSource, figure
+from bokeh.models import HoverTool
+from bokeh.embed import components
 
 #==============================================================================
 def detectCycle (tag):
@@ -269,7 +273,7 @@ def stationValidation(args):
                 #pointSkill.append ( myPointData )
 
                 try:
-                    plt.waterlevel.pointSeries(cfg, 
+                    myPointData['plot'] = plt.waterlevel.pointSeriesInteractive(cfg, 
                         obsVals, modVals, refDates, nosid, info, tag, 
                         model['time'], forecast)
                 except:
@@ -285,7 +289,7 @@ def stationValidation(args):
                 #pointSkill.append ( myPointData )
                 
                 try:
-                    plt.waterlevel.pointSeries(cfg, 
+                    myPointData['plot'] = plt.waterlevel.pointSeriesInteractive(cfg, 
                         None, forecast, model['time'], 
                         info['nosid'], info, tag, 
                         model['time'], forecast)                    
@@ -344,16 +348,32 @@ def pointValidation (cfg, path, tag):
     msg ( 'i','Datespan for analysis is set to: ' \
             + timeToStamp(datespan[0]) + ' ' + timeToStamp(datespan[1]) )
 
-    num_stations = len(stations)
+    '''
+    num_stations = 2 #len(stations)
+    #Single Thread Processing For debugging purposes
     tupleArgs = []
     for i in range(num_stations):
         tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan))
 
     input = zip(tupleArgs, range(num_stations))
-    pool = multiprocessing.Pool(processes=nProcessors)
+    for args in input:
+        pointSkill.append(stationValidation(args))
+    '''
+
+    #Multiple Thread Processing for operational purposes
+    num_stations = 100 #len(stations)
+    tupleArgs = []
+    for i in range(num_stations):
+        tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan))
+
+    input = zip(tupleArgs, range(num_stations))
+    #pool = multiprocessing.Pool(processes=nProcessors)
+    pool = Pool(processes=nProcessors)
     for item in pool.map(stationValidation, input):
         pointSkill.append(item)
-
+    pool.close()
+    pool.join()
+    
     # # # Done running on stations list
     return pointSkill, datespan, tag
 
@@ -366,6 +386,7 @@ def waterLevel (cfg, path, tag):
     info     = []
     datespan = []
 
+    
     # Field data analysis
     if cfg['Analysis']['fielddataplots'] or cfg['Analysis']['maxfieldplots']:
         # Get the grid
@@ -377,11 +398,17 @@ def waterLevel (cfg, path, tag):
 
     del(grid)
     gc.collect()
+    
     # Point data (time series)
     if cfg['Analysis']['pointdatastats']:
         pointSkill, datespan, tag = pointValidation (cfg, path, tag)
         lon  = []
         lat  = []
+
+        #Load the Station Time Series Plots
+        tsPlots = {}
+        for stationData in pointSkill:
+            tsPlots[stationData['id']] = stationData['plot']
         
         for point in pointSkill:
             lon.append ( point['info']['lon'] )
@@ -391,6 +418,7 @@ def waterLevel (cfg, path, tag):
 
         del(pointSkill)
         gc.collect()
+        
         # Plot stats on the map
         if cfg['Analysis']['pointskillmap']:
             plt.skill.map (cfg, lon, lat, mtx, 'rmsd', [0., 1.],      [0.,0.2],tag)
@@ -401,4 +429,5 @@ def waterLevel (cfg, path, tag):
             plt.skill.map (cfg, lon, lat, mtx, 'rval', [0., 1.],      [0.8, 1.], tag)
             plt.skill.map (cfg, lon, lat, mtx, 'vexp', [0., 100.],    [80., 100.], tag)
             plt.skill.map (cfg, lon, lat, mtx, 'npts', [0., 1000.],   [240.,1000.], tag)
-    return mtx, info, datespan, tag
+        
+    return mtx, info, datespan, tag, tsPlots

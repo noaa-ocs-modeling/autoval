@@ -236,7 +236,7 @@ if __name__ == "__main__":
         tag  = expTags[n]
         path = expPaths[n] 
 
-        stats, info, datespan, tag = waterLevel (cfg, path, tag)
+        stats, info, datespan, tag, tsPlots = waterLevel (cfg, path, tag)
         expTags[n] = tag # in case if OFS cycle was detected
         
         expStats.append( stats )
@@ -247,5 +247,5 @@ if __name__ == "__main__":
                 appendGlobalStats(cfg, tag, avgStats)
 
         # Save/upload diagnostics reports
-        singleReport (cfg, tag, info, datespan, stats, avgStats)
+        singleReport (cfg, tag, info, datespan, stats, avgStats, tsPlots)
         
