@@ -90,7 +90,7 @@ def fieldValidation (cfg, path, tag, grid):
     fieldVal = []
     diagVar  = cfg['Analysis']['name']
     print (diagVar)
-
+    
     # Choose the model output file
     if cfg['Analysis']['fielddataplots'] == 1: # Plot maxele
         fmask = cfg[diagVar]['fieldfilemask']
@@ -180,7 +180,7 @@ def fieldValidation (cfg, path, tag, grid):
 
         else:
             msg('e','You need Convert installed on your system.')
-
+    
     return tag
 
 #def stationValidation(cfg, path, tag, lonMin, lonMax, latMin, latMax, n, stations, model, tmpDir, datespan, pointSkill):
@@ -266,7 +266,8 @@ def stationValidation(args):
                     # Compute statistics    
                 M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
 
-                myPointData['id']      = nosid            
+                #myPointData['id']      = nosid
+                myPointData['id']      = info['nosid']
                 myPointData['info']    = info
                 myPointData['metrics'] = M
 
@@ -283,7 +284,8 @@ def stationValidation(args):
             if isVirtual:
                 # Compute statistics    
                 M = csdllib.methods.statistics.metrics (np.nan, np.nan, np.nan)
-                myPointData['id']      = nosid            
+                #myPointData['id']      = nosid            
+                myPointData['id']      = info['nosid']
                 myPointData['info']    = info
                 myPointData['metrics'] = M
                 #pointSkill.append ( myPointData )
@@ -349,6 +351,7 @@ def pointValidation (cfg, path, tag):
             + timeToStamp(datespan[0]) + ' ' + timeToStamp(datespan[1]) )
 
     '''
+    ##################################
     num_stations = 2 #len(stations)
     #Single Thread Processing For debugging purposes
     tupleArgs = []
@@ -358,8 +361,9 @@ def pointValidation (cfg, path, tag):
     input = zip(tupleArgs, range(num_stations))
     for args in input:
         pointSkill.append(stationValidation(args))
+    #############
     '''
-
+ 
     #Multiple Thread Processing for operational purposes
     num_stations = len(stations)
     tupleArgs = []
@@ -373,6 +377,7 @@ def pointValidation (cfg, path, tag):
         pointSkill.append(item)
     pool.close()
     pool.join()
+    
     
     # # # Done running on stations list
     return pointSkill, datespan, tag
@@ -408,7 +413,10 @@ def waterLevel (cfg, path, tag):
         #Load the Station Time Series Plots
         tsPlots = {}
         for stationData in pointSkill:
-            tsPlots[stationData['id']] = stationData['plot']
+            tsPlots[stationData['id']] = {}
+            script, div = components(stationData['plot'])
+            tsPlots[stationData['id']] = {'script':script, 'div':div}
+            #tsPlots[stationData['id']]['script'],tsPlots[stationData['id']]['div'] = components(stationData['plot'])
         
         for point in pointSkill:
             lon.append ( point['info']['lon'] )

@@ -124,7 +124,8 @@ def timeSeriesPanelInteractive (fod, cfg, tag, nosid, name, state, tsPlot):
     fod.write('<td>\n')
     fod.write('<a href=\"' + 
                 lcpng + '\"><img src=\"' + lcpng + 
-                '\" alt=\"\" height=\"250\" border=\"0\"></a>\n')
+
+              '\" alt=\"\" height=\"250\" border=\"0\"></a>\n')
     fod.write('</td>\n')
 
     fod.write('<td>\n')
@@ -153,7 +154,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats, tsPlots):
     diagVar   = cfg['Analysis']['name']
     expDescr  = cfg['Analysis']['experimentdescr']
 
-    script, divs = components(tsPlots)
+    #script, divs = components(tsPlots)
        
 # Try to upload
     try:
@@ -259,12 +260,13 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats, tsPlots):
                         nosid = ids[n]
                         name  = names[n]
                         state = states[n]
-                        timeSeriesPanelInteractive (fod, cfg, tag, nosid, name, state, divs[ids[n]])
+                        timeSeriesPanelInteractive (fod, cfg, tag, nosid, name, state, tsPlots[ids[n]]['div'])
                         csv2html (fod, stats[n])
                         fod.write('<hr>\n')
             elif '<!--InsertTSPlotScript-->' in line:
                 fod.write('<script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.4.1.min.js"></script>')
-                fod.write(script)
+                for n in range(len(ids)):
+                    fod.write(tsPlots[ids[n]]['script'])
             else:
                 line = re.sub('__expname__', tag, line)
                 line = re.sub('__expdesc__', cfg['Analysis']['experimentdescr'], line)
