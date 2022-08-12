@@ -1,0 +1,21 @@
+			 Version History File
+                              autoval
+
+This file shows the following:
+(a) What was changed in science code
+(b) What was changed in the process
+(c) Why it was changed
+(d) How the output product will be affected by the change
+(e) Date the change was made.
+
+
+V2.0.0  (Based on initial baseline)      			      08/12/2022
+================================================================================
+- Compatible with v2.0.0 csdllib
+- autoval/validate/waterlevel.py:
+  * Added functionality to parallelize the station processing by passing a
+  NumberOfProcessors parameter into the *.ini file for the number of processors
+  required for parallelism
+- Changed the autoval/tests/oper.estofs-glo.v6.0.cwl.ini to include the
+  NumberOfProcessors variable required the new version of ini file is
+  autoval/tests/oper.estofs-glo.v6.1.cwl.ini
