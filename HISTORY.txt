@@ -19,3 +19,29 @@ V2.0.0  (Based on initial baseline)      			      08/12/2022
 - Changed the autoval/tests/oper.estofs-glo.v6.0.cwl.ini to include the
   NumberOfProcessors variable required the new version of ini file is
   autoval/tests/oper.estofs-glo.v6.1.cwl.ini
+
+
+V3.0.0  (Based on V2.0.0)      			                      02/06/2024
+================================================================================
+- Changed the autoval/validate/waterlevel.py to include:
+    - Use searvey package instead of csdllib package to download CO-OPS 
+      observational data.
+    - Added functionality to download, process, and compare the IOC water level 
+      values with the model output.
+    - Added functionality to run the code for both Pacific and Atlantic domains
+      by passing the "pacific" variable into the *.ini file.
+    - Added functionality to save the country of a station for the new report
+      file.
+- Changed the autoval/tests/*.ini to include the "Pacific" variable required for 
+  the new version. 
+- Changed autoval/report/html.py to list the stations based on their location
+  and observational data source.
+- Changed autoval/report/field.py to plot the coastline and spatial maps 
+  independently of the "csdllib" package
+- Changed autoval/report/skill.py to plot the averaged skill maps independently 
+  of the "csdllib" package
+- Updated README.md to include more information for users.
+- Removed "csdllib" dependency from setup.py as it is not functioning properly 
+  and causing errors.
+- Updated package version in setup.cfg.
+- Updated package version in autoval/version.py.
