@@ -12,6 +12,6 @@ setuptools.setup(
     url=meta['url'],
     packages=setuptools.find_packages(),
     setup_requires=[],
-    install_requires=["csdllib"],
+    install_requires=[],
     )
     
