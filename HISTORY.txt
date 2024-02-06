@@ -40,6 +40,7 @@ V3.0.0  (Based on V2.0.0)      			                      02/06/2024
   independently of the "csdllib" package
 - Changed autoval/report/skill.py to plot the averaged skill maps independently 
   of the "csdllib" package
+- Added new .ini domain files for the Pacific domain.
 - Updated README.md to include more information for users.
 - Removed "csdllib" dependency from setup.py as it is not functioning properly 
   and causing errors.
