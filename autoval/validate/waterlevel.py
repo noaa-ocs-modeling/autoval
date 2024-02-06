@@ -89,8 +89,7 @@ def fieldValidation (cfg, path, tag, grid):
 
     fieldVal = []
     diagVar  = cfg['Analysis']['name']
-    print (diagVar)
-
+    
     # Choose the model output file
     if cfg['Analysis']['fielddataplots'] == 1: # Plot maxele
         fmask = cfg[diagVar]['fieldfilemask']
@@ -267,7 +266,7 @@ def getIOC_Country(uhslcid,datespan):
     try:
 
        # get uhslc id 
-       all_UHSLC_stations = uhslc.get_uhslc_data(start_date = datespan[0]-timedelta(days=1095),end_date=datespan[1]-timedelta(days=1090),)   #get data from 3 years ago, UHSLC is not updated
+       all_UHSLC_stations = uhslc.get_uhslc_data(start_date = datespan[0]-timedelta(days=1095),end_date=datespan[1]-timedelta(days=1085),)   #get data from 3 years ago, UHSLC is not updated
        all_UHSLC_stations = all_UHSLC_stations.set_index('uhslc_id')
        stationn=int(uhslcid)
    
@@ -293,8 +292,8 @@ def getIOCData(uhslcid,datespan):
 
    try:
        # Get IOC Id using uhslc id 
-       all_UHSLC_stations = uhslc.get_uhslc_data(start_date = datespan[0]-timedelta(days=1095),end_date=datespan[1]-timedelta(days=1090),)   #get data from 3 years ago, UHSLC is not updated
-
+       all_UHSLC_stations = uhslc.get_uhslc_data(start_date = datespan[0]-timedelta(days=1095),end_date=datespan[1]-timedelta(days=1085),)   #get data from 3 years ago, UHSLC is not updated
+     
        all_UHSLC_stations = all_UHSLC_stations.set_index('uhslc_id')
        stationn=int(uhslcid)
 
@@ -373,7 +372,6 @@ def stationValidation(args):
     (cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan), n = args
     msg('i', 'Working on station : ' + str(n).zfill(5) + 
                                    ' ' + stations[n].strip())
-    
     myPointData = dict () 
     isVirtual   = False  # 'virtual' station has no obs counterpart
 
@@ -383,7 +381,7 @@ def stationValidation(args):
 
     # Try to obtain NOS ID
     nosid       = csdllib.data.coops.getNOSID ( stations[n].strip() )
-
+  
 
     # Try to obtaion UHSLC ID
     uhslcid = getUHSLCID ( stations[n].strip() )
@@ -392,7 +390,7 @@ def stationValidation(args):
     # Getting stations' info
     if nosid is None and uhslcid is None:  
         isVirtual = True # add attempts to get UH or GLOSS ids here
-
+   
     elif nosid is None and uhslcid is not None: # Is a IOC station
         info          = dict()
         info['nosid'] = 'UH'+uhslcid.zfill(3)
@@ -401,7 +399,6 @@ def stationValidation(args):
         info['name']  =  model['stations'][n]
         info['state'] = 'UN'
         info['country'] = getIOC_Country(uhslcid,datespan)
-        print(info['country'])
         msg('w','Station is uhslc gauge. Using id=' + info['nosid'])
 
     else:
@@ -438,7 +435,7 @@ def stationValidation(args):
         info['country'] = None
         msg('w','Station is not NOAA gauge. Using id=' + info['nosid'])
      
-    
+
     # Check lon/lats  
   
     
@@ -448,40 +445,41 @@ def stationValidation(args):
     if cfg['Analysis']['pacific'] == 1 and info['lon'] < -30: 
         info['lon'] = 360.+info['lon']
 
-
     
     if  lonMin <= info['lon'] and info['lon'] <= lonMax and     \
         latMin <= info['lat'] and info['lat'] <= latMax:
-        
+       
         # plot time series
         if cfg['Analysis']['pointdataplots']:
-
+        
             #Plot IOS stations
         
             if not isVirtual and uhslcid is not None: # changed this for ioc
+                
                 localFile = os.path.join(
                         cfg['Analysis']['localdatadir'], 
                         'cwl.uhslc.' + info['nosid'] + '.' + \
                         timeToStamp(datespan[0]) + '-' + \
                         timeToStamp(datespan[1]) + '.dat')
-                print(1)      
+                      
                 if not os.path.exists(localFile):
-                    print(2)
+                   
                     obs = getIOCData(uhslcid, datespan)
                     #obs = csdllib.data.coops.getData(nosid, datespan, tmpDir=tmpDir) 
                     csdllib.data.coops.writeData    (obs,  localFile)
                 else:
+                    
                     obs = csdllib.data.coops.readData ( localFile )
        
-
+              
                 refDates = np.nan
                 obsVals  = np.nan
                 modVals  = np.nan
 
-                if len(obs['values']) == 0:
+                if len(obs['values']) == 0 or all(value != value for value in obs['values']):  # check if we do not have observation
                     msg('w','No obs found for station ' + uhslcid + ', skipping.')
                     isVirtual = True
-               
+                    
                 elif len(forecast) == 0 or np.sum(~np.isnan(forecast)) == 0:
                     msg('w','No forecast found for station ' + uhslcid + ', skipping.')
                    
@@ -492,7 +490,8 @@ def stationValidation(args):
                     obs ['dates'], obs['values'],   \
                     model['time'], forecast, refStepMinutes=6)
                 
-                    # Compute statistics    
+           
+                # Compute statistics    
                 M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
 
                 myPointData['id']      = info['nosid']            
@@ -501,7 +500,7 @@ def stationValidation(args):
                 
 
                 #pointSkill.append ( myPointData )
-
+ 
                 try:
                     plt.waterlevel.pointSeries(cfg,
                         obsVals, modVals, refDates, info['nosid'], info, tag,
@@ -512,11 +511,12 @@ def stationValidation(args):
                     isVirtual = True
                     
                 pass
-
+       
             #Plot NOS stations
  
             if not isVirtual and uhslcid is None:
-            # Get station's water levels for this timespan, save locally
+
+                # Get station's water levels for this timespan, save locally
                 localFile = os.path.join(
                         cfg['Analysis']['localdatadir'], 
                         'cwl.nos.' + nosid + '.' + \
@@ -610,7 +610,7 @@ def stationValidation(args):
     else:
         msg('i','Station ' + info['nosid'] + ' is not within the domain. Skipping')
         
-    
+
     return myPointData
 #==============================================================================
 def pointValidation (cfg, path, tag):
@@ -657,14 +657,14 @@ def pointValidation (cfg, path, tag):
             + timeToStamp(datespan[0]) + ' ' + timeToStamp(datespan[1]) )
 
     num_stations = len(stations)
-    print(num_stations)
-    #num_stations = 238
+    #num_stations = 239
     tupleArgs = []
     for i in range(num_stations):
         tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan))
 
+ 
     input = zip(tupleArgs, range(num_stations))
-
+  
     pool = multiprocessing.Pool(processes=nProcessors)
     for item in pool.map(stationValidation, input):
         pointSkill.append(item)
