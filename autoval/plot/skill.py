@@ -8,6 +8,9 @@ matplotlib.use('Agg',warn=False)
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
+from .field import set
+from .field import readCoastline
+
 
 #==============================================================================
 def subplot (ax, val, name, plotRange, goodRange):
@@ -116,12 +119,12 @@ def map (cfg, lon, lat, mtx, field, clim, goodRange, tag):
         cfg['Analysis']['localdatadir'], 'coastline.dat')    
     if not os.path.exists(coastlineFile):
         csdllib.oper.transfer.download (cfg['PlotData']['coastlinefile'], coastlineFile)
-    coast = csdllib.plot.map.readCoastline  (coastlineFile)
+    coast = readCoastline(coastlineFile)
 
     lonlim = [ float(cfg['Analysis']['lonmin']), float(cfg['Analysis']['lonmax']) ]
     latlim = [ float(cfg['Analysis']['latmin']), float(cfg['Analysis']['latmax']) ]
 
-    fig = csdllib.plot.map.set(lonlim, latlim, coast=coast)
+    fig = set(cfg, lonlim, latlim, coast=coast)
     plt.suptitle(tag + ' ', fontsize=8)
 
     plt.jet()
