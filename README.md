@@ -1,7 +1,7 @@
 # AUTOVAL
 Autoval is a library designed for model skill assessment, with a focus on large-scale water level data.
 
-## Compatibility
+## Supported Models
 Autoval currently supports the output of the following models: 
 
 - [STOFS-2D_Global](https://noaa-gestofs-pds.s3.amazonaws.com/README.html)
@@ -63,6 +63,17 @@ To install the Autoval package, follow these steps:
    ```
    pip install -r requirements.txt
    ```
+## Package Description
+
+- Currently, Autoval is specifically designed to read and plot STOFS-2D-global model output. For STOFS-3D model outputs, we utilize converted model outputs available at the same location.
+- The package reads model outputs and compares predicted water levels with IOC and NOS observed water level values.
+- The package is currently being utilized for STOFS skill assessment (Here is an example of the package output).
+- It is recommended to use a bash file (available in the tests folder) to run the package.
+- The recommended bash scripts use a main configuration file to execute the Autoval code (example configuration files are available in the tests folder). These configuration files contain the directories and parameters required for running Autoval code.
+
+
+
+    
 
 
    
