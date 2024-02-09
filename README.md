@@ -35,7 +35,7 @@ To download the Autoval package, follow these steps:
    
    Use the following command to clone the repository:
    ```
-   git clone https://github.com/noaa-ocs-modeling/autoval.git
+   git clone -b v3.0.0 https://github.com/noaa-ocs-modeling/autoval.git
    ```
 ## Installation
 To install the Autoval package, follow these steps:
