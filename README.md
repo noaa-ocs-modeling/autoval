@@ -63,18 +63,36 @@ To install the Autoval package, follow these steps:
    ```
    pip install -r requirements.txt
    ```
+
 ## Package Description
+- Currently, Autoval is specifically designed to read and plot ADCIRC model output (the base model used for STOFS-2D-global). For STOFS-3D model outputs (based on the SCHISM model), we use converted model outputs available in the same location.
 
-- Currently, Autoval is specifically designed to read and plot STOFS-2D-global model output. For STOFS-3D model outputs, we utilize converted model outputs available at the same location.
-- The package reads model outputs and compares predicted water levels with IOC and NOS observed water level values.
-- The package is currently being utilized for STOFS skill assessment (Here is an example of the package output).
-- It is recommended to use a bash file (available in the tests folder) to run the package.
-- The recommended bash scripts use a main configuration file to execute the Autoval code (example configuration files are available in the tests folder). These configuration files contain the directories and parameters required for running Autoval code.
+- The package reads model outputs and compares predicted water levels with data from the Intergovernmental Oceanographic Commission (IOC) and NOAA NOS Center for Operational Oceanographic Products and Services (CO-OPS).
 
+- The `csdlib` package is fully integrated into the Autoval package. Autoval uses `csdllib` to read predicted water levels, calculate performance metrics, and report relevant notifications. It is recommended that users download and save the `csdllib` package in the same directory as the Autoval package.
 
+- It is also recommended to use a bash file (available in the tests folder) to run the package. These bash files include the directory of configuration and `csdllib` packages and call the `run.py` code to execute Autoval.
 
-    
+- The recommended bash scripts use a main configuration file to execute the Autoval code. Example configuration files are available in the tests folder. Users should modify the directories and parameters according to their working area.
 
+- Autoval is currently being used for STOFS skill assessment. An example of the Autoval report output can be found [here](https://polar.ncep.noaa.gov/estofs/autoval/estofs.glo/index.htm).
+
+- The package generates both spatial maps of the maximum water levels and time series of model-predicted and observed water levels.
+
+- Autoval uses different performance metrics to assess the model's skill at any specific location. The performance metrics are listed below:
+
+    - RMSE (meters): Root Mean Square Error between the model and the observations.
+    - PEAK (meters): Under/overestimation of the maximal water level.
+    - PLAG (minutes): Time lag between the modeled and the observed peak in water level.
+    - BIAS (meters): Linear bias in the modeled water level.
+    - VEXP (%): Variance explained, a measure of coherence between the model and the observations.
+    - SKIL (unitless): Statistical Skill of the model against the observations.
+    - RVAL (unitless): R-Value of the model against the observations.
+    - NPTS (unitless): The number of 6-minute model/data pairs at the location that went into computing the above metrics.
+
+For more information, please refer to this [link](https://polar.ncep.noaa.gov/estofs/glo.htm).
+
+Below are a few examples of setting up and running Autoval.
 
    
    
