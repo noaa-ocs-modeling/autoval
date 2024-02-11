@@ -5,7 +5,7 @@
 source /work/noaa/nosofs/aalipour/envs/autoval_env/bin/activate  #activate the virtual environment
 
 # Set path to python3 
-pyPath=/work/noaa/nosofs/aalipour/Orion_envs/autoval_env/bin/python
+pyPath=/work/noaa/nosofs/aalipour/envs/autoval_env/bin/python
 
 module load nco
 
