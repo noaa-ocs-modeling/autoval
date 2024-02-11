@@ -135,7 +135,7 @@ Below are a few examples of setting up and running Autoval.
 
    - To run Autoval, we need a main config file and up to five config files specifying the spatial extent of the maximum water level plots.
 
-   - For the extent of the domain, copy `config.map.estofs.glo.ini`, `config.map.estofs.atl.ini`, `config.map.estofs.pac.ini`, `config.map.hawaii.ini` to the config folder. You can also follow the same format and generate any domain.ini file that you would like. Just note that STOFS-2D-Global model outputs are associated with -180 to 180 longitude coordinates.
+   - For the extent of the domain, copy `config.map.estofs.glo.ini`, `config.map.estofs.atl.ini`, `config.map.estofs.pac.ini`, `config.map.puertorico.ini` to the config folder. You can also follow the same format and generate any domain.ini file that you would like. Just note that STOFS-2D-Global model outputs are associated with -180 to 180 longitude coordinates.
 
    - Copy the `test1_golbal.ini` file from the tests folder into your config folder. This will serve as your main configuration file. Update the directories inside the file to correspond to your paths.
 
