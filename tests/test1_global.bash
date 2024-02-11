@@ -30,7 +30,7 @@ user=$USER
 echo $cwd
 echo $inputDir
 echo $procDir
-echo $saveOutDir
+#echo $saveOutDir
 echo $host
 echo $user
 
