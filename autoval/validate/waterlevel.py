@@ -265,7 +265,7 @@ def getIOC_Country(uhslcid,datespan):
 
     try:
 
-       # get uhslc id , this needs to be changed
+       # get uhslc id 
        all_UHSLC_stations = uhslc.get_uhslc_data(start_date = datespan[0]-timedelta(days=1095),end_date=datespan[1]-timedelta(days=1085),)   #get data from 3 years ago, UHSLC is not updated
        all_UHSLC_stations = all_UHSLC_stations.set_index('uhslc_id')
        stationn=int(uhslcid)
