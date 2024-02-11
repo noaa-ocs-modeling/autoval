@@ -9,6 +9,8 @@ from report.html import singleReport
 import csdllib
 from csdllib.oper.sys import msg
 import numpy as np
+from searvey import coops
+
 
 #==============================================================================
 def read_cmd_argv (argv):
@@ -163,9 +165,9 @@ if __name__ == "__main__":
     '''
     msg('time', str(datetime.datetime.utcnow()) + ' UTC')
     cmd = read_cmd_argv (sys.argv[1:])   # Read command line aruments
-    cfg = csdllib.oper.sys.config (cmd.iniFile) # Read config file
-    cfg = setDomainLimits(cfg)                  # Set domain limits
+    cfg = csdllib.oper.sys.config (cmd.iniFile) # Read config file   
     cycle = ''                                  # OFS cycle
+    
     try:
         cycle = cfg['Forecast']['cycle']            
     except:
@@ -175,13 +177,17 @@ if __name__ == "__main__":
     dataDir = cfg['Analysis']['localdatadir']
     tmpDir  = cfg['Analysis']['tmpdir']
     wwwDir  = cfg['Analysis']['reportdir']
+    #imgDir  = os.path.join(wwwDir, cfg['Analysis']['imgdir'])
     imgDir  = os.path.join(wwwDir, cfg['Analysis']['imgdir'])
     setDir (workDir)
     setDir (dataDir)
-    setDir (wwwDir)
+    setDir (wwwDir, flush=True)
     setDir (imgDir)
     setDir (tmpDir, flush=True)
 
+    cfg = setDomainLimits(cfg)                  # Set domain limits 
+
+    
     # Find and validate path(s) to model output(s)
     expPaths = []                        # Define path(s) to experiment(s)
     if os.path.isdir(cmd.paths):   # cmd line argument was a single path.
@@ -209,7 +215,7 @@ if __name__ == "__main__":
         mainTag = cfg['Analysis']['tag']
     except:
         pass
-
+    
     for p in expPaths:
         folders = p.split('/')           # beware of reverse slashes!
         for f in folders:
@@ -225,17 +231,18 @@ if __name__ == "__main__":
 
         expTags.append(tag)
         msg (' ',p + ' tag=' + tag)
-
+    
     diagVar = cfg['Analysis']['name'].lower() 
     msg ('i', 'Working on variable=' + diagVar)
-
+    
     # Run diagnostics - individual and across the experiments
     expStats = []
     for n in range(len(expPaths)):
-
+        
         tag  = expTags[n]
+        
         path = expPaths[n] 
-
+        
         stats, info, datespan, tag = waterLevel (cfg, path, tag)
         expTags[n] = tag # in case if OFS cycle was detected
         
@@ -247,5 +254,7 @@ if __name__ == "__main__":
                 appendGlobalStats(cfg, tag, avgStats)
 
         # Save/upload diagnostics reports
+        
         singleReport (cfg, tag, info, datespan, stats, avgStats)
+        
         
