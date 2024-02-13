@@ -4,7 +4,7 @@ Autoval is a library designed for model skill assessment, with a focus on large-
 ## Supported Models
 Autoval currently supports the output of the following models: 
 
-- [STOFS-2D_Global](https://noaa-gestofs-pds.s3.amazonaws.com/README.html)
+- [STOFS-2D-Global](https://noaa-gestofs-pds.s3.amazonaws.com/README.html)
 
 - [STOFS-3D-Atlantic](https://noaa-nos-stofs3d-pds.s3.amazonaws.com/README.html) 
 
