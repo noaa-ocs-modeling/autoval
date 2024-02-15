@@ -51,7 +51,7 @@ To download the Autoval package, follow these steps:
 
 - The package reads model outputs and compares predicted water levels with data from the Intergovernmental Oceanographic Commission (IOC) and NOAA NOS Center for Operational Oceanographic Products and Services (CO-OPS).
 
-- The `csdlib` package is fully integrated into the Autoval package. Autoval uses `csdllib` to read predicted water levels, calculate performance metrics, and report relevant notifications. It is recommended that users download and save the `csdllib` package in the same directory as the Autoval package.
+- The `csdllib` package is fully integrated into the Autoval package. Autoval uses `csdllib` to read predicted water levels, calculate performance metrics, and report relevant notifications. It is recommended that users download and save the `csdllib` package in the same directory as the Autoval package.
 
 - It is also recommended to use a bash file (available in the tests folder) to run the package. These bash files include the directory of configuration and `csdllib` packages and call the `run.py` code to execute Autoval.
 
