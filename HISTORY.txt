@@ -50,4 +50,4 @@ V3.0.0  (Based on V2.0.0)      			                      02/06/2024
   and causing errors.
 - Updated package version in setup.cfg.
 - Updated package version in autoval/version.py.
--
+

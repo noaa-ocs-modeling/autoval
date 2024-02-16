@@ -7,6 +7,10 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import matplotlib.dates as mdates
 import numpy as np
+from .field import set
+from .field import readCoastline
+
+
 
 #==============================================================================
 def stationMap(cfg, nosid, info, tag):
@@ -30,9 +34,9 @@ def stationMap(cfg, nosid, info, tag):
         cfg['Analysis']['localdatadir'], 'coastline.dat')    
     if not os.path.exists(coastlineFile):
         csdllib.oper.transfer.download (cfg['PlotData']['coastlinefile'], coastlineFile)
-    coast = csdllib.plot.map.readCoastline  (coastlineFile)
+    coast = readCoastline  (coastlineFile)
 
-    fig = csdllib.plot.map.set([xo-dx, xo+dx], [yo-dy, yo+dy], fig_w=3.0, coast=coast)
+    fig = set(cfg, [xo-dx, xo+dx], [yo-dy, yo+dy], fig_w=3.0, coast=coast)
     plt.suptitle(info['name'] + ' ' + info['state'], fontsize=8)
 
     plt.scatter(xo, yo, c='r', marker = 'o', edgecolors='k', s=30,zorder=2)
