@@ -29,9 +29,9 @@ To download the Autoval package, follow these steps:
    - Once Conda is installed, create a new virtual environment for autoval. Run the following command:
    
    ```
-   conda create --name autoval_env
+   conda create --name autoval_env python=3.9
    ```
-   Replace autoval_env with your desired environment name.
+   Replace autoval_env with your desired environment name. Please make sure you are using Python version 3.8 or later. 
 
    - Activate the newly created virtual environment using the following command:
    ```
