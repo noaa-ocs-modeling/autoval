@@ -73,7 +73,7 @@ def timeSeriesPanel (fod, cfg, tag, nosid, name, state):
                             'loc.' + str(nosid) + '.png')
     fod.write('<table width=\"700\" cellspacing=\"2\" cellpadding=\"2\" border=\"0\">\n')
     fod.write('<tr>\n')
-    #fod.write('<td colspan = \"3\">' + str(nosid)+': ' + name + ' ' + state +  '</td>\n')
+    fod.write('<td colspan = \"3\">' + str(nosid)+': ' + name + ' ' + state +  '</td>\n')
     fod.write('</tr>\n')
     fod.write('<tr>\n')
     fod.write('<td>\n')
@@ -422,7 +422,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                                timeSeriesPanel (fod, cfg, tag, nosid, name, state)
 
                                csv2html (fod, stats[indices[n]])
-                               #fod.write('<hr>\n')
+                               fod.write('<hr>\n')
                 
                 # Process 'Islands' category
                 if states_list: 
@@ -444,7 +444,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                                timeSeriesPanel (fod, cfg, tag, nosid, name, state)
 
                                csv2html (fod, stats[indices[n]])
-                               #fod.write('<hr>\n')
+                               fod.write('<hr>\n')
   
               
                 for country_name in countries_list:
@@ -468,7 +468,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                               timeSeriesPanel (fod, cfg, tag, nosid, name, state)
 
                               csv2html (fod, stats[indices[n]])
-                              #fod.write('<hr>\n')
+                              fod.write('<hr>\n')
                 
                 #add sations witout observation
                 
@@ -496,7 +496,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                                timeSeriesPanel (fod, cfg, tag, nosid, name, state)
 
                                csv2html (fod, stats[indices[n]])
-                               #fod.write('<hr>\n')
+                               fod.write('<hr>\n')
                 
                 # Process 'Islands' category
                 if states_list_noObs:
@@ -518,7 +518,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                                timeSeriesPanel (fod, cfg, tag, nosid, name, state)
 
                                csv2html (fod, stats[indices[n]])
-                               #fod.write('<hr>\n')
+                               fod.write('<hr>\n')
 
                 for country_name in countries_list_noObs:
                     #if True: #not np.isnan( stats[n]['rmsd']):
@@ -541,7 +541,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                               timeSeriesPanel (fod, cfg, tag, nosid, name, state)
 
                               csv2html (fod, stats[indices[n]])
-                              #fod.write('<hr>\n')
+                              fod.write('<hr>\n')
                 
                 #add other stations
                 if station_exists:
@@ -555,7 +555,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                           state = states[n]
                           timeSeriesPanel (fod, cfg, tag, nosid, name, state)
                           csv2html (fod, stats[n])
-                          #fod.write('<hr>\n')
+                          fod.write('<hr>\n')
                 
                 
 
