@@ -168,12 +168,12 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
         imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], '*.png')
                         
         #imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], tag + '*.png')
-        #csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
+        csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
                         
         # Upload pertinent untagged graphics
-        #imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], 'loc*.png')
+        imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], 'loc*.png')
                        
-        #csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
+        csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
                         
     except:
         csdllib.oper.sys.msg('w','Report has not been uploaded')
