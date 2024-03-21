@@ -177,6 +177,9 @@ if __name__ == "__main__":
     dataDir = cfg['Analysis']['localdatadir']
     tmpDir  = cfg['Analysis']['tmpdir']
     wwwDir  = cfg['Analysis']['reportdir']
+    RemoteDir = cfg['Upload']['remote_htm']
+    RemotecsvDir = cfg['Upload']['remote_csv']    
+    RemoteimgDir = cfg['Upload']['remote_img']
     #imgDir  = os.path.join(wwwDir, cfg['Analysis']['imgdir'])
     imgDir  = os.path.join(wwwDir, cfg['Analysis']['imgdir'])
     setDir (workDir)
@@ -184,7 +187,10 @@ if __name__ == "__main__":
     setDir (wwwDir, flush=True)
     setDir (imgDir)
     setDir (tmpDir, flush=True)
-
+    setDir (imgDir)
+    setDir (RemoteDir)
+    setDir (RemotecsvDir)
+    setDir (RemoteimgDir)
     cfg = setDomainLimits(cfg)                  # Set domain limits 
 
     
@@ -222,12 +228,19 @@ if __name__ == "__main__":
             if f=='':
                 folders.remove(f)
         tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]
+
         if len(mainTag):
-            tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]+'.'+ mainTag
+            if not folders[-1]:
+                tag = folders[-3] + '.' + folders[-2] + '.' + mainTag
+            else:
+                tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]+'.'+ mainTag
+ 
         if len(cycle):
             tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]+'.'+cycle
+
             if len(mainTag):
                 tag = folders[-3] + '.' + folders[-2] + '.' + folders[-1]+'.'+ mainTag+'.' + cycle
+
 
         expTags.append(tag)
         msg (' ',p + ' tag=' + tag)
@@ -240,9 +253,8 @@ if __name__ == "__main__":
     for n in range(len(expPaths)):
         
         tag  = expTags[n]
-        
         path = expPaths[n] 
-        
+
         stats, info, datespan, tag = waterLevel (cfg, path, tag)
         expTags[n] = tag # in case if OFS cycle was detected
         
