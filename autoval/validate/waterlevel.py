@@ -38,20 +38,23 @@ def selectOutputFile (cfg, path, tag, fmasks):
         pass 
     if cycle == '':   
         cycle = detectCycle (tag)
+
     print ('tag=' + tag)
     print ('cycle=' + cycle)
     outputFile = []
     for m in masks:
         f = glob.glob(path + '*' + cycle + '*' + m + '*')
         for fil in f:
-            print(fil)
             outputFile.append(fil)
+
     if len(outputFile)>1:
         msg('w','Found more than 1 output detected. Verify your mask!')
         for f in outputFile:
             print(f)
+            
         outputFile.sort(key=os.path.getmtime)
-    print (outputFile)
+
+
     outputFile = outputFile[-1] # Taking the latest cycle (estofs)
     # Update tag with the detected OFS cycle
     if cycle == '':
@@ -62,6 +65,130 @@ def selectOutputFile (cfg, path, tag, fmasks):
 
     return outputFile, tag
 
+#==============================================================================
+
+def selectOutputFiles_nowcast(cfg, path, tag, fmask, datespan):
+    '''
+    Selects the files to read for the nowcast period
+    '''
+    outputFile, tag = selectOutputFile(cfg, path, tag, fmask)
+
+    # Extract the directory and file name
+    directory = os.path.dirname(outputFile)
+    file_name = os.path.basename(outputFile)
+
+    # Extract the date part from the output file path
+    date_str = directory.split('.')[1]
+
+    # Convert the date string to datetime
+    date_format = "%Y%m%d"
+    date = datetime.strptime(date_str, date_format)
+
+    # Extract the hour part from the output file name
+    dot_t_index=file_name.index('.t') + 1
+    cycle_index = dot_t_index + 1
+    cycle = file_name[cycle_index:cycle_index+2]
+
+    # Create a list to store the paths for each available cycle
+    output_files = []
+
+    # Iterate through the date range
+    for i in range(int(cfg['Analysis']['nowcastperiod'] // 24 + 1)):
+
+        # Subtract 24 hours from the current date
+        new_date = date - timedelta(days=i)
+
+        # Convert the new date to string format
+        new_date_str = new_date.strftime(date_format)
+
+        # Iterate through each cycle (00, 06, 12, 18)
+        for new_cycle in ['00', '06', '12', '18']:
+            if i==0 and int(cycle)>int(new_cycle):
+               # Replace the hour in the file name with the new cycle
+               new_file_name = file_name[:cycle_index] + new_cycle + file_name[cycle_index+2:]
+
+               # Generate the path for the current cycle and directory
+               new_directory = directory.replace(date_str, new_date_str)
+               new_file_path = os.path.join(new_directory, new_file_name)
+
+               # Add the path to the list
+               output_files.append(new_file_path)
+            elif i!=0:
+               # Replace the cycle in the file name with the new cycle
+               new_file_name = file_name[:cycle_index] + new_cycle + file_name[cycle_index+2:]
+
+               # Generate the path for the current cycle and directory
+               new_directory = directory.replace(date_str, new_date_str)
+               new_file_path = os.path.join(new_directory, new_file_name)
+
+               # Add the path to the list
+               output_files.append(new_file_path)
+               
+
+    return output_files
+#==============================================================================
+
+def selectOutputFiles_nowcast_biased(cfg, path, tag, fmask, datespan):
+    '''
+    Selects the files to read for the nowcast period
+    '''
+    outputFile, tag = selectOutputFile(cfg, path, tag, fmask)
+
+    # Extract the directory and file name
+    directory = os.path.dirname(outputFile)
+    file_name = os.path.basename(outputFile)
+
+    # Extract the date part from the output file path
+    date_str = directory.split('.')[1]
+
+    # Convert the date string to datetime
+    date_format = "%Y%m%d"
+    date = datetime.strptime(date_str, date_format)
+
+    # Extract the hour part from the output file name
+    dot_t_index=file_name.index('.t') + 1
+    cycle_index = dot_t_index + 1
+    cycle = file_name[cycle_index:cycle_index+2]
+
+    # Create a list to store the paths for each available cycle
+    output_files_biased = []
+
+    # Iterate through the date range
+    for i in range(int(cfg['Analysis']['nowcastperiod'] // 24 + 1)):
+
+        # Subtract 24 hours from the current date
+        new_date = date - timedelta(days=i)
+
+        # Convert the new date to string format
+        new_date_str = new_date.strftime(date_format)
+
+        # Iterate through each cycle (00, 06, 12, 18)
+        for new_cycle in ['00', '06', '12', '18']:
+            if i==0 and int(cycle)>=int(new_cycle):
+               # Replace the hour in the file name with the new cycle
+               new_file_name = file_name[:cycle_index] + new_cycle + file_name[cycle_index+2:]
+
+               # Generate the path for the current cycle and directory
+               new_directory = directory.replace(date_str, new_date_str)
+               new_file_path1 = os.path.join(new_directory, new_file_name)
+               new_file_path = new_file_path1.replace(".nc", ".noanomaly.nc")
+
+               # Add the path to the list
+               output_files_biased .append(new_file_path)
+            elif i!=0:
+               # Replace the cycle in the file name with the new cycle
+               new_file_name = file_name[:cycle_index] + new_cycle + file_name[cycle_index+2:]
+
+               # Generate the path for the current cycle and directory
+               new_directory = directory.replace(date_str, new_date_str)
+               new_file_path1 = os.path.join(new_directory, new_file_name)
+               new_file_path = new_file_path1.replace(".nc", ".noanomaly.nc")
+
+               # Add the path to the list
+               output_files_biased.append(new_file_path)
+               
+
+    return output_files_biased
 #==============================================================================
 def multi_plot (cfg, tag, grid, model, clim, n):
     '''
@@ -113,7 +240,7 @@ def fieldValidation (cfg, path, tag, grid):
 
         plt.field.save (figFile)
         
-    
+
     if cfg['Analysis']['maxfieldplots'] == 1:   
         fmask = cfg[diagVar]['maxfieldfilemask']
         fieldFile, tag = selectOutputFile (cfg, path, tag, fmask)
@@ -189,7 +316,7 @@ def fieldValidation (cfg, path, tag, grid):
 
 #=======================================
 # def getData 
-def getData(nosid, datespan): 
+def getData(nosid, datespan, vdatum): 
 
    try:
 
@@ -369,15 +496,69 @@ def getIOCData(uhslcid,datespan):
 #==============================================================================
 #def stationValidation(cfg, path, tag, lonMin, lonMax, latMin, latMax, n, stations, model, tmpDir, datespan, pointSkill):
 def stationValidation(args):
-    (cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan), n = args
+    (cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, 
+nowcast_outputFiles, nowcast_outputFiles_biased), n = args
     msg('i', 'Working on station : ' + str(n).zfill(5) + 
                                    ' ' + stations[n].strip())
     myPointData = dict () 
     isVirtual   = False  # 'virtual' station has no obs counterpart
 
     forecast = model['zeta'][:,n]
+
     forecast[np.where(forecast<-100.)] = np.nan  # _fillvalue doesnt work
     
+    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
+       num_intervals_per_hour = int(60 / 6)  # 6 minutes interval
+       num_intervals_hours = num_intervals_per_hour * cfg['Analysis']['nowcastperiodineachfile']
+
+       nowcast= None
+       nowcast_time= None
+
+       for i in range(len(nowcast_outputFiles)):
+    
+            nowcast_model = csdllib.models.adcirc.readTimeSeries(nowcast_outputFiles[i])
+            if  nowcast is None:
+                # Convert the time string in nowcast_model to datetime object
+                #nowcast_time_str = nowcast_model['time'][:int(num_intervals_hours)]
+                #nowcast_time_list = [datetime.strptime(nowcast_time_str, '%Y-%m-%d %H:%M:%S')]
+
+                if all(datespan[0] <= model_times <= datespan[1] for model_times in nowcast_model['time'][:int(num_intervals_hours)]):
+                     nowcast = nowcast_model['zeta'][:int(num_intervals_hours),n]
+                     nowcast_time = nowcast_model['time'][:int(num_intervals_hours)]
+   
+            else:
+
+                if all(datespan[0] <= model_times <= datespan[1] for model_times in nowcast_model['time'][:int(num_intervals_hours)]):
+                     current_nowcast = nowcast_model['zeta'][:int(num_intervals_hours), n]
+                     current_time = nowcast_model['time'][:int(num_intervals_hours)]
+                     nowcast = np.concatenate((nowcast, current_nowcast))
+                     nowcast_time = np.concatenate((nowcast_time, current_time))
+
+       #nowcast=np.array(nowcast)
+       nowcast[np.where(nowcast<-100.)] = np.nan  # _fillvalue doesnt work
+       
+       if cfg['Analysis']['biascorrection'] == 1:
+
+
+          nowcast_biased= None
+
+  
+          for i in range(len(nowcast_outputFiles_biased)):
+            nowcast_model_biased = csdllib.models.adcirc.readTimeSeries(nowcast_outputFiles_biased[i])
+            if  nowcast_biased is None:
+                nowcast_biased = nowcast_model_biased['zeta'][:int(num_intervals_hours),n]
+                #nowcast_time = nowcast_model['time'][:int(num_intervals_hours)]
+
+            else:
+
+                current_nowcast = nowcast_model_biased['zeta'][:int(num_intervals_hours),n]
+                #current_time = nowcast_model['time'][:int(num_intervals_hours)]
+                nowcast_biased = np.concatenate((nowcast_biased, current_nowcast))
+                #nowcast_time = np.concatenate((nowcast_time, current_time))
+
+       #nowcast=np.array(nowcast)
+       nowcast_biased[np.where(nowcast_biased<-100.)] = np.nan  # _fillvalue doesnt work
+
 
     # Try to obtain NOS ID
     nosid       = csdllib.data.coops.getNOSID ( stations[n].strip() )
@@ -409,7 +590,7 @@ def stationValidation(args):
             info = csdllib.data.coops.getStationInfo (nosid, 
                                                       verbose=1, tmpDir=tmpDir)
             
-            #print(info)
+
           
             if info is None:
                 msg('w','No info found for station ' + nosid)
@@ -463,7 +644,7 @@ def stationValidation(args):
                         timeToStamp(datespan[1]) + '.dat')
                       
                 if not os.path.exists(localFile):
-                   
+
                     obs = getIOCData(uhslcid, datespan)
                     #obs = csdllib.data.coops.getData(nosid, datespan, tmpDir=tmpDir) 
                     csdllib.data.coops.writeData    (obs,  localFile)
@@ -484,12 +665,24 @@ def stationValidation(args):
                     msg('w','No forecast found for station ' + uhslcid + ', skipping.')
                    
                 else:
+ 
+                    
                     # Unify model and data series 
                     refDates, obsVals, modVals =            \
                     csdllib.methods.interp.retime  (    \
                     obs ['dates'], obs['values'],   \
                     model['time'], forecast, refStepMinutes=6)
-                
+
+                    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
+                       refDatesWithNowcast = np.nan
+                       obsValsWithNowcast  = np.nan
+                       modValsWithNowcast  = np.nan
+                       # Unify model and data series 
+                       refDatesWithNowcast, obsValsWithNowcast, modValsWithNowcast =            \
+                       csdllib.methods.interp.retime  (    \
+                       obs ['dates'], obs['values'],   \
+                       np.concatenate((nowcast_time,model['time'])), np.concatenate((nowcast,forecast)), refStepMinutes=6)
+                                   
            
                 # Compute statistics    
                 M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
@@ -502,14 +695,22 @@ def stationValidation(args):
                 #pointSkill.append ( myPointData )
  
                 try:
-                    plt.waterlevel.pointSeries(cfg,
-                        obsVals, modVals, refDates, info['nosid'], info, tag,
-                        model['time'], forecast)
+                   
+                    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['biascorrection'] == 1: 
+                       plt.waterlevel.pointSeries(cfg, 
+                            obsValsWithNowcast, modValsWithNowcast, refDatesWithNowcast, nosid, info, tag, 
+                            model['time'], forecast, nowcast_biased)
+                    elif cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['biascorrection'] != 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
+                       plt.waterlevel.pointSeries(cfg, 
+                            obsValsWithNowcast, modValsWithNowcast, refDatesWithNowcast, nosid, info, tag, 
+                            model['time'], forecast)
+                    else:
+                       plt.waterlevel.pointSeries(cfg,
+                            obsVals, modVals, refDates, info['nosid'], info, tag,
+                            model['time'], forecast)
 
-                    
                 except:
                     isVirtual = True
-                    
                 pass
        
             #Plot NOS stations
@@ -526,7 +727,8 @@ def stationValidation(args):
                           
 
                 if not os.path.exists(localFile):
-                    obs = getData(nosid, datespan)
+                    vdatum = cfg['Analysis']['vdatum']
+                    obs = getData(nosid, datespan, vdatum)
                     #obs = csdllib.data.coops.getData(nosid, datespan, tmpDir=tmpDir) 
                     csdllib.data.coops.writeData    (obs,  localFile)                    
 
@@ -538,6 +740,8 @@ def stationValidation(args):
                 refDates = np.nan
                 obsVals  = np.nan
                 modVals  = np.nan
+
+                 
 
                 if len(obs['values']) == 0:
                     msg('w','No obs found for station ' + nosid + ', skipping.')
@@ -552,7 +756,17 @@ def stationValidation(args):
                     csdllib.methods.interp.retime  (    \
                     obs ['dates'], obs['values'],   \
                     model['time'], forecast, refStepMinutes=6)
-                
+                    
+                    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
+                       refDatesWithNowcast = np.nan
+                       obsValsWithNowcast  = np.nan
+                       modValsWithNowcast  = np.nan
+                       # Unify model and data series 
+                       refDatesWithNowcast, obsValsWithNowcast, modValsWithNowcast =            \
+                       csdllib.methods.interp.retime  (    \
+                       obs ['dates'], obs['values'],   \
+                       np.concatenate((nowcast_time,model['time'])), np.concatenate((nowcast,forecast)), refStepMinutes=6)
+
                     # Compute statistics    
                 M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
 
@@ -564,9 +778,18 @@ def stationValidation(args):
                 #pointSkill.append ( myPointData )
 
                 try:
-                    plt.waterlevel.pointSeries(cfg, 
-                        obsVals, modVals, refDates, nosid, info, tag, 
-                        model['time'], forecast)
+                    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['biascorrection'] == 1: 
+                       plt.waterlevel.pointSeries(cfg, 
+                            obsValsWithNowcast, modValsWithNowcast, refDatesWithNowcast, nosid, info, tag, 
+                            model['time'], forecast, nowcast_biased)
+                    elif cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['biascorrection'] != 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
+                       plt.waterlevel.pointSeries(cfg, 
+                            obsValsWithNowcast, modValsWithNowcast, refDatesWithNowcast, nosid, info, tag, 
+                            model['time'], forecast)
+                    else:
+                       plt.waterlevel.pointSeries(cfg, 
+                            obsVals, modVals, refDates, nosid, info, tag, 
+                            model['time'], forecast)
                     
                 except:
                     isVirtual = True
@@ -583,10 +806,18 @@ def stationValidation(args):
                  #pointSkill.append ( myPointData )
                 
                  try:
-                     plt.waterlevel.pointSeries(cfg, 
-                         None, forecast, model['time'], 
-                         info['nosid'], info, tag, 
-                         model['time'], forecast) 
+
+                     if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
+                         plt.waterlevel.pointSeries(cfg,  
+                            None, np.concatenate((nowcast,forecast)), np.concatenate((nowcast_time,model['time'])),
+                            info['nosid'], info, tag, 
+                            model['time'], forecast)
+
+                     else:  
+                         plt.waterlevel.pointSeries(cfg, 
+                            None, forecast, model['time'], 
+                            info['nosid'], info, tag, 
+                            model['time'], forecast) 
                                       
                  except:
                      msg('w','Virtual station ' + nosid + ' was not plotted.')
@@ -631,6 +862,7 @@ def pointValidation (cfg, path, tag):
 
     # Read list of stations out of model file
     model    = csdllib.models.adcirc.readTimeSeries (outputFile)
+
     stations = model['stations']
    
     if len(stations) == 0:
@@ -644,6 +876,8 @@ def pointValidation (cfg, path, tag):
 
     # Set/get datespan
     dates = model['time']
+
+    
     datespan = [dates[0], dates[-1]] 
     try:
         datespan[0] = stampToTime (cfg[diagVar].get('pointdatesstart'))
@@ -653,6 +887,19 @@ def pointValidation (cfg, path, tag):
         datespan[1] = stampToTime (cfg[diagVar].get('pointdatesend'))
     except:
         pass
+
+    if cfg['Analysis']['nowcast'] == 1: 
+       if cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
+           datespan[0] = datespan[0]-timedelta(hours=cfg['Analysis']['nowcastperiod'])
+           nowcast_outputFiles = selectOutputFiles_nowcast (cfg, path, tag, fmask,datespan) 
+
+       if cfg['Analysis']['biascorrection'] == 1:
+              nowcast_outputFiles_biased = selectOutputFiles_nowcast_biased (cfg, path, tag, fmask,datespan)    
+
+              
+       #nowcast_model = csdllib.models.adcirc.readTimeSeries (nowcast_outputFile) 
+
+
     msg ( 'i','Datespan for analysis is set to: ' \
             + timeToStamp(datespan[0]) + ' ' + timeToStamp(datespan[1]) )
 
@@ -660,11 +907,14 @@ def pointValidation (cfg, path, tag):
     #num_stations = 239
     tupleArgs = []
     for i in range(num_stations):
-        tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan))
-
+        if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['biascorrection'] == 1:
+           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, sorted(nowcast_outputFiles),sorted(nowcast_outputFiles_biased)))
+        elif cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['biascorrection'] != 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
+           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, sorted(nowcast_outputFiles),None))
+        else:
+           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, None, None))           
  
     input = zip(tupleArgs, range(num_stations))
-  
     pool = multiprocessing.Pool(processes=nProcessors)
     for item in pool.map(stationValidation, input):
         pointSkill.append(item)
