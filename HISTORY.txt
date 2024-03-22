@@ -21,7 +21,7 @@ V2.0.0  (Based on initial baseline)      			      08/12/2022
   autoval/tests/oper.estofs-glo.v6.1.cwl.ini
 
 
-V3.0.0  (Based on V2.0.0)      			                      02/06/2024
+V3.0.0  (Based on V2.0.0)      			                      03/20/2024
 ================================================================================
 - Changed the autoval/validate/waterlevel.py to include:
     - Use searvey package instead of csdllib package to download CO-OPS 
@@ -32,19 +32,29 @@ V3.0.0  (Based on V2.0.0)      			                      02/06/2024
       by passing the "pacific" variable into the *.ini file.
     - Added functionality to save the country of a station for the new report
       file.
-- Changed the autoval/tests/*.ini to include the "Pacific" variable required for 
-  the new version. 
+    - Added functionality to use different datums for CO-OPS observationl data 
+      by passing the "VDatum" variable into the *.ini file.
+    - Added functionality to plot the nowcast period in addition to the forecast
+      period.
+    - Added functionality to show the corrected bias on time series.
+- Changed the autoval/tests/*.ini to include the "Pacific", "VDatum", "Nowcast",
+  "NowcastPeriod", "NowcastPeriodineachfile", and "BiasCorrection" variables
+   required for the new version. 
 - Changed autoval/report/html.py to list the stations based on their location
   and observational data source.
 - Changed autoval/report/field.py to plot the coastline and spatial maps 
-  independently of the "csdllib" package
+  independently of the "csdllib" package.
 - Changed autoval/report/skill.py to plot the averaged skill maps independently 
   of the "csdllib" package
+- Changed the autoval/plot/waterlevel.py to plot the nowcast period in addition 
+  to the forecast period.
+- Changed the autoval/plot/waterlevel.py to show the corrected bias on
+  time series.
 - Added new .ini domain files for the Pacific domain.
 - Moved tests, cfg.domains, and cfg.storm folders out of the autoval code 
   directory.
 - Updated README.md to include more information for users.
-- Added three tests for new users.
+- Added four tests for new users.
 - Added requirements.txt file listing the required libraries.
 - Removed "csdllib" dependency from setup.py as it is not functioning properly 
   and causing errors.
