@@ -120,11 +120,11 @@ Below are a few examples of setting up and running Autoval.
 
    - To run Autoval, we need a main config file and up to five config files specifying the spatial extent of the maximum water level plots.
 
-   - For the extent of the domain, copy `config.map.estofs.glo.ini`, `config.map.estofs.atl.ini`, `config.map.estofs.pac.ini`, `config.map.puertorico.ini` to the config folder. You can also follow the same format and generate any domain.ini file that you would like. Just note that STOFS-2D-Global model outputs are associated with -180 to 180 longitude coordinates.
+   - For the extent of the domain, copy `config.map.estofs.glo.ini`, `config.map.estofs.atl.ini`, `config.map.estofs.pac.ini`, `config.map.puertorico.ini` from the cfg.domains folder to the config folder. You can also follow the same format and generate any domain.ini file that you would like. Just note that STOFS-2D-Global model outputs are associated with -180 to 180 longitude coordinates.
 
    - Copy the `test1_global.ini` file from the tests folder into your config folder. This will serve as your main configuration file. Update the directories inside the file to correspond to your paths.
 
-- Copy the `test1_global.bash` file from the tests directory to your jobs directory. Ensure you have set up the environment as per the **Setup Python Environment** section. Update the file locations inside the bash script to point to the appropriate files.
+   - Copy the `test1_global.bash` file from the tests directory to your jobs directory. Ensure you have set up the environment as per the **Setup Python Environment** section. Update the file locations inside the bash script to point to the appropriate files.
 
 3. **Run:**
 
@@ -134,8 +134,55 @@ Below are a few examples of setting up and running Autoval.
      bash test1_global.bash
      ```
   
+### STOFS-2D-Global (Using bias corrected data):
+Here we explain how to use Autoval for STOFS-2D-Global on bias corrected data. For that we need to read additional data from previous cycles to calculate bias. Follow steps 1 explained for STOFS-2D-Global to create directories. Follow step 2 to download the csdllib and Autoval packages in the code directory.
+
+Go to the `inputs` directory and create two directories: `statics` and `dynamic`.
+
+   - Inside the 'dynamic' folder, download STOFS-2D-Global outputs for five to six days. Create six folders using the dates of data you are interested in; for example:
+     
+     ```
+     mkdir stofs_2d_glo.202403{05..10} 
+     ```
+     To download all the available cycles in each folder, copy the URL available in the 'tests' folder to the corresponding directory and download data for all the available cycles for that date using the following commands:
+
+     ```
+     cd ./stofs_2d_glo.20240310
+     wget -i urls_20240310.txt
+     cd ../stofs_2d_glo.20240309
+     wget -i urls_20240309.txt
+     cd ../stofs_2d_glo.20240308
+     wget -i urls_20240308.tx
+     cd ../stofs_2d_glo.20240307
+     wget -i urls_20240307.tx
+     cd ../stofs_2d_glo.20240306
+     wget -i urls_20240306.tx
+     cd ../stofs_2d_glo.20240305
+     wget -i urls_20240305.tx
+     ```
+
+   - Inside the `static` folder, download grid data and coastline data:
+
+     ```
+     wget 
+     wget ftp://ocsftp.ncd.noaa.gov/estofs/data/noaa_coastline_world.dat
+     ```
+   - To run Autoval, we need a main config file and up to five config files specifying the spatial extent of the maximum water level plots.
+
+   - For the extent of the domain, copy `config.map.estofs.glo.ini`, `config.map.estofs.atl.ini`, `config.map.estofs.pac.ini`, `config.map.puertorico.ini` from the cfg.domains folder to the config folder. You can also follow the same format and generate any domain.ini file that you would like. Just note that STOFS-2D-Global model outputs are associated with -180 to 180 longitude coordinates.
+
+   - Copy the test4_global.ini file from the tests folder into your config folder. This will serve as your main configuration file. Update the directories inside the file to correspond to your paths.
+
+   - Copy the test4_global.bash file from the tests directory to your jobs directory. Ensure you have set up the environment as per the Setup Python Environment section. Update the file locations inside the bash script to point to the appropriate files.
+
+   - Submit the bash file to the computing node or simply run it interactively:
+
+     ```
+     bash test4_global.bash
+     ```
+
 ### STOFS-3D-Atlantic:
-The steps to use Autoval for STOFS-3D-Atlantic are very similar to those for STOFS-2D-Global. Follow steps 1 and 2 to create directories. Follow step 2 to download the csdllib and Autoval packages in the code directory.
+The steps to use Autoval for STOFS-3D-Atlantic are very similar to those for STOFS-2D-Global. Follow steps 1 to create directories. Follow step 2 to download the csdllib and Autoval packages in the code directory.
 
 Inside the dynamic folder, download STOFS-3D-Atlantic outputs using the following commands:
 
@@ -152,7 +199,7 @@ Inside the dynamic folder, download STOFS-3D-Atlantic outputs using the followin
      ```
   - To run Autoval, we need a main config file and up to five config files specifying the spatial extent of the maximum water level plots.
 
-  - For the extent of the domain, copy config.map.estofs.glo.ini, config.map.estofs.atl.ini, config.map.puertorico.ini to the config folder. You can also follow the same format and generate any domain.ini file that you would like. Just note that STOFS-3D-Atlantic model outputs are associated with -180 to 180 longitude coordinates.
+  - For the extent of the domain, copy config.map.estofs.glo.ini, config.map.estofs.atl.ini, config.map.puertorico.ini from the cfg.domains folder to the config folder. You can also follow the same format and generate any domain.ini file that you would like. Just note that STOFS-3D-Atlantic model outputs are associated with -180 to 180 longitude coordinates.
 
   - Copy the test2_atl.ini file from the tests folder into your config folder. This will serve as your main configuration file. Update the directories inside the file to correspond to your paths.
 
@@ -164,7 +211,7 @@ Inside the dynamic folder, download STOFS-3D-Atlantic outputs using the followin
      bash test2_atl.bash
      ```
 ### STOFS-3D-Pacific:
-The steps to use Autoval for STOFS-3D-Pacific are very similar to those for STOFS-2D-Global. Follow steps 1 and 2 to create directories. Follow step 2 to download the csdllib and Autoval packages in the code directory.
+The steps to use Autoval for STOFS-3D-Pacific are very similar to those for STOFS-2D-Global. Follow steps 1 to create directories. Follow step 2 to download the csdllib and Autoval packages in the code directory.
 
 Inside the dynamic folder, download STOFS-3D-Pacific outputs using the following commands:
 
@@ -181,7 +228,7 @@ Inside the dynamic folder, download STOFS-3D-Pacific outputs using the following
      ```
   - To run Autoval, we need a main config file and up to five config files specifying the spatial extent of the maximum water level plots.
 
-  - For the extent of the domain, copy config.map.estofs.glo_pac.ini, config.map.estofs.pac.pac.ini, config.map.west.ini, config.map.Alaska.ini, config.map.hawaii_pac.ini to the config folder. You can also follow the same format and generate any domain.ini file that you would like. Just note that STOFS-3D-Pacific model outputs are associated with -30 to 330 longitude coordinates.
+  - For the extent of the domain, copy config.map.estofs.glo_pac.ini, config.map.estofs.pac.pac.ini, config.map.west.ini, config.map.Alaska.ini, config.map.hawaii_pac.ini from the cfg.domains folder to the config folder. You can also follow the same format and generate any domain.ini file that you would like. Just note that STOFS-3D-Pacific model outputs are associated with -30 to 330 longitude coordinates.
 
   - Copy the test3_pac.ini file from the tests folder into your config folder. This will serve as your main configuration file. Update the directories inside the file to correspond to your paths.
 
