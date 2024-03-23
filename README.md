@@ -144,7 +144,7 @@ Go to the `inputs` directory and create two directories: `statics` and `dynamic`
      ```
      mkdir stofs_2d_glo.202403{05..10} 
      ```
-     To download all the available cycles in each folder, copy the URL available in the 'tests' folder to the corresponding directory and download data for all the available cycles for that date using the following commands:
+     To download all the available cycles in each folder, copy the url files available in the 'tests' folder to the corresponding directory and download data for all the available cycles for that date using the following commands:
 
      ```
      cd ./stofs_2d_glo.20240310
