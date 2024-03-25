@@ -164,7 +164,7 @@ Go to the `inputs` directory and create two directories: `statics` and `dynamic`
    - Inside the `static` folder, download grid data and coastline data:
 
      ```
-     wget 
+     wget ftp://ocsftp.ncd.noaa.gov/estofs/data/GSTOFSv5.6.5_BT_DMW.14
      wget ftp://ocsftp.ncd.noaa.gov/estofs/data/noaa_coastline_world.dat
      ```
    - To run Autoval, we need a main config file and up to five config files specifying the spatial extent of the maximum water level plots.
