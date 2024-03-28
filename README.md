@@ -152,13 +152,13 @@ Go to the `inputs` directory and create two directories: `statics` and `dynamic`
      cd ../stofs_2d_glo.20240309
      wget -i urls_20240309.txt
      cd ../stofs_2d_glo.20240308
-     wget -i urls_20240308.tx
+     wget -i urls_20240308.txt
      cd ../stofs_2d_glo.20240307
-     wget -i urls_20240307.tx
+     wget -i urls_20240307.txt
      cd ../stofs_2d_glo.20240306
-     wget -i urls_20240306.tx
+     wget -i urls_20240306.txt
      cd ../stofs_2d_glo.20240305
-     wget -i urls_20240305.tx
+     wget -i urls_20240305.txt
      ```
 
    - Inside the `static` folder, download grid data and coastline data:
