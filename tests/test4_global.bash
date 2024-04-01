@@ -70,7 +70,7 @@ for (( i=0; i<=$NowcastPeriod; i+=24 )); do
 done
 
 
-## If BiasCorrection is 1 activate this part
+## If DynamicBiasCorrection is 1 activate this part
 # Loop through each day
 for (( i=0; i<=$NowcastPeriod; i+=24 )); do
     # Calculate the date for the current iteration
