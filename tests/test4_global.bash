@@ -93,7 +93,7 @@ myCode="/work/noaa/nosofs/aalipour/test_bias/code/autoval/autoval/validate/run.p
 PYTHONPATH="/work/noaa/nosofs/aalipour/test_bias/code/csdllib/"
 
 # Specify the INI file
-iniFile="/work/noaa/nosofs/aalipour/test_bias/config/test1_global.ini"
+iniFile="/work/noaa/nosofs/aalipour/test_bias/config/test4_global.ini"
 
 
 PYTHONPATH=${PYTHONPATH} ${pyPath} -W ignore ${myCode} -p $inputDir/ -i ${iniFile}
