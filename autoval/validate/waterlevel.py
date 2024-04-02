@@ -309,7 +309,7 @@ def fieldValidation (cfg, path, tag, grid):
 
         else:
             msg('e','You need Convert installed on your system.')
-    
+        
     return tag
 
     
@@ -321,7 +321,7 @@ def getData(nosid, datespan, vdatum):
    try:
 
       # Retrieve water level infromation for the specified date range             
-      station_info = coops.COOPS_Query(int(nosid),product='water_level', start_date=datespan[0], end_date=datespan[1],interval = None, datum = 'MSL',)
+      station_info = coops.COOPS_Query(int(nosid),product='water_level', start_date=datespan[0], end_date=datespan[1],interval = None, datum = vdatum,)
 
       # Perform necessary cleanup                   
       station_df = station_info.data.drop(columns = ['q','s','f'])
@@ -507,54 +507,53 @@ nowcast_outputFiles, nowcast_outputFiles_biased), n = args
 
     forecast[np.where(forecast<-100.)] = np.nan  # _fillvalue doesnt work
     
-    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
+    if cfg['Analysis']['nowcast'] == 1: 
        num_intervals_per_hour = int(60 / 6)  # 6 minutes interval
        num_intervals_hours = num_intervals_per_hour * cfg['Analysis']['nowcastperiodineachfile']
 
        nowcast= None
        nowcast_time= None
-
-       for i in range(len(nowcast_outputFiles)):
+       if cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
+          for i in range(len(nowcast_outputFiles)):
     
-            nowcast_model = csdllib.models.adcirc.readTimeSeries(nowcast_outputFiles[i])
-            if  nowcast is None:
-                # Convert the time string in nowcast_model to datetime object
-                #nowcast_time_str = nowcast_model['time'][:int(num_intervals_hours)]
-                #nowcast_time_list = [datetime.strptime(nowcast_time_str, '%Y-%m-%d %H:%M:%S')]
+               nowcast_model = csdllib.models.adcirc.readTimeSeries(nowcast_outputFiles[i])
+               if  nowcast is None:
+                   # Convert the time string in nowcast_model to datetime object
+                   #nowcast_time_str = nowcast_model['time'][:int(num_intervals_hours)]
+                   #nowcast_time_list = [datetime.strptime(nowcast_time_str, '%Y-%m-%d %H:%M:%S')]
 
-                if all(datespan[0] <= model_times <= datespan[1] for model_times in nowcast_model['time'][:int(num_intervals_hours)]):
-                     nowcast = nowcast_model['zeta'][:int(num_intervals_hours),n]
-                     nowcast_time = nowcast_model['time'][:int(num_intervals_hours)]
+                   if all(datespan[0] <= model_times <= datespan[1] for model_times in nowcast_model['time'][:int(num_intervals_hours)]):
+                        nowcast = nowcast_model['zeta'][:int(num_intervals_hours),n]
+                        nowcast_time = nowcast_model['time'][:int(num_intervals_hours)]
    
-            else:
+               else:
 
-                if all(datespan[0] <= model_times <= datespan[1] for model_times in nowcast_model['time'][:int(num_intervals_hours)]):
-                     current_nowcast = nowcast_model['zeta'][:int(num_intervals_hours), n]
-                     current_time = nowcast_model['time'][:int(num_intervals_hours)]
-                     nowcast = np.concatenate((nowcast, current_nowcast))
-                     nowcast_time = np.concatenate((nowcast_time, current_time))
+                   if all(datespan[0] <= model_times <= datespan[1] for model_times in nowcast_model['time'][:int(num_intervals_hours)]):
+                        current_nowcast = nowcast_model['zeta'][:int(num_intervals_hours), n]
+                        current_time = nowcast_model['time'][:int(num_intervals_hours)]
+                        nowcast = np.concatenate((nowcast, current_nowcast))
+                        nowcast_time = np.concatenate((nowcast_time, current_time))
 
-       #nowcast=np.array(nowcast)
-       nowcast[np.where(nowcast<-100.)] = np.nan  # _fillvalue doesnt work
-       
-       if cfg['Analysis']['biascorrection'] == 1:
+               #nowcast=np.array(nowcast)
+               nowcast[np.where(nowcast<-100.)] = np.nan  # _fillvalue doesnt work
+           
+    if cfg['Analysis']['dynamicbiascorrection'] == 1:
 
 
-          nowcast_biased= None
+       nowcast_biased= None
 
-  
-          for i in range(len(nowcast_outputFiles_biased)):
-            nowcast_model_biased = csdllib.models.adcirc.readTimeSeries(nowcast_outputFiles_biased[i])
-            if  nowcast_biased is None:
-                nowcast_biased = nowcast_model_biased['zeta'][:int(num_intervals_hours),n]
-                #nowcast_time = nowcast_model['time'][:int(num_intervals_hours)]
+       for i in range(len(nowcast_outputFiles_biased)):
+          nowcast_model_biased = csdllib.models.adcirc.readTimeSeries(nowcast_outputFiles_biased[i])
+          if  nowcast_biased is None:
+              nowcast_biased = nowcast_model_biased['zeta'][:int(num_intervals_hours),n]
+              #nowcast_time = nowcast_model['time'][:int(num_intervals_hours)]
 
-            else:
+          else:
 
-                current_nowcast = nowcast_model_biased['zeta'][:int(num_intervals_hours),n]
-                #current_time = nowcast_model['time'][:int(num_intervals_hours)]
-                nowcast_biased = np.concatenate((nowcast_biased, current_nowcast))
-                #nowcast_time = np.concatenate((nowcast_time, current_time))
+              current_nowcast = nowcast_model_biased['zeta'][:int(num_intervals_hours),n]
+              #current_time = nowcast_model['time'][:int(num_intervals_hours)]
+              nowcast_biased = np.concatenate((nowcast_biased, current_nowcast))
+              #nowcast_time = np.concatenate((nowcast_time, current_time))
 
        #nowcast=np.array(nowcast)
        nowcast_biased[np.where(nowcast_biased<-100.)] = np.nan  # _fillvalue doesnt work
@@ -696,11 +695,11 @@ nowcast_outputFiles, nowcast_outputFiles_biased), n = args
  
                 try:
                    
-                    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['biascorrection'] == 1: 
+                    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] == 1: 
                        plt.waterlevel.pointSeries(cfg, 
                             obsValsWithNowcast, modValsWithNowcast, refDatesWithNowcast, nosid, info, tag, 
                             model['time'], forecast, nowcast_biased)
-                    elif cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['biascorrection'] != 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
+                    elif cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] != 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
                        plt.waterlevel.pointSeries(cfg, 
                             obsValsWithNowcast, modValsWithNowcast, refDatesWithNowcast, nosid, info, tag, 
                             model['time'], forecast)
@@ -711,6 +710,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased), n = args
 
                 except:
                     isVirtual = True
+
                 pass
        
             #Plot NOS stations
@@ -741,22 +741,22 @@ nowcast_outputFiles, nowcast_outputFiles_biased), n = args
                 obsVals  = np.nan
                 modVals  = np.nan
 
-                 
 
                 if len(obs['values']) == 0:
                     msg('w','No obs found for station ' + nosid + ', skipping.')
                     isVirtual = True
-               
+
                 elif len(forecast) == 0 or np.sum(~np.isnan(forecast)) == 0:
                     msg('w','No forecast found for station ' + nosid + ', skipping.')
-                   
+
                 else:
+
                     # Unify model and data series 
                     refDates, obsVals, modVals =            \
                     csdllib.methods.interp.retime  (    \
                     obs ['dates'], obs['values'],   \
                     model['time'], forecast, refStepMinutes=6)
-                    
+
                     if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
                        refDatesWithNowcast = np.nan
                        obsValsWithNowcast  = np.nan
@@ -773,31 +773,41 @@ nowcast_outputFiles, nowcast_outputFiles_biased), n = args
                 myPointData['id']      = nosid            
                 myPointData['info']    = info
                 myPointData['metrics'] = M
-                
+
 
                 #pointSkill.append ( myPointData )
 
                 try:
-                    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['biascorrection'] == 1: 
-                       plt.waterlevel.pointSeries(cfg, 
-                            obsValsWithNowcast, modValsWithNowcast, refDatesWithNowcast, nosid, info, tag, 
-                            model['time'], forecast, nowcast_biased)
-                    elif cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['biascorrection'] != 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
+
+                    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] == 1: 
+
+                       if cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
+
+                            plt.waterlevel.pointSeries(cfg, 
+                               obsValsWithNowcast, modValsWithNowcast, refDatesWithNowcast, nosid, info, tag, 
+                               model['time'], forecast, nowcast_biased)
+                       else:
+
+                            plt.waterlevel.pointSeries(cfg, 
+                               obsVals, modVals, refDates, nosid, info, tag, 
+                               model['time'], forecast,nowcast_biased) 
+                    elif cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] != 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
+
                        plt.waterlevel.pointSeries(cfg, 
                             obsValsWithNowcast, modValsWithNowcast, refDatesWithNowcast, nosid, info, tag, 
                             model['time'], forecast)
                     else:
+
                        plt.waterlevel.pointSeries(cfg, 
                             obsVals, modVals, refDates, nosid, info, tag, 
-                            model['time'], forecast)
-                    
+                            model['time'], forecast) 
+
                 except:
                     isVirtual = True
-                    
+
                 pass
 
             if isVirtual:
-             
                  # Compute statistics    
                  M = csdllib.methods.statistics.metrics (np.nan, np.nan, np.nan)
                  myPointData['id']      = nosid            
@@ -893,8 +903,9 @@ def pointValidation (cfg, path, tag):
            datespan[0] = datespan[0]-timedelta(hours=cfg['Analysis']['nowcastperiod'])
            nowcast_outputFiles = selectOutputFiles_nowcast (cfg, path, tag, fmask,datespan) 
 
-       if cfg['Analysis']['biascorrection'] == 1:
-              nowcast_outputFiles_biased = selectOutputFiles_nowcast_biased (cfg, path, tag, fmask,datespan)    
+       if cfg['Analysis']['dynamicbiascorrection'] == 1:
+              nowcast_outputFiles_biased = selectOutputFiles_nowcast_biased (cfg, path, tag, fmask,datespan)
+              nowcast_outputFiles = selectOutputFiles_nowcast (cfg, path, tag, fmask,datespan)    
 
               
        #nowcast_model = csdllib.models.adcirc.readTimeSeries (nowcast_outputFile) 
@@ -907,9 +918,9 @@ def pointValidation (cfg, path, tag):
     #num_stations = 239
     tupleArgs = []
     for i in range(num_stations):
-        if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['biascorrection'] == 1:
+        if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] == 1:
            tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, sorted(nowcast_outputFiles),sorted(nowcast_outputFiles_biased)))
-        elif cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['biascorrection'] != 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
+        elif cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] != 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
            tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, sorted(nowcast_outputFiles),None))
         else:
            tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, None, None))           
