@@ -196,10 +196,11 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag,
 
     ylim = [cfg['WaterLevel']['pointymin'],cfg['WaterLevel']['pointymax']]
 
+    vdatum = cfg['Analysis']['vdatum']
     datums      = 0
     floodlevels = 0
 
-    if cfg['Analysis']['nowcast'] == 1: 
+    if cfg['Analysis']['nowcast'] == 1:
        num_intervals_per_hour = int(60 / 6)  # 6 minutes interval
        num_intervals_hours = num_intervals_per_hour * cfg['Analysis']['nowcastperiodineachfile']
 
@@ -211,24 +212,30 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag,
 
     if obsVals is not None:
        ax.plot(refDates, obsVals, color='lime', linestyle='-',label='OBS', lw=2)
+
        #ax.legend(bbox_to_anchor=(0.8, 0.82), loc='center left',prop={'size':6})
 
     if forecast is not None:
        if cfg['Analysis']['nowcast'] == 1:
-           #ax = csdllib.plot.series.add(ax, forecastDates, forecast, 
-             #color='b',label='FCST',lw=1)
-           #ax = add(ax, forecastDates, forecast,color='b',label='FCST',lw=1)
-           idx = np.where(refDates < forecastDates[int(num_intervals_hours)])[0][-1]
-           ax.plot(refDates[:idx], modVals[:idx], color='b', linestyle='--', label='MOD Nowcast', lw=2)
-           ax.plot(refDates[idx:], modVals[idx:], color='b', linestyle='-',label='MOD', lw=2)
+           if cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
+                idx = np.where(refDates < forecastDates[int(num_intervals_hours)])[0][-1]
+                ax.plot(refDates[:idx], modVals[:idx], color='b', linestyle='--', label='MOD Nowcast', lw=2)
+                ax.plot(refDates[idx:], modVals[idx:], color='b', linestyle='-',label='MOD', lw=2)
+           else:
+                #ax = csdllib.plot.series.add(ax, forecastDates, forecast, 
+                #color='b',label='FCST',lw=1)
+                #ax = add(ax, forecastDates, forecast,color='b',label='FCST',lw=1)
+                idx = np.where(refDates < forecastDates[int(num_intervals_hours)])[0][-1]
+                ax.plot(forecastDates[:idx], forecast[:idx], color='b', linestyle='--', label='MOD Nowcast', lw=2)
+                ax.plot(forecastDates[idx:], forecast[idx:], color='b', linestyle='-',label='MOD', lw=2)
        else:
            ax.plot(refDates, modVals, color='b', linestyle='-', label='MOD', lw=2)
             
     ax.legend(bbox_to_anchor=(0.8, 0.82), loc='center left',prop={'size':6})
 
     ax.text(xlim[0],ylim[1]+0.05,'NOAA / OCEAN SERVICE')
-    ax.set_ylabel ('WATER LEVELS, meters')
-    ax2.set_ylabel('WATER LEVELS, feet')
+    ax.set_ylabel (f'WATER LEVELS, meters {vdatum}')
+    ax2.set_ylabel(f'WATER LEVELS, feet {vdatum}')
     ax.set_xlabel('DATE/TIME UTC')
     ax.grid(True,which='both')
     if obsVals is not None:
@@ -257,7 +264,7 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag,
        #num_intervals_hours = num_intervals_per_hour * cfg['Analysis']['nowcastperiodineachfile']
        # Add a dashed vertical line at start of forecast
        ax.axvline(x=forecastDates[int(num_intervals_hours)], color='r', linestyle='--')
-       if cfg['Analysis']['biascorrection'] == 1 and obsVals is not None:
+       if cfg['Analysis']['dynamicbiascorrection'] == 1 and obsVals is not None and info['state'] is not 'UN':
           bias = np.nanmean(nowcast_biased[:idx])-np.nanmean(obsVals[:idx])
           ax.text(xlim[0]+0.05*(xlim[1]-xlim[0]), ylim[0]+0.1*(ylim[1]-ylim[0]), 'Adjusted Bias {:.2f}m'.format(bias), fontsize=8, color='red', ha='left', va='bottom')
 
