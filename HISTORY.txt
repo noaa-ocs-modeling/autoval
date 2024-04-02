@@ -21,7 +21,7 @@ V2.0.0  (Based on initial baseline)      			      08/12/2022
   autoval/tests/oper.estofs-glo.v6.1.cwl.ini
 
 
-V3.0.0  (Based on V2.0.0)      			                      03/20/2024
+V3.0.0  (Based on V2.0.0)      			                      04/01/2024
 ================================================================================
 - Changed the autoval/validate/waterlevel.py to include:
     - Use searvey package instead of csdllib package to download CO-OPS 
