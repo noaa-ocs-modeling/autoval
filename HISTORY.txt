@@ -38,7 +38,7 @@ V3.0.0  (Based on V2.0.0)      			                      03/20/2024
       period.
     - Added functionality to show the corrected bias on time series.
 - Changed the autoval/tests/*.ini to include the "Pacific", "VDatum", "Nowcast",
-  "NowcastPeriod", "NowcastPeriodineachfile", and "BiasCorrection" variables
+  "NowcastPeriod", "NowcastPeriodineachfile", and "DynamicBiasCorrection" variables
    required for the new version. 
 - Changed autoval/report/html.py to list the stations based on their location
   and observational data source.
