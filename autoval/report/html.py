@@ -120,6 +120,13 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
     states_list = set(filter(lambda state: state and state != "UN", states))
     countries_list = set(filter(lambda country: country, countries))
 
+    
+    # Convert states_list and countries_list to a list and sort to maintain the order
+    
+    states_list = list(states_list)
+    states_list.sort()
+    countries_list = list(countries_list)
+    countries_list.sort()
 
     reportDir = cfg['Analysis']['reportdir']
     diagVar   = cfg['Analysis']['name']
