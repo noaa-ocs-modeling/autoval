@@ -22,6 +22,8 @@ To download the Autoval package, follow these steps:
    ```
    git clone -b v3.0.0 https://github.com/noaa-ocs-modeling/autoval.git
    ```
+   If you have already downloaded Autoval v3.0.0 and only want to update the code, please navigate to the Autoval folder directory. Inside the Autoval directory, run `git pull origin`.
+      
 ## Setup Python Environment
  
    - We recommend setting up a Conda virtual environment to manage dependencies. If you haven't already, install Conda by following the instructions [here](https://docs.anaconda.com/free/miniconda/).
