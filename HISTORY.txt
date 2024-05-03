@@ -41,7 +41,7 @@ V3.0.0  (Based on V2.0.0)      			                      04/01/2024
   "NowcastPeriod", "NowcastPeriodineachfile", and "DynamicBiasCorrection" variables
    required for the new version. 
 - Changed autoval/report/html.py to list the stations based on their location
-  and observational data source.
+  and observational data source in alphabetical order.
 - Changed autoval/report/field.py to plot the coastline and spatial maps 
   independently of the "csdllib" package.
 - Changed autoval/report/skill.py to plot the averaged skill maps independently 
