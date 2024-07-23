@@ -104,7 +104,7 @@ Below are a few examples of setting up and running Autoval.
      git clone https://github.com/noaa-ocs-modeling/csdllib.git
      ```
 
-   - Go to the `inputs` directory and create two directories: `statics` and `dynamic`.
+   - Go to the `inputs` directory and create two directories: `static` and `dynamic`.
 
    - Inside the `dynamic` folder, download STOFS-2D-Global outputs using the following commands:
 
@@ -139,7 +139,7 @@ Below are a few examples of setting up and running Autoval.
 ### STOFS-2D-Global (Using bias corrected data):
 Here we explain how to use Autoval for STOFS-2D-Global on bias corrected data. For that we need to read additional data from previous cycles to calculate bias. Follow steps 1 explained for STOFS-2D-Global to create directories. Follow step 2 to download the csdllib and Autoval packages in the code directory.
 
-Go to the `inputs` directory and create two directories: `statics` and `dynamic`.
+Go to the `inputs` directory and create two directories: `static` and `dynamic`.
 
    - Inside the 'dynamic' folder, download STOFS-2D-Global outputs for five to six days. Create six folders using the dates of data you are interested in; for example:
      
