@@ -337,10 +337,7 @@ def getData(nosid, datespan, vdatum):
 
       return {'dates' : dates_list, 'values' : values_list} 
 
-   except ValueError as ve: 
-      
-      # Handle the ValueError exception (station not found)
-      print(f"Error: {ve}. Skipping data retrieval for station {nosid}.")
+   except:
       return {'dates' : [], 'values' : []}
 
 
