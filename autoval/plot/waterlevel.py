@@ -11,7 +11,7 @@ from .field import set
 from .field import readCoastline
 from csdllib.methods.convert import ft2meters
 import matplotlib
-matplotlib.use('Agg',warn=False)
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
