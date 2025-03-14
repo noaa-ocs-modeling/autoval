@@ -7,7 +7,7 @@ import datetime
 from waterlevel import waterLevel
 from report.html import singleReport
 import csdllib
-from csdllib.oper.sys import msg
+from csdllib.oper.sys import msg # type: ignore
 import numpy as np
 from searvey import coops
 
