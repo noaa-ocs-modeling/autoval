@@ -109,8 +109,8 @@ Below are a few examples of setting up and running Autoval.
    - Inside the `dynamic` folder, download STOFS-2D-Global outputs using the following commands:
 
      ```     
-     wget https://noaa-gestofs-pds.s3.amazonaws.com/stofs_2d_glo.20250109/stofs_2d_glo.t06z.points.cwl.nc
-     wget https://noaa-gestofs-pds.s3.amazonaws.com/stofs_2d_glo.20250109/stofs_2d_glo.t06z.fields.cwl.maxele.nc
+     wget https://noaa-gestofs-pds.s3.amazonaws.com/stofs_2d_glo.20250109/stofs_2d_glo.t18z.points.cwl.nc
+     wget https://noaa-gestofs-pds.s3.amazonaws.com/stofs_2d_glo.20250109/stofs_2d_glo.t18z.fields.cwl.maxele.nc
      ```
 
    - Inside the `static` folder, download grid data and coastline data:
