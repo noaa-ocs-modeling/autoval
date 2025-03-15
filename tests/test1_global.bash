@@ -1,66 +1,77 @@
 #!/bin/bash
 
-#Script execution instructions
+# Script execution instructions
 
-source /work/noaa/nosofs/aalipour/envs/autoval_env/bin/activate  #activate the virtual environment
+# Get the path to python3 from the active conda environment
+pyPath=$(which python)
 
-# Set path to python3 
-pyPath=/work/noaa/nosofs/aalipour/envs/autoval_env/bin/python
+# Check if python3 is found
+if [[ -z "$pyPath" ]]; then
+  echo "Error: python not found in the active conda environment."
+  exit 1
+fi
 
-module load nco
+# Install nco via conda if it is not found.
+if ! command -v ncks &> /dev/null
+then
+    echo "ncks not found. Installing via conda..."
+    conda install -y -c conda-forge nco
+    if [ $? -ne 0 ]; then
+        echo "Error: Failed to install nco."
+        exit 1
+    fi
+fi
 
+datetimeLabel="202307171030"
+currenttime="10:30"
+echo "$currenttime"
+runDate="20230717"
 
-datetimeLabel="202307171030" #$(date +\%Y\%m\%d\%H\%M)
-currenttime="10:30" #$(date +%H:%M)
-echo $currenttime
-runDate="20230717" 
+export USER=$(whoami)
 
+cwd="/c/autoval_gsoc/autoval_package/jobs"
+inputDir="/c/autoval_gsoc/autoval_package/inputs/dynamic"
+configDir="/c/autoval_gsoc/autoval_package/config"
+procDir="/c/autoval_gsoc/autoval_package/outputs/www"
+host="localhost"
+user="$USER"
 
-export USER=`whoami`
+echo "$cwd"
+echo "$inputDir"
+echo "$procDir"
+echo "$host"
+echo "$user"
 
-#Assign the directories
-cwd=/work/noaa/nosofs/aalipour/STOFS_2D_Test/jobs/
-inputDir=/work/noaa/nosofs/aalipour/STOFS_2D_Test/inputs/dynamic/
-configDir=/work/noaa/nosofs/aalipour/STOFS_2D_Test/config/
-procDir=/work/noaa/nosofs/aalipour/STOFS_2D_Test/outputs/www/
-#saveOutDir=/work/noaa/nosofs/aalipour/STOFS_2D_Test/saveOutDir/ 
-host=localhost
-user=$USER
+rm -rf "$procDir"{/img/*,index.htm,/../work/*,/../data/*,/../tmp/*}
 
-echo $cwd
-echo $inputDir
-echo $procDir
-#echo $saveOutDir
-echo $host
-echo $user
-
-#Cleanup previous run
-rm -rf $procDir{./img/*,index.htm,../work/*,../data/*,../tmp/*}
-
-cd $cwd
+cd "$cwd"
 
 fileMaxele="stofs_2d_glo.t06z.fields.cwl.maxele.nc"
 filePoints="stofs_2d_glo.t06z.points.cwl.nc"
 
-echo $runDate > maxele.recent.new.txt
-echo $currenttime >> maxele.recent.new.txt
-echo $fileMaxele >> maxele.recent.new.txt
-echo $filePoints >> maxele.recent.new.txt
+echo "$runDate" > maxele.recent.new.txt
+echo "$currenttime" >> maxele.recent.new.txt
+echo "$fileMaxele" >> maxele.recent.new.txt
+echo "$filePoints" >> maxele.recent.new.txt
 
 # Select points for skill assessment
-#ncks -F -d station,1,833 $inputDir/stofs_2d_glo.t18z.points.cwl.nc $inputDir/stofs_2d_glo.t06z.points.autoval.cwl.nc
-ncks -F -d station,1,10 $inputDir/stofs_2d_glo.t18z.points.cwl.nc $inputDir/stofs_2d_glo.t06z.points.autoval.cwl.nc
+ncks -F -d station,1,10 "$inputDir/stofs_2d_glo.t18z.points.cwl.nc" "$inputDir/stofs_2d_glo.t06z.points.autoval.cwl.nc"
 
+# Check if ncks command was successful.
+if [ $? -ne 0 ]; then
+    echo "ncks command failed."
+    exit 1
+fi
 
-# Set path to python executable
-myCode="/work/noaa/nosofs/aalipour/STOFS_2D_Test/code/autoval/autoval/validate/run.py"
+myCode="/c/autoval_gsoc/autoval_package/code/autoval/autoval/validate/run.py"
+PYTHONPATH="/c/autoval_gsoc/autoval_package/code/csdllib"
+iniFile="/c/autoval_gsoc/autoval_package/config/test1_global.ini"
 
-# Set PYTHONPATH to csdllib
-PYTHONPATH="/work/noaa/nosofs/aalipour/STOFS_2D_Test/code/csdllib/"
+/c/Users/siddh/anaconda3/envs/autoval_env/python -W ignore "$myCode" -p "$inputDir/" -i "$iniFile"
 
-# Specify the INI file
-iniFile="/work/noaa/nosofs/aalipour/STOFS_2D_Test/config/test1_global.ini"
+if [ $? -ne 0 ]; then
+    echo "Python script failed."
+    exit 1
+fi
 
-
-PYTHONPATH=${PYTHONPATH} ${pyPath} -W ignore ${myCode} -p $inputDir/ -i ${iniFile}
-
+echo "Script completed successfully."
