@@ -116,7 +116,7 @@ Below are a few examples of setting up and running Autoval.
    - Inside the `static` folder, download grid data and coastline data:
 
      ```
-     wget ftp://ocsftp.ncd.noaa.gov/svinogra/GESTOFS/glo6/GESTOFS_vPT_V2_w_weir_island.14
+     wget ftp://ocsftp.ncd.noaa.gov/estofs/data/GSTOFSv5.6.5_BT_DMW.14
      wget ftp://ocsftp.ncd.noaa.gov/estofs/data/noaa_coastline_world.dat
      ```
 
