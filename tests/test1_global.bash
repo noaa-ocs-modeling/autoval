@@ -10,8 +10,8 @@ pyPath=/work/noaa/nosofs/aalipour/envs/autoval_env/bin/python
 module load nco
 
 
-datetimeLabel="202307171030" #$(date +\%Y\%m\%d\%H\%M)
-currenttime="10:30" #$(date +%H:%M)
+datetimeLabel="202501091830" #$(date +\%Y\%m\%d\%H\%M)
+currenttime="18:30" #$(date +%H:%M)
 echo $currenttime
 runDate="20230717" 
 
@@ -39,8 +39,8 @@ rm -rf $procDir{./img/*,index.htm,../work/*,../data/*,../tmp/*}
 
 cd $cwd
 
-fileMaxele="stofs_2d_glo.t06z.fields.cwl.maxele.nc"
-filePoints="stofs_2d_glo.t06z.points.cwl.nc"
+fileMaxele="stofs_2d_glo.t18z.fields.cwl.maxele.nc"
+filePoints="stofs_2d_glo.t18z.points.cwl.nc"
 
 echo $runDate > maxele.recent.new.txt
 echo $currenttime >> maxele.recent.new.txt
@@ -48,8 +48,8 @@ echo $fileMaxele >> maxele.recent.new.txt
 echo $filePoints >> maxele.recent.new.txt
 
 # Select points for skill assessment
-#ncks -F -d station,1,833 $inputDir/stofs_2d_glo.t18z.points.cwl.nc $inputDir/stofs_2d_glo.t06z.points.autoval.cwl.nc
-ncks -F -d station,1,10 $inputDir/stofs_2d_glo.t18z.points.cwl.nc $inputDir/stofs_2d_glo.t06z.points.autoval.cwl.nc
+#ncks -F -d station,1,833 $inputDir/stofs_2d_glo.t18z.points.cwl.nc $inputDir/stofs_2d_glo.t18z.points.autoval.cwl.nc
+ncks -F -d station,1,10 $inputDir/stofs_2d_glo.t18z.points.cwl.nc $inputDir/stofs_2d_glo.t18z.points.autoval.cwl.nc
 
 
 # Set path to python executable
