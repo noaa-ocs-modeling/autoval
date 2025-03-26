@@ -410,7 +410,7 @@ def getIOC_Country(uhslcid,datespan):
 
 # def get_IOC_Data 
 
-# later I should this function that dode not use UHSLC id
+# This function use UHSLC id
 
 def getIOCData(uhslcid,datespan): 
 
