@@ -1,300 +1,1145 @@
+
+
+
 """
 @author: Sergey.Vinogradov@noaa.gov
 """
+import os, glob, sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))    
+import plot as plt
 import csdllib
-import os
-import matplotlib.pyplot as plt
-from matplotlib.ticker import MultipleLocator
-import matplotlib.dates as mdates
+from csdllib.oper.sys import stampToTime, timeToStamp, msg
+from datetime import datetime, timedelta
 import numpy as np
-from .field import set
-from .field import readCoastline
-from csdllib.methods.convert import ft2meters
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import numpy as np
-from datetime import timedelta as dt
-
+import copy
+import multiprocessing
+import gc
+from searvey import coops 
+from searvey import ioc
+from searvey import uhslc
+from searvey import usgs
+from geopy.geocoders import Nominatim
+from geopy.distance import distance
+import re
+#==============================================================================
+def detectCycle (tag):
+    cycle = ''
+    masks = ['t00z', 't06z', 't12z', 't18z']
+    for mask in masks:
+        if mask in tag:
+            cycle = mask
+    return cycle
 
 #==============================================================================
-def pset (xlim, ylim, datums, floodlevels, zero='MSL',width=14, height=4.5):
-    """
-    stages the hydrograph plot with vertical datums and flood levels.
-    Returns figure and axis handles.
-    """
+def selectOutputFile (cfg, path, tag, fmasks):
+    '''
+    Selects the file to read, and updates experiment tag if needed
+    '''
+    masks = fmasks.split(',')
+    cycle = ''
+    try:
+        cycle = cfg['Forecast']['cycle']
+    except:
+        pass 
+    if cycle == '':   
+        cycle = detectCycle (tag)
+
+    print ('tag=' + tag)
+    print ('cycle=' + cycle)
+    outputFile = []
+    for m in masks:
+        f = glob.glob(path + '*' + cycle + '*' + m + '*')
+        for fil in f:
+            outputFile.append(fil)
+
+    if len(outputFile)>1:
+        msg('w','Found more than 1 output detected. Verify your mask!')
+        for f in outputFile:
+            print(f)
+            
+        outputFile.sort(key=os.path.getmtime)
+
+
+    outputFile = outputFile[-1] # Taking the latest cycle (estofs)
+    # Update tag with the detected OFS cycle
+    if cycle == '':
+        for cycle in ['t00z','t06z','t12z','t18z']:
+            if cycle in outputFile:
+                tag = tag + '.' + cycle
+                msg('i','Tag updated: ' + tag)
+
+    return outputFile, tag
+
+#==============================================================================
+
+def selectOutputFiles_nowcast(cfg, path, tag, fmask, datespan):
+    '''
+    Selects the files to read for the nowcast period
+    '''
+    outputFile, tag = selectOutputFile(cfg, path, tag, fmask)
+
+    # Extract the directory and file name
+    directory = os.path.dirname(outputFile)
+    file_name = os.path.basename(outputFile)
+
+    # Extract the date part from the output file path
+    date_str = directory.split('.')[1]
+
+    # Convert the date string to datetime
+    date_format = "%Y%m%d"
+    date = datetime.strptime(date_str, date_format)
+
+    # Extract the hour part from the output file name
+    dot_t_index=file_name.index('.t') + 1
+    cycle_index = dot_t_index + 1
+    cycle = file_name[cycle_index:cycle_index+2]
+
+    # Create a list to store the paths for each available cycle
+    output_files = []
+
+    # Iterate through the date range
+    for i in range(int(cfg['Analysis']['nowcastperiod'] // 24 + 1)):
+
+        # Subtract 24 hours from the current date
+        new_date = date - timedelta(days=i)
+
+        # Convert the new date to string format
+        new_date_str = new_date.strftime(date_format)
+
+        # Iterate through each cycle (00, 06, 12, 18)
+        for new_cycle in ['00', '06', '12', '18']:
+            if i==0 and int(cycle)>int(new_cycle):
+               # Replace the hour in the file name with the new cycle
+               new_file_name = file_name[:cycle_index] + new_cycle + file_name[cycle_index+2:]
+
+               # Generate the path for the current cycle and directory
+               new_directory = directory.replace(date_str, new_date_str)
+               new_file_path = os.path.join(new_directory, new_file_name)
+
+               # Add the path to the list
+               output_files.append(new_file_path)
+            elif i!=0:
+               # Replace the cycle in the file name with the new cycle
+               new_file_name = file_name[:cycle_index] + new_cycle + file_name[cycle_index+2:]
+
+               # Generate the path for the current cycle and directory
+               new_directory = directory.replace(date_str, new_date_str)
+               new_file_path = os.path.join(new_directory, new_file_name)
+
+               # Add the path to the list
+               output_files.append(new_file_path)
+               
+
+    return output_files
+#==============================================================================
+
+def selectOutputFiles_nowcast_biased(cfg, path, tag, fmask, datespan):
+    '''
+    Selects the files to read for the nowcast period
+    '''
+    outputFile, tag = selectOutputFile(cfg, path, tag, fmask)
+
+    # Extract the directory and file name
+    directory = os.path.dirname(outputFile)
+    file_name = os.path.basename(outputFile)
+
+    # Extract the date part from the output file path
+    date_str = directory.split('.')[1]
+
+    # Convert the date string to datetime
+    date_format = "%Y%m%d"
+    date = datetime.strptime(date_str, date_format)
+
+    # Extract the hour part from the output file name
+    dot_t_index=file_name.index('.t') + 1
+    cycle_index = dot_t_index + 1
+    cycle = file_name[cycle_index:cycle_index+2]
+
+    # Create a list to store the paths for each available cycle
+    output_files_biased = []
+
+    # Iterate through the date range
+    for i in range(int(cfg['Analysis']['nowcastperiod'] // 24 + 1)):
+
+        # Subtract 24 hours from the current date
+        new_date = date - timedelta(days=i)
+
+        # Convert the new date to string format
+        new_date_str = new_date.strftime(date_format)
+
+        # Iterate through each cycle (00, 06, 12, 18)
+        for new_cycle in ['00', '06', '12', '18']:
+            if i==0 and int(cycle)>=int(new_cycle):
+               # Replace the hour in the file name with the new cycle
+               new_file_name = file_name[:cycle_index] + new_cycle + file_name[cycle_index+2:]
+
+               # Generate the path for the current cycle and directory
+               new_directory = directory.replace(date_str, new_date_str)
+               new_file_path1 = os.path.join(new_directory, new_file_name)
+               new_file_path = new_file_path1.replace(".nc", ".noanomaly.nc")
+
+               # Add the path to the list
+               output_files_biased .append(new_file_path)
+            elif i!=0:
+               # Replace the cycle in the file name with the new cycle
+               new_file_name = file_name[:cycle_index] + new_cycle + file_name[cycle_index+2:]
+
+               # Generate the path for the current cycle and directory
+               new_directory = directory.replace(date_str, new_date_str)
+               new_file_path1 = os.path.join(new_directory, new_file_name)
+               new_file_path = new_file_path1.replace(".nc", ".noanomaly.nc")
+
+               # Add the path to the list
+               output_files_biased.append(new_file_path)
+               
+
+    return output_files_biased
+#==============================================================================
+def multi_plot (cfg, tag, grid, model, clim, n):
+    '''
+    Possible multiprocessing execution. 
+    '''
+    figFile = os.path.join( 
+                    cfg['Analysis']['tmpdir'], 
+                    tag+'.mov.'+ str(n).zfill(3) + '.png')
+
+    plt.field.map( cfg, grid, model['value'][n,:], 
+                              clim, tag, title=
+                               str(n).zfill(3) + ' ' + 
+                               timeToStamp(model['time'][n]),
+                               fig_w = 8.0)
+    plt.field.save(figFile)
+
+#==============================================================================
+def fieldValidation (cfg, path, tag, grid):
+    '''
+    Works on point data
+    '''
+    imgDir  = os.path.join( cfg['Analysis']['reportdir'], 
+                            cfg['Analysis']['imgdir'])
+    tmpDir  = cfg['Analysis']['tmpdir']
+
+    fieldVal = []
+    diagVar  = cfg['Analysis']['name']
+    
+    # Choose the model output file
+    if cfg['Analysis']['fielddataplots'] == 1: # Plot maxele
+        fmask = cfg[diagVar]['fieldfilemask']
+        fieldFile, tag = selectOutputFile (cfg, path, tag, fmask)
+        model    = csdllib.models.adcirc.readSurfaceField (fieldFile, 
+                            cfg[diagVar]['fieldfilevariable'])
+        maxele  = csdllib.models.adcirc.computeMax (model['value'])
+        lons  = model['lon']
+        print('maxele lonlim = ' + str(np.min(lons)) + ' ' + str(np.max(lons)))
+        clim = [ float(cfg[diagVar]['maxfieldymin']), 
+                 float(cfg[diagVar]['maxfieldymax']) ]
         
-    fig, ax = plt.subplots(sharex=True, figsize=(width, height))
-    ax2 = ax.twinx()
-    ax.plot([],[])
+        if diagVar.lower() == 'waterlevel':
+            plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Elevation')
+            figFile = os.path.join(imgDir, 'map.max.png')
 
-    """
-    TODO: Extract the below to addDatums() and addLevels()
-    """
-    if datums:
+        if diagVar.lower() == 'windvelocity':
+            maxele = 1.94384*maxele  # mps to knots
+            plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Wind Velocity')
+            figFile = os.path.join(imgDir, 'map.maxwvel.png')
 
-        datum_mhhw_ft = datums['datum_mhhw_ft']
-        datum_mllw_ft = datums['datum_mllw_ft']
-        datum_msl_ft  = datums['datum_msl_ft']
-        datum_hat_ft  = datums['datum_hat_ft']
+        plt.field.save (figFile)
+        
 
-        shift = 0.
-        datum_msl_m = 0
-        if zero is 'MLLW':
-            shift =  - datum_mllw_ft + datum_msl_ft
-            datum_msl_m = ft2meters( datum_msl_ft )
-    
-    if floodlevels:
+    if cfg['Analysis']['maxfieldplots'] == 1:   
+        fmask = cfg[diagVar]['maxfieldfilemask']
+        fieldFile, tag = selectOutputFile (cfg, path, tag, fmask)
+        model    = csdllib.models.adcirc.readSurfaceField (fieldFile, 
+                            cfg[diagVar]['maxfieldvariable'])
+        maxele  = model['value']
 
-        fl_major_ft   = floodlevels['fl_major_ft']
-        fl_moder_ft   = floodlevels['fl_moder_ft']
-        fl_minor_ft   = floodlevels['fl_minor_ft']
-
-        # Compute and plot minor flood level
-        fl_minor_m = ft2meters( datum_mhhw_ft+fl_minor_ft-datum_msl_ft+shift ) 
-        if not np.isnan(fl_minor_m) and fl_minor_m < ylim[1]:
-            ax.plot(xlim[0], fl_minor_m, 'dr', markerfacecolor='r')
-            ax.text(xlim[0], fl_minor_m,\
-                    'Minor Flood: ' + str(np.round(fl_minor_m,2)),color='k',fontsize=7)
-            p = patches.Rectangle((mdates.date2num(xlim[0]), fl_minor_m), \
-                                mdates.date2num(xlim[1])-mdates.date2num(xlim[0]), \
-                                ylim[1]-fl_minor_m, \
-                                color='r',alpha=0.15)
-            ax.add_patch(p)
+        lons  = model['lon']
+        clim = [ float(cfg[diagVar]['maxfieldymin']), 
+                 float(cfg[diagVar]['maxfieldymax']) ]
+        if diagVar.lower() == 'waterlevel':
+            plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Elevation')
+            figFile = os.path.join(imgDir, 'map.max.png')
+        if diagVar.lower() == 'windvelocity':
+            maxele = 1.94384*maxele  # mps to knots
+            plt.field.map (cfg, grid, maxele, clim, tag, 'Maximal Wind Velocity')
+            figFile = os.path.join(imgDir, 'map.maxwvel.png')
+        plt.field.save (figFile)
+         
+    #Zoom levels, 1 to 4
+    '''
+    if cfg['Analysis']['maxfieldplots'] == 1 or cfg['Analysis']['fielddataplots'] == 1:   
+        
+        for zoom in range(1,5):
+            print('Working on zoom ' + str(zoom))
+            try:
+                iniFile = cfg['Zoom'+str(zoom)]['domainfile']
+                lonlim, latlim = csdllib.plot.map.ini(iniFile, 
+                             local=os.path.join(tmpDir, 'mapfile.ini'))
+                cfgzoom = copy.deepcopy(cfg)
+                cfgzoom['Analysis']['lonmin'] = lonlim[0]
+                cfgzoom['Analysis']['lonmax'] = lonlim[1]
+                cfgzoom['Analysis']['latmin'] = latlim[0]
+                cfgzoom['Analysis']['latmax'] = latlim[1]
+                #figFile = os.path.join(imgDir, tag+'.map.max.'+ str(zoom)+'.png')
+                if diagVar.lower() == 'waterlevel':
+                    
+                    plt.field.map (cfgzoom, grid, maxele, clim, tag, 
+                               'Maximal Elevation', fig_w=5.0)
+                    figFile = os.path.join(imgDir, 'map.max.'+ str(zoom)+'.png')
+                    
+                if diagVar.lower() == 'windvelocity':
+                    plt.field.map (cfgzoom, grid, maxele, clim, tag, 
+                               'Maximal Wind Velocity', fig_w=5.0)
+                    figFile = os.path.join(imgDir, 'map.maxwvel.'+ str(zoom)+'.png')
+       
+                plt.field.save (figFile)
                 
-        # Compute and plot moderate flood level
-        fl_moder_m = ft2meters( datum_mhhw_ft+fl_moder_ft-datum_msl_ft+shift ) 
-        if not np.isnan(fl_moder_m) and fl_moder_m < ylim[1]:
-            ax.plot(xlim[0], fl_moder_m, 'dr', markerfacecolor='r')
-            ax.text(xlim[0], fl_moder_m,\
-                    'Moderate Flood: '+ str(np.round(fl_moder_m,2)),color='k',fontsize=7)
-            p = patches.Rectangle((mdates.date2num(xlim[0]), fl_moder_m), \
-                                mdates.date2num(xlim[1])-mdates.date2num(xlim[0]), \
-                                ylim[1]-fl_moder_m, \
-                                color='r',alpha=0.15)
-            ax.add_patch(p)
+            except:
+                pass
+        
+    if cfg['Analysis']['fieldevolution']: # Do the movie
+        if os.system('which convert') == 0:
+            clim = [ float(cfg[diagVar]['fieldymin']), 
+                     float(cfg[diagVar]['fieldymax']) ]
+            
+            for n in range(len(model['time'])):
+                msg('i','Working on ' + str(n))
+                multi_plot(cfg, tag, grid, model, clim, n)
 
-        # Compute and plot major flood level
-        fl_major_m = ft2meters( datum_mhhw_ft+fl_major_ft-datum_msl_ft+shift ) 
-        if not np.isnan(fl_major_m) and fl_major_m < ylim[1]:
-            ax.plot(xlim[0], fl_major_m, 'dr', markerfacecolor='r')
-            ax.text(xlim[0], fl_major_m,\
-                    'Major Flood: ' + str(np.round(fl_major_m,2)),color='k',fontsize=7)
-            p = patches.Rectangle((mdates.date2num(xlim[0]), fl_major_m), \
-                                mdates.date2num(xlim[1])-mdates.date2num(xlim[0]), \
-                                ylim[1]-fl_major_m, \
-                                color='r',alpha=0.15)
-            ax.add_patch(p)
+            gifFile = os.path.join( imgDir, tag + '.gif')
+            cmd = "convert -delay 20 -loop 1 " + \
+                   os.path.join(cfg['Analysis']['tmpdir'], tag+'*.mov*.png') + \
+                   " " + gifFile
+            os.system(cmd)
 
-        # Compute and plot MHHW datum
-        datum_mhhw_m = ft2meters( datum_mhhw_ft-datum_msl_ft+shift ) 
-        if not np.isnan(datum_mhhw_m) and datum_mhhw_m < ylim[1]:
-            ax.plot(xlim, [datum_mhhw_m, datum_mhhw_m], color='c')
-            ax.plot(xlim[1], datum_mhhw_m, 'dc', markerfacecolor='c')
-            ax.text(xlim[1] - dt(hours=6), 
-                    datum_mhhw_m + 0.05, 'MHHW',color='c',fontsize=7)
+        else:
+            msg('e','You need Convert installed on your system.')
+    '''    
+    return tag
 
-        # Compute and plot MLLW datum
-        datum_mllw_m = ft2meters( datum_mllw_ft-datum_msl_ft+shift ) 
-        if not np.isnan(datum_mllw_m) and datum_mllw_m > ylim[0] and datum_mllw_m < ylim[1]:
-            ax.plot(xlim, [datum_mllw_m, datum_mllw_m], color='c')
-            ax.plot(xlim[1], datum_mllw_m, 'dc', markerfacecolor='c')
-            ax.text(xlim[1] - dt(hours=6), 
-                    datum_mllw_m + 0.05, 'MLLW',color='c',fontsize=7)
-
-        # Compute and plot HAT datum
-        datum_hat_m  = ft2meters( datum_hat_ft-datum_msl_ft+shift ) 
-        if not np.isnan(datum_hat_m) and datum_hat_m < ylim[1]:
-            ax.plot(xlim, [datum_hat_m, datum_hat_m], color='y')
-            ax.plot(xlim[1], datum_hat_m, 'dy', markerfacecolor='y')
-            ax.text(xlim[1] - dt(hours=6), 
-                    datum_hat_m  + 0.05, 'HAT',color='y',fontsize=7)
-
-        # Plot LMSL datum
-        if not np.isnan(shift):
-            ax.plot(xlim, [ft2meters(shift), ft2meters(shift)], color='k')
-            ax.plot(xlim[1], ft2meters(shift), 'dk',color='k')
-            ax.text(xlim[1] - dt(hours=6), 0.05+ft2meters(shift), 'LMSL',color='k',fontsize=7)
-
-        # Plot 'now' line
-        #ax.plot( [now, now], ylim, 'k',linewidth=1)
-        #ax.text(  now + dt(hours=1),  ylim[1]-0.4,'N O W', color='k',fontsize=6, 
-        #          rotation='vertical', style='italic')
     
-    return fig, ax, ax2
+
+#=======================================
+# def getData 
+def getData(nosid, datespan, vdatum): 
+
+   try:
+
+      # Retrieve water level infromation for the specified date range             
+      station_info = coops.COOPS_Query(int(nosid),product='water_level', start_date=datespan[0], end_date=datespan[1],interval = None, datum = vdatum,)
+
+      # Perform necessary cleanup                   
+      station_df = station_info.data.drop(columns = ['q','s','f'])
+      new2_station_df = station_df.reset_index()
+      new2_station_df.rename(columns={'t':'dates','v':'values'}, inplace=True)
+
+      # Format the date and time in the DataFrame
+      new2_station_df['dates'] =  new2_station_df['dates'].apply(lambda d: datetime(d.year, d.month, d.day, d.hour, d.minute))
+
+      # Extract dates and values as lists
+      dates_list = new2_station_df['dates'].tolist() 
+      values_list = new2_station_df['values'].apply(lambda v: round(v, 3)).tolist()
+
+      return {'dates' : dates_list, 'values' : values_list} 
+
+   except ValueError as ve: 
+      
+      # Handle the ValueError exception (station not found)
+      print(f"Error: {ve}. Skipping data retrieval for station {nosid}.")
+      return {'dates' : [], 'values' : []}
+
+#=======================================
+# def getUSGSData 
+def getUSGSData(usgsid, datespan): 
+
+   try:
+
+      # Retrieve water level infromation for the specified date range             
+      station_df = usgs.get_usgs_station_data(usgsid,endtime=datespan[1],period=(datespan[1]-datespan[0]).days)
+
+      # Perform necessary cleanup                   
+      new2_station_df = station_df.reset_index()
+      new2_station_df.rename(columns={'datetime':'dates','value':'values'}, inplace=True)
+
+      # Format the date and time in the DataFrame
+      new2_station_df['dates'] =  new2_station_df['dates'].apply(lambda d: datetime(d.year, d.month, d.day, d.hour, d.minute))
+      
+      # Extract dates and values as lists
+      dates_list = new2_station_df['dates'].tolist() 
+      values_list = new2_station_df['values'].apply(lambda v: round(v*0.3048, 3)).tolist()
+      
+      return {'dates' : dates_list, 'values' : values_list} 
+       
+   except ValueError as ve: 
+      
+      # Handle the ValueError exception (station not found)
+      print(f"Error: {ve}. Skipping data retrieval for station {usgsid}.")
+      return {'dates' : [], 'values' : []}
+
+#=======================================
+
+# def getUHSLCID
+
+def getUHSLCID(string):
+
+    """
+    Parses 3-digit UHSLC ID from the string
+    """
+    uhslcid = None
+    try:
+        uhslcid_full_id = string[2:5]
+        uhslcid  = str(int(uhslcid_full_id))
+        
+        if string[:2] != 'UH':
+            uhslcid = None
+    except:
+        pass
+    return uhslcid
+
+#=======================================
+
+#get usgs id
+def getUSGSID(string):
+
+    """
+    Parses 15- or 8-digit USGS ID from the string (usually, a station description)
+    """
+    usgsid = None
+
+    try:
+
+        usgsid = max(re.findall(r'\d+', string), key = len)
+
+        if len(str(usgsid)) != 8 and len(str(usgsid)) != 15:
+            usgsid = None
+    except:
+        pass
+    return usgsid
+
+
+#=======================================
+# get state 
+
+def get_state(lat, lon):
+    # Initialize a geocoder
+    geolocator = Nominatim(user_agent="state_info")
+
+    # Reverse geocode the coordinates to get location information
+    location = geolocator.reverse((lon,lat)) #chnage tho lat lon when stofs-3D-Atl is fixed
+    if location:
+        # Check if state information is available in address components
+        address_components = location.raw.get('address', {})
+        state = address_components.get('state', None)
+        if state:
+            return state
+        else:
+            'UN'
+
+    else:
+        return 'UN'
+
+#=======================================
+
+# Function to remove outliers from IOC data based on IOC website
+def remove_outliers(data, window_size):
+    median_values = data.median()
+    percentile90 = data.quantile(0.9)
+    tolerance = 3 * np.abs(percentile90 - median_values)
+
+    # Hide values where abs(X - median) > tolerance
+    outliers_mask = np.abs(data - median_values) > tolerance
+    data[outliers_mask] = np.nan
+
+    # Spike removal using median of a window with size 3
+    data = data.rolling(window=window_size, center=True, min_periods=1).median()
+
+    return data
+
+#=======================================
+
+# def get_IOC_country
+
+def getIOC_Country(uhslcid,datespan):
+    ioc_country = None
+
+    try:
+
+       # get uhslc id 
+       all_UHSLC_stations = uhslc.get_uhslc_data(start_date = datespan[0]-timedelta(days=1095),end_date=datespan[1]-timedelta(days=1085),)   #get data from 3 years ago, UHSLC is not updated
+       all_UHSLC_stations = all_UHSLC_stations.set_index('uhslc_id')
+       stationn=int(uhslcid)
+   
+       
+       # Get IOC country name for plotting
+       ioc_stations_c = all_UHSLC_stations['station_country'][stationn]
+       ioc_stations_c_new = ioc_stations_c.reset_index()
+       ioc_country = ioc_stations_c_new['station_country'][0]
+       return ioc_country
+
+    except:
+       return ioc_country
+    
+
+
+#=======================================
+
+# def get_IOC_Data 
+
+# later I should change this function that dose not use UHSLC id
+
+def getIOCData(uhslcid,datespan): 
+
+   try:
+       # Get IOC Id using uhslc id 
+       all_UHSLC_stations = uhslc.get_uhslc_data(start_date = datespan[0]-timedelta(days=1095),end_date=datespan[1]-timedelta(days=1085),)   #get data from 3 years ago, UHSLC is not updated
+     
+       all_UHSLC_stations = all_UHSLC_stations.set_index('uhslc_id')
+       stationn=int(uhslcid)
+
+       ioc_stations = all_UHSLC_stations['ssc_id'][stationn]
+       ioc_stations_new = ioc_stations.reset_index()
+       ioc_id = ioc_stations_new['ssc_id'][0]
+       
+         
+       # download data using ioc function in searvey
+       station_df = ioc.get_ioc_station_data(ioc_code = ioc_id,endtime=datespan[1], )
+
+
+       # Filter the DataFrame based on the time range
+       filtered_df = station_df[(station_df['time'] >= datespan[0]) & (station_df['time'] <= datespan[1])]
+
+       # take data every six minutes
+       filtered_df.set_index('time', inplace=True)
+       station_df_resampled = filtered_df.resample('6T').first()
+       station_df_resampled.reset_index(inplace=True)   
+   
+       #In some stations we have the report of multiple sensores, here we first calculate the relative water level
+       # similar to the IOC website and then we average the value of different sensors
+
+       # Check for the existence of columns 'prs', 'rad', 'ras', and etc.
+       columns_to_check = ['pr2', 'rad', 'ras','ra2','bub','flt','pwl','wls']
+       existing_columns = [col for col in columns_to_check if col in station_df_resampled.columns]
+
+       if existing_columns:
+          # Calculate medians of existing columns
+          median_values = station_df_resampled[existing_columns].median()
+
+          # Subtract medians from respective columns
+          station_df_resampled[existing_columns] -= median_values
+
+          # Remove outliers and spikes for existing columns
+          for col in existing_columns:
+             window_size = 3  # Adjust the window size as needed
+             station_df_resampled[col] = remove_outliers(station_df_resampled[col], window_size)
+
+          # Detect flat sensors
+          flat_sensors = station_df_resampled.columns[station_df_resampled.nunique().eq(1)]
+
+          # drop flat sensors
+          station_df_resampled.drop(columns = flat_sensors)
+      
+          # update the sensor list
+          selected_columns = [col for col in columns_to_check if col in station_df_resampled.columns]
+
+          # Calculate the average value considering NaN values
+          station_df_resampled['values'] = station_df_resampled[selected_columns].mean(axis=1, skipna=True)
+
+          
+          # drop the columns
+          station_df_resampled.drop(columns = ['ioc_code'])
+          station_df_resampled.drop(columns = selected_columns)
+       
+       # rename the column
+       station_df_resampled.rename(columns={'time':'dates'}, inplace=True)
+
+       # Format the date and time in the DataFrame
+       station_df_resampled['dates'] =  station_df_resampled['dates'].apply(lambda d: datetime(d.year, d.month, d.day, d.hour, d.minute))
+
+
+       # Extract dates and values as lists
+       dates_list = station_df_resampled['dates'].tolist()
+       values_list = station_df_resampled['values'].apply(lambda v: round(v, 3)).tolist()
+       return {'dates' : dates_list, 'values' : values_list}
+
+   except:
+       return {'dates' : [], 'values' : []}
+
 
 #==============================================================================
-def add (ax, dates, values, color='k',label='',lw=2):
-    """
-    Adds time series and its paraphernalia to the axis
-    """
-    ax.plot(dates, values, color=color, label=label,linewidth=lw)
-    return ax
+#def stationValidation(cfg, path, tag, lonMin, lonMax, latMin, latMax, n, stations, model, tmpDir, datespan, pointSkill):
+def stationValidation(args):
+    (cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, 
+nowcast_outputFiles, nowcast_outputFiles_biased), n = args
+    msg('i', 'Working on station : ' + str(n).zfill(5) + 
+                                   ' ' + stations[n].strip())
+    
+    myPointData = dict () 
+    isVirtual   = False  # 'virtual' station has no obs counterpart
 
-#==============================================================================
-def addDatums(ax):
-    """
-    Adds vertical datums to the axis
-    """
-    cs.oper.sys.msg('e','function is not yet implemented')
-    return ax
+    forecast = model['zeta'][:,n]
 
-#==============================================================================
-def addLevels(ax):
-    """
-    Adds (flood) levels to the plot
-    """
-    cs.oper.sys.msg('e','function is not yet implemented')
-    return ax
-
-
-#==============================================================================
-def stationMap(cfg, nosid, info, tag):
-    '''  
-    Plots one stations map 
-    '''
-    imgDir  = os.path.join( cfg['Analysis']['reportdir'], 
-                            cfg['Analysis']['imgdir'])
-
-    figFile = os.path.join( \
-        imgDir, 'loc.'+nosid+'.png')
-    if os.path.exists(figFile):
-        return
-
-    xo = info['lon']
-    yo = info['lat']
-    dx = 1.8
-    dy = 1.8
-
-    coastlineFile = os.path.join(
-        cfg['Analysis']['localdatadir'], 'coastline.dat')    
-    if not os.path.exists(coastlineFile):
-        csdllib.oper.transfer.download (cfg['PlotData']['coastlinefile'], coastlineFile)
-    coast = readCoastline  (coastlineFile)
-
-    fig = set(cfg, [xo-dx, xo+dx], [yo-dy, yo+dy], fig_w=3.0, coast=coast)
-    plt.suptitle(info['name'] + ' ' + info['state'], fontsize=8)
-
-    plt.scatter(xo, yo, c='r', marker = 'o', edgecolors='k', s=30,zorder=2)
-    plt.text(xo+0.01*dx, yo+0.01*dy, str(info['nosid']), color='darkblue', fontsize=7, weight='bold',zorder=2)
-
-    plt.savefig(figFile)
-    plt.close(fig)
-    plt.close()
-#==============================================================================
-def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag, 
-                forecastDates = None, forecast = None, nowcast_biased = None):
-    '''
-    Plots one station.
-    '''
-
-    imgDir  = os.path.join( cfg['Analysis']['reportdir'], 
-                            cfg['Analysis']['imgdir'])
-
-    xlim = [min(refDates), max(refDates)]
-
-    ylim = [cfg['WaterLevel']['pointymin'],cfg['WaterLevel']['pointymax']]
-
-    vdatum = cfg['Analysis']['vdatum']
-    datums      = 0
-    floodlevels = 0
-
-    if cfg['Analysis']['nowcast'] == 1:
+    forecast[np.where(forecast<-100.)] = np.nan  # _fillvalue doesnt work
+    
+    if cfg['Analysis']['nowcast'] == 1: 
        num_intervals_per_hour = int(60 / 6)  # 6 minutes interval
        num_intervals_hours = num_intervals_per_hour * cfg['Analysis']['nowcastperiodineachfile']
 
-    if forecastDates is not None:
-            xlim[1] = forecastDates[-1]
+       nowcast= None
+       nowcast_time= None
+       if cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
+          for i in range(len(nowcast_outputFiles)):
+    
+               nowcast_model = csdllib.models.adcirc.readTimeSeries(nowcast_outputFiles[i])
+               if  nowcast is None:
+                   # Convert the time string in nowcast_model to datetime object
+                   #nowcast_time_str = nowcast_model['time'][:int(num_intervals_hours)]
+                   #nowcast_time_list = [datetime.strptime(nowcast_time_str, '%Y-%m-%d %H:%M:%S')]
 
-    #fig, ax, ax2 = csdllib.plot.series.set(xlim, ylim, datums, floodlevels)
-    fig, ax, ax2 = pset(xlim, ylim, datums, floodlevels)
+                   if all(datespan[0] <= model_times <= datespan[1] for model_times in nowcast_model['time'][:int(num_intervals_hours)]):
+                        nowcast = nowcast_model['zeta'][:int(num_intervals_hours),n]
+                        nowcast_time = nowcast_model['time'][:int(num_intervals_hours)]
+   
+               else:
 
-    if obsVals is not None:
-       ax.plot(refDates, obsVals, color='lime', linestyle='-',label='OBS', lw=2)
+                   if all(datespan[0] <= model_times <= datespan[1] for model_times in nowcast_model['time'][:int(num_intervals_hours)]):
+                        current_nowcast = nowcast_model['zeta'][:int(num_intervals_hours), n]
+                        current_time = nowcast_model['time'][:int(num_intervals_hours)]
+                        nowcast = np.concatenate((nowcast, current_nowcast))
+                        nowcast_time = np.concatenate((nowcast_time, current_time))
 
-       #ax.legend(bbox_to_anchor=(0.8, 0.82), loc='center left',prop={'size':6})
+               #nowcast=np.array(nowcast)
+               nowcast[np.where(nowcast<-100.)] = np.nan  # _fillvalue doesnt work
+           
+    if cfg['Analysis']['dynamicbiascorrection'] == 1:
 
-    if forecast is not None:
-       if cfg['Analysis']['nowcast'] == 1:
-           if cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
-                idx = np.where(refDates < forecastDates[int(num_intervals_hours)])[0][-1]
-                ax.plot(refDates[:idx], modVals[:idx], color='b', linestyle='--', label='MOD Nowcast', lw=2)
-                ax.plot(refDates[idx:], modVals[idx:], color='b', linestyle='-',label='MOD', lw=2)
-           else:
-                #ax = csdllib.plot.series.add(ax, forecastDates, forecast, 
-                #color='b',label='FCST',lw=1)
-                #ax = add(ax, forecastDates, forecast,color='b',label='FCST',lw=1)
-                idx = np.where(refDates < forecastDates[int(num_intervals_hours)])[0][-1]
-                ax.plot(forecastDates[:idx], forecast[:idx], color='b', linestyle='--', label='MOD Nowcast', lw=2)
-                ax.plot(forecastDates[idx:], forecast[idx:], color='b', linestyle='-',label='MOD', lw=2)
-       else:
-           ax.plot(refDates, modVals, color='b', linestyle='-', label='MOD', lw=2)
+
+       nowcast_biased= None
+
+       for i in range(len(nowcast_outputFiles_biased)):
+          nowcast_model_biased = csdllib.models.adcirc.readTimeSeries(nowcast_outputFiles_biased[i])
+          if  nowcast_biased is None:
+              nowcast_biased = nowcast_model_biased['zeta'][:int(num_intervals_hours),n]
+              #nowcast_time = nowcast_model['time'][:int(num_intervals_hours)]
+
+          else:
+
+              current_nowcast = nowcast_model_biased['zeta'][:int(num_intervals_hours),n]
+              #current_time = nowcast_model['time'][:int(num_intervals_hours)]
+              nowcast_biased = np.concatenate((nowcast_biased, current_nowcast))
+              #nowcast_time = np.concatenate((nowcast_time, current_time))
+
+       #nowcast=np.array(nowcast)
+       nowcast_biased[np.where(nowcast_biased<-100.)] = np.nan  # _fillvalue doesnt work
+
+
+    # Try to obtain NOS ID
+    nosid = csdllib.data.coops.getNOSID ( stations[n].strip() )
+  
+
+    # Try to obtaion UHSLC ID
+    uhslcid = getUHSLCID ( stations[n].strip() )
+    
+    # Try to obtaion usgs ID
+    usgsid = getUSGSID ( stations[n].strip() )
+
+    # Getting stations' info
+    if nosid is None and uhslcid is None and usgsid is None:  
+        isVirtual = True # add attempts to get UH or GLOSS ids here
+   
+    elif nosid is None and uhslcid is not None: # Is a IOC station
+        info          = dict()
+        info['id'] = 'UH'+uhslcid.zfill(3)
+        info['lon']   =  model['lon'][n]
+        info['lat']   =  model['lat'][n]
+        info['name']  =  model['stations'][n]
+        info['state'] = 'UN'
+        info['country'] = getIOC_Country(uhslcid,datespan)
+        msg('w','Station is uhslc gauge. Using id=' + info['id'])
+
+    elif nosid is None and usgsid is not None: # Is a usgs station
+
+        info          = dict()
+
+        info['id'] = usgsid
+        info['lon']   =  model['lat'][n]
+        info['lat']   =  model['lon'][n]
+        info['name']  =  model['stations'][n]
+        info['state'] = get_state(float(model['lat'][n]),float(model['lon'][n]))
+        info['country'] = None
+
+        msg('w','Station is usgs gauge. Using id=' + info['id'])
+    else:
+
+        # Try to get stations' info, save locally as info.nos.XXXXXXX.dat
+        localFile = os.path.join(cfg['Analysis']['localdatadir'], 'info.nos.'+nosid+'.dat')
+        if not os.path.exists(localFile) and uhslcid is None and usgsid is None:  # Is not IOC station
+            info = csdllib.data.coops.getStationInfo (nosid, 
+                                                      verbose=1, tmpDir=tmpDir)
             
-    ax.legend(bbox_to_anchor=(0.8, 0.82), loc='center left',prop={'size':6})
 
-    ax.text(xlim[0],ylim[1]+0.05,'NOAA / OCEAN SERVICE')
-    ax.set_ylabel (f'WATER LEVELS, meters {vdatum}')
-    ax2.set_ylabel(f'WATER LEVELS, feet {vdatum}')
-    ax.set_xlabel('DATE/TIME UTC')
-    ax.grid(True,which='both')
-    if obsVals is not None:
-        peak_obs_val = np.nanmax(obsVals)
-        peak_obs_dat = refDates[np.argmax(obsVals)]
-    peak_mod_val = np.nanmax(modVals)
-    peak_mod_dat = refDates[np.argmax(modVals)]
-    if forecast is not None:
-        peak_fst_val = np.nanmax(forecast)
-        peak_fst_dat = forecastDates[np.argmax(forecast)]
-        if ylim[0] <= peak_fst_val and peak_fst_val <= ylim[1]:
-            ax.plot(peak_fst_dat, peak_fst_val, 'o',
-                markerfacecolor='b', markeredgecolor='b')
-            ax.plot([peak_fst_dat, peak_fst_dat],[ylim[0],peak_fst_val], 
-                '--',c='b')
-            ax.text(peak_fst_dat, 1.06*peak_fst_val, 
-                str(np.round(peak_fst_val,1)) + "m",
-                color='darkblue', fontsize=7, weight='bold')
-    if ylim[0] <= peak_mod_val and peak_mod_val <= ylim[1]:
-        ax.plot(peak_mod_dat, peak_mod_val, 'o',
-                markerfacecolor='b', markeredgecolor='k')
-        ax.plot([peak_mod_dat, peak_mod_dat],[ylim[0],peak_mod_val], 
-                '--',c='b')
-    if cfg['Analysis']['nowcast'] == 1: 
-       #num_intervals_per_hour = int(60 / 6)  # 6 minutes interval
-       #num_intervals_hours = num_intervals_per_hour * cfg['Analysis']['nowcastperiodineachfile']
-       # Add a dashed vertical line at start of forecast
-       ax.axvline(x=forecastDates[int(num_intervals_hours)], color='r', linestyle='--')
-       if cfg['Analysis']['dynamicbiascorrection'] == 1 and obsVals is not None and info['state'] is not 'UN':
-          bias = np.nanmean(nowcast_biased[:idx])-np.nanmean(obsVals[:idx])
-          ax.text(xlim[0]+0.05*(xlim[1]-xlim[0]), ylim[0]+0.1*(ylim[1]-ylim[0]), 'Adjusted Bias {:.2f}m'.format(bias), fontsize=8, color='red', ha='left', va='bottom')
+          
+            if info is None:
+                msg('w','No info found for station ' + nosid)
+                isVirtual = True
+              
+            else:
+                csdllib.data.coops.writeStationInfo (info, localFile)
+                info['country'] = None
+        else:
+        
+            info = csdllib.data.coops.readStationInfo (localFile)
+            info['country'] = None  
+        if 'nosid' in info:   
+            info['id'] = info['nosid']
+            del info['nosid']
 
-    if obsVals is not None and ylim[0] <= peak_obs_val and peak_obs_val <= ylim[1]:
-        ax.plot(peak_obs_dat, peak_obs_val, 'o',
-                markerfacecolor='limegreen', markeredgecolor='k')
-        ax.plot([peak_obs_dat, peak_obs_dat],[ylim[0],peak_obs_val], 
-                '--',c='limegreen')
-        ax.text(peak_obs_dat, 1.06*peak_obs_val, 
-                str(np.round(peak_obs_val,1)) + "m (" + 
-                str(np.round(3.28084*peak_obs_val,1)) +"ft)",
-                color='forestgreen', fontsize=7, weight='bold')
+    if isVirtual:
+
+        info          = dict()
+        info['id'] = 'UN'+str(n).zfill(5)
+        info['lon']   =  model['lon'][n]
+        info['lat']   =  model['lat'][n]
+        info['name']  =  model['stations'][n]
+        info['state'] = 'UN'
+        info['country'] = None
+        msg('w','Station is not NOAA gauge. Using id=' + info['id'])
+     
+
+    # Check lon/lats  
+  
+    if info['lon'] < -180 and lonMax - lonMin > 359.:
+        info['lon'] = 360.+info['lon']  
+        
+    if cfg['Analysis']['pacific'] == 1 and info['lon'] < -30: 
+        info['lon'] = 360.+info['lon']
+
+    
+    if lonMin <= info['lon'] and info['lon'] <= lonMax and     \
+        latMin <= info['lat'] and info['lat'] <= latMax:
+       
+        # plot time series
+        if cfg['Analysis']['pointdataplots']:
+        
+            #Plot IOS stations
+        
+            if not isVirtual and uhslcid is not None: # changed this for ioc
+                
+                localFile = os.path.join(
+                        cfg['Analysis']['localdatadir'], 
+                        'cwl.uhslc.' + info['id'] + '.' + \
+                        timeToStamp(datespan[0]) + '-' + \
+                        timeToStamp(datespan[1]) + '.dat')
+                      
+                if not os.path.exists(localFile):
+
+                    obs = getIOCData(uhslcid, datespan)
+                    #obs = csdllib.data.coops.getData(nosid, datespan, tmpDir=tmpDir) 
+                    csdllib.data.coops.writeData    (obs,  localFile)
+                else:
+                    
+                    obs = csdllib.data.coops.readData ( localFile )
+       
+              
+                refDates = np.nan
+                obsVals  = np.nan
+                modVals  = np.nan
+
+                if len(obs['values']) == 0 or all(value != value for value in obs['values']):  # check if we do not have observation
+                    msg('w','No obs found for station ' + uhslcid + ', skipping.')
+                    isVirtual = True
+                    
+                elif len(forecast) == 0 or np.sum(~np.isnan(forecast)) == 0:
+                    msg('w','No forecast found for station ' + uhslcid + ', skipping.')
+                   
+                else:
  
-    ax.xaxis.set_major_locator(mdates.DayLocator())
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d\n00:00'))
-    ax.xaxis.set_minor_locator(MultipleLocator(0.5))
+                    
+                    # Unify model and data series 
+                    refDates, obsVals, modVals =            \
+                    csdllib.methods.interp.retime  (    \
+                    obs ['dates'], obs['values'],   \
+                    model['time'], forecast, refStepMinutes=6)
 
-    ax.set_xlim (        xlim)
-    ax.set_ylim (        ylim)
-    ax2.set_ylim(3.28084*ylim[0], 3.28084*ylim[1])
-    ax2.plot([],[])
+                    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
+                       refDatesWithNowcast = np.nan
+                       obsValsWithNowcast  = np.nan
+                       modValsWithNowcast  = np.nan
+                       # Unify model and data series 
+                       refDatesWithNowcast, obsValsWithNowcast, modValsWithNowcast =            \
+                       csdllib.methods.interp.retime  (    \
+                       obs ['dates'], obs['values'],   \
+                       np.concatenate((nowcast_time,model['time'])), np.concatenate((nowcast,forecast)), refStepMinutes=6)
+                                   
+           
+                # Compute statistics    
+                M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
 
-    plt.suptitle(tag + ' ' + nosid + ' ' + info['name'] + ', ' + info['state'], fontsize=8)
-    plt.tight_layout()
+                myPointData['id']      = info['id']            
+                myPointData['info']    = info
+                myPointData['metrics'] = M
+                
+
+                #pointSkill.append ( myPointData )
+ 
+                try:
+                   
+                    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] == 1: 
+                       plt.waterlevel.pointSeries(cfg, 
+                            obsValsWithNowcast, modValsWithNowcast, refDatesWithNowcast, nosid, info, tag, 
+                            model['time'], forecast, nowcast_biased)
+                    elif cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] != 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
+                       plt.waterlevel.pointSeries(cfg, 
+                            obsValsWithNowcast, modValsWithNowcast, refDatesWithNowcast, IOCid, info, tag, 
+                            model['time'], forecast)
+                    else:
+                       plt.waterlevel.pointSeries(cfg,
+                            obsVals, modVals, refDates, info['id'], info, tag,
+                            model['time'], forecast)
+
+                except:
+                    isVirtual = True
+
+                pass
+        
+            # Plot USGS stations
+        
+            if not isVirtual and usgsid is not None: # changed this for ioc
+                
+                localFile = os.path.join(
+                        cfg['Analysis']['localdatadir'], 
+                        'cwl.usgs.' + info['id'] + '.' + \
+                        timeToStamp(datespan[0]) + '-' + \
+                        timeToStamp(datespan[1]) + '.dat')
+                      
+                if not os.path.exists(localFile):
+
+                    obs = getUSGSData(usgsid, datespan)
+                   
+                    #obs = csdllib.data.coops.getData(nosid, datespan, tmpDir=tmpDir) 
+                    csdllib.data.coops.writeData    (obs,  localFile)
+                else:
+                    
+                    obs = csdllib.data.coops.readData ( localFile )
+       
+              
+                refDates = np.nan
+                obsVals  = np.nan
+                modVals  = np.nan
+
+                if len(obs['values']) == 0 or all(value != value for value in obs['values']):  # check if we do not have observation
+                    msg('w','No obs found for station ' + usgsid + ', skipping.')
+                    isVirtual = True
+                    
+                elif len(forecast) == 0 or np.sum(~np.isnan(forecast)) == 0:
+                    msg('w','No forecast found for station ' + usgsid + ', skipping.')
+                   
+                else:
+                    print(forecast)
+                    
+                    # Unify model and data series 
+                    refDates, obsVals, modVals =            \
+                    csdllib.methods.interp.retime  (    \
+                    obs ['dates'], obs['values'],   \
+                    model['time'], forecast, refStepMinutes=6)
+
+                    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
+                       refDatesWithNowcast = np.nan
+                       obsValsWithNowcast  = np.nan
+                       modValsWithNowcast  = np.nan
+                       # Unify model and data series 
+                       refDatesWithNowcast, obsValsWithNowcast, modValsWithNowcast =            \
+                       csdllib.methods.interp.retime  (    \
+                       obs ['dates'], obs['values'],   \
+                       np.concatenate((nowcast_time,model['time'])), np.concatenate((nowcast,forecast)), refStepMinutes=6)
+                                   
+      
+
+                # Compute statistics    
+                M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
+
+                myPointData['id']      = info['id']            
+                myPointData['info']    = info
+                myPointData['metrics'] = M
+                
+
+                #pointSkill.append ( myPointData )
+ 
+                try:
+                   
+                    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] == 1: 
+                       plt.waterlevel.pointSeries(cfg, 
+                            obsValsWithNowcast, modValsWithNowcast, refDatesWithNowcast, usgsid, info, tag, 
+                            model['time'], forecast, nowcast_biased)
+                    elif cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] != 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
+                       plt.waterlevel.pointSeries(cfg, 
+                            obsValsWithNowcast, modValsWithNowcast, refDatesWithNowcast, usgsid, info, tag, 
+                            model['time'], forecast)
+                    else:
+                       plt.waterlevel.pointSeries(cfg,
+                            obsVals, modVals, refDates, info['id'], info, tag,
+                            model['time'], forecast)
+
+                except:
+                    isVirtual = True
+
+                pass
+            #Plot NOS stations
+ 
+            if not isVirtual and uhslcid is None and usgsid is None:
+
+                # Get station's water levels for this timespan, save locally
+                localFile = os.path.join(
+                        cfg['Analysis']['localdatadir'], 
+                        'cwl.nos.' + nosid + '.' + \
+                        timeToStamp(datespan[0]) + '-' + \
+                        timeToStamp(datespan[1]) + '.dat')  
+ 
+                          
+
+                if not os.path.exists(localFile):
+                    vdatum = cfg['Analysis']['vdatum']
+                    obs = getData(nosid, datespan, vdatum)
+                    #obs = csdllib.data.coops.getData(nosid, datespan, tmpDir=tmpDir) 
+                    csdllib.data.coops.writeData    (obs,  localFile)                    
+
+                   
+                else:
+                    obs = csdllib.data.coops.readData ( localFile )
+       
+
+                refDates = np.nan
+                obsVals  = np.nan
+                modVals  = np.nan
+
+
+                if len(obs['values']) == 0:
+                    msg('w','No obs found for station ' + nosid + ', skipping.')
+                    isVirtual = True
+
+                elif len(forecast) == 0 or np.sum(~np.isnan(forecast)) == 0:
+                    msg('w','No forecast found for station ' + nosid + ', skipping.')
+
+                else:
+
+                    # Unify model and data series 
+                    refDates, obsVals, modVals =            \
+                    csdllib.methods.interp.retime  (    \
+                    obs ['dates'], obs['values'],   \
+                    model['time'], forecast, refStepMinutes=6)
+
+                    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
+                       refDatesWithNowcast = np.nan
+                       obsValsWithNowcast  = np.nan
+                       modValsWithNowcast  = np.nan
+                       # Unify model and data series 
+                       refDatesWithNowcast, obsValsWithNowcast, modValsWithNowcast =            \
+                       csdllib.methods.interp.retime  (    \
+                       obs ['dates'], obs['values'],   \
+                       np.concatenate((nowcast_time,model['time'])), np.concatenate((nowcast,forecast)), refStepMinutes=6)
+
+                    # Compute statistics    
+                M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
+
+                myPointData['id']      = nosid            
+                myPointData['info']    = info
+                myPointData['metrics'] = M
+
+
+                #pointSkill.append ( myPointData )
+
+                try:
+
+                    if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] == 1: 
+
+                       if cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
+
+                            plt.waterlevel.pointSeries(cfg, 
+                               obsValsWithNowcast, modValsWithNowcast, refDatesWithNowcast, nosid, info, tag, 
+                               model['time'], forecast, nowcast_biased)
+                       else:
+
+                            plt.waterlevel.pointSeries(cfg, 
+                               obsVals, modVals, refDates, nosid, info, tag, 
+                               model['time'], forecast,nowcast_biased) 
+                    elif cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] != 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']: 
+
+                       plt.waterlevel.pointSeries(cfg, 
+                            obsValsWithNowcast, modValsWithNowcast, refDatesWithNowcast, nosid, info, tag, 
+                            model['time'], forecast)
+                    else:
+
+                       plt.waterlevel.pointSeries(cfg, 
+                            obsVals, modVals, refDates, nosid, info, tag, 
+                            model['time'], forecast) 
+
+                except:
+                    isVirtual = True
+
+                pass
+
+            if isVirtual:
+                 # Compute statistics    
+                 M = csdllib.methods.statistics.metrics (np.nan, np.nan, np.nan)
+                 myPointData['id']      = info['id']            
+                 myPointData['info']    = info
+                 myPointData['metrics'] = M
+                 #pointSkill.append ( myPointData )
+                
+                 try:
+
+                     if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
+                         plt.waterlevel.pointSeries(cfg,  
+                            None, np.concatenate((nowcast,forecast)), np.concatenate((nowcast_time,model['time'])),
+                            info['id'], info, tag, 
+                            model['time'], forecast)
+
+                     else:  
+                         plt.waterlevel.pointSeries(cfg, 
+                            None, forecast, model['time'], 
+                            info['id'], info, tag, 
+                            model['time'], forecast) 
+                                      
+                 except:
+                     msg('w','Virtual station ' +  info['id'] + ' was not plotted.')
+                   
+                     pass
+
+        
+        # plot station map
+        if cfg['Analysis']['pointlocationmap']: 
+            plt.waterlevel.stationMap(cfg, info['id'], info, tag)
+
+
+        # Plot dashpanels
+        if cfg['Analysis']['pointskillpanel'] and not isVirtual: 
+            plt.skill.panel(cfg, M, refDates,info['id'] , info, tag)
+
+    else:
+        msg('i','Station ' + info['id'] + ' is not within the domain. Skipping')
+        
+
+    return myPointData
+#==============================================================================
+def pointValidation (cfg, path, tag):
+    '''
+    Works on point data
+    '''
+    pointSkill   = []
     
-    figFile = os.path.join( \
-        imgDir, 'ts.'+nosid+'.png')
-#        imgDir, tag+ '.ts.'+nosid+'.png')
-    plt.savefig(figFile)
-    plt.close(fig)
-    plt.close()
+    tmpDir     = cfg['Analysis']['tmpdir']
     
-    return
+    diagVar    = cfg['Analysis']['name']
+    
+    nProcessors = int(cfg['Analysis']['numberofprocessors'])
+    
+    # Choose the model output file
+    fmask = cfg[diagVar]['pointfilemask']
+    outputFile, tag = selectOutputFile (cfg, path, tag, fmask)
+
+    # Read list of stations out of model file
+    model    = csdllib.models.adcirc.readTimeSeries (outputFile)
+
+    stations = model['stations']
+   
+    if len(stations) == 0:
+        msg('w','No stations found')
+        
+    # Set/get bbox
+    lonMin = float( cfg['Analysis']['lonmin'])
+    lonMax = float( cfg['Analysis']['lonmax'])
+    latMin = float( cfg['Analysis']['latmin'])
+    latMax = float( cfg['Analysis']['latmax'])
+
+    # Set/get datespan
+    dates = model['time']
+
+    
+    datespan = [dates[0], dates[-1]] 
+    try:
+        datespan[0] = stampToTime (cfg[diagVar].get('pointdatesstart'))
+    except:
+        pass
+    try:
+        datespan[1] = stampToTime (cfg[diagVar].get('pointdatesend'))
+    except:
+        pass
+
+    if cfg['Analysis']['nowcast'] == 1: 
+       if cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
+           datespan[0] = datespan[0]-timedelta(hours=cfg['Analysis']['nowcastperiod'])
+           nowcast_outputFiles = selectOutputFiles_nowcast (cfg, path, tag, fmask,datespan) 
+
+       if cfg['Analysis']['dynamicbiascorrection'] == 1:
+              nowcast_outputFiles_biased = selectOutputFiles_nowcast_biased (cfg, path, tag, fmask,datespan)
+              nowcast_outputFiles = selectOutputFiles_nowcast (cfg, path, tag, fmask,datespan)    
+
+              
+       #nowcast_model = csdllib.models.adcirc.readTimeSeries (nowcast_outputFile) 
+
+
+    msg ( 'i','Datespan for analysis is set to: ' \
+            + timeToStamp(datespan[0]) + ' ' + timeToStamp(datespan[1]) )
+
+    num_stations = len(stations)
+    #num_stations = 239
+    tupleArgs = []
+    for i in range(num_stations):
+        if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] == 1:
+           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, sorted(nowcast_outputFiles),sorted(nowcast_outputFiles_biased)))
+        elif cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] != 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
+           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, sorted(nowcast_outputFiles),None))
+        else:
+           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, None, None))           
+ 
+    input = zip(tupleArgs, range(num_stations))
+    pool = multiprocessing.Pool(processes=nProcessors)
+    for item in pool.map(stationValidation, input):
+        pointSkill.append(item)
+
+    # # # Done running on stations list
+    return pointSkill, datespan, tag
+
+#==============================================================================
+def waterLevel (cfg, path, tag):
+    '''
+    Performs waterlevel validation of a single given run.
+    '''
+    mtx      = []
+    info     = []
+    datespan = []
+
+    # Field data analysis
+    if cfg['Analysis']['fielddataplots'] or cfg['Analysis']['maxfieldplots']:
+        # Get the grid
+        gridFile = os.path.join(
+            cfg['Analysis']['localdatadir'], 'fort.14')    
+        csdllib.oper.transfer.refresh (cfg['Analysis']['gridfile'], gridFile)
+        grid = csdllib.models.adcirc.readGrid  (gridFile)
+        tag = fieldValidation (cfg, path, tag, grid)
+
+    del(grid)
+    gc.collect()
+    # Point data (time series)
+    if cfg['Analysis']['pointdatastats']:
+        pointSkill, datespan, tag = pointValidation (cfg, path, tag)
+        lon  = []
+        lat  = []
+        for point in pointSkill:
+            lon.append ( point['info']['lon'] )
+            lat.append ( point['info']['lat'] )
+            info.append ( point['info'])
+            mtx.append ( point['metrics'] )
+
+        del(pointSkill)
+        gc.collect()
+        # Plot stats on the map
+        if cfg['Analysis']['pointskillmap']:
+            plt.skill.map (cfg, lon, lat, mtx, 'rmsd', [0., 1.],      [0.,0.2],tag)
+            plt.skill.map (cfg, lon, lat, mtx, 'bias', [-1., 1.],     [-0.2, 0.2], tag)
+            plt.skill.map (cfg, lon, lat, mtx, 'peak', [-1., 1.],     [-0.2, 0.2], tag)
+            plt.skill.map (cfg, lon, lat, mtx, 'plag', [-360., 360.], [-30., 30.], tag)
+            plt.skill.map (cfg, lon, lat, mtx, 'skil', [0., 1.],      [0.8, 1.], tag)
+            plt.skill.map (cfg, lon, lat, mtx, 'rval', [0., 1.],      [0.8, 1.], tag)
+            plt.skill.map (cfg, lon, lat, mtx, 'vexp', [0., 100.],    [80., 100.], tag)
+            plt.skill.map (cfg, lon, lat, mtx, 'npts', [0., 1000.],   [240.,1000.], tag)
+    return mtx, info, datespan, tag
