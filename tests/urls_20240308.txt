@@ -1,0 +1,8 @@
+https://noaa-gestofs-pds.s3.amazonaws.com/_para/stofs_2d_glo.20240308/stofs_2d_glo.t00z.points.cwl.nc
+https://noaa-gestofs-pds.s3.amazonaws.com/_para/stofs_2d_glo.20240308/stofs_2d_glo.t06z.points.cwl.nc
+https://noaa-gestofs-pds.s3.amazonaws.com/_para/stofs_2d_glo.20240308/stofs_2d_glo.t12z.points.cwl.nc
+https://noaa-gestofs-pds.s3.amazonaws.com/_para/stofs_2d_glo.20240308/stofs_2d_glo.t18z.points.cwl.nc
+https://noaa-gestofs-pds.s3.amazonaws.com/_para/stofs_2d_glo.20240308/stofs_2d_glo.t00z.points.cwl.noanomaly.nc
+https://noaa-gestofs-pds.s3.amazonaws.com/_para/stofs_2d_glo.20240308/stofs_2d_glo.t06z.points.cwl.noanomaly.nc
+https://noaa-gestofs-pds.s3.amazonaws.com/_para/stofs_2d_glo.20240308/stofs_2d_glo.t12z.points.cwl.noanomaly.nc
+https://noaa-gestofs-pds.s3.amazonaws.com/_para/stofs_2d_glo.20240308/stofs_2d_glo.t18z.points.cwl.noanomaly.nc

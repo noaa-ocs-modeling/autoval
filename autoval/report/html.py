@@ -73,7 +73,7 @@ def timeSeriesPanel (fod, cfg, tag, nosid, name, state):
                             'loc.' + str(nosid) + '.png')
     fod.write('<table width=\"700\" cellspacing=\"2\" cellpadding=\"2\" border=\"0\">\n')
     fod.write('<tr>\n')
-    #fod.write('<td colspan = \"3\">' + str(nosid)+': ' + name + ' ' + state +  '</td>\n')
+    fod.write('<td colspan = \"3\">' + str(nosid)+': ' + name + ' ' + state +  '</td>\n') # heading
     fod.write('</tr>\n')
     fod.write('<tr>\n')
     fod.write('<td>\n')
@@ -116,37 +116,17 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
         
     # Filtering those states and countries that has observation
 
-    states_with_Obs = []
-    countries_with_Obs = []
 
-    m=0
-    for i in info:
-        if not np.isnan( stats[m]['rmsd']):     
-           states_with_Obs.append(i['state'])
-           countries_with_Obs.append(i['country'])
-        m=m+1
-
-    states_list = set(filter(lambda state: state and state != "UN", states_with_Obs))
-    countries_list = set(filter(lambda country: country, countries_with_Obs))
-
-
-    # Filtering those states and countries that has no observation
-
-    states_with_noObs = []
-    countries_with_noObs = []
-
-    m=0
-    for i in info:
-        if np.isnan( stats[m]['rmsd']):     
-           states_with_noObs.append(i['state'])
-           countries_with_noObs.append(i['country'])
-        m=m+1
-
-    states_list_noObs = set(filter(lambda state: state and state != "UN", states_with_noObs))
-    countries_list_noObs = set(filter(lambda country: country, countries_with_noObs))
+    states_list = set(filter(lambda state: state and state != "UN", states))
+    countries_list = set(filter(lambda country: country, countries))
 
     
+    # Convert states_list and countries_list to a list and sort to maintain the order
     
+    states_list = list(states_list)
+    states_list.sort()
+    countries_list = list(countries_list)
+    countries_list.sort()
 
     reportDir = cfg['Analysis']['reportdir']
     diagVar   = cfg['Analysis']['name']
@@ -154,26 +134,21 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
     
 # Try to upload
     try:
-        host   = cfg['Upload']['host']
-                       
-        user   = cfg['Upload']['user']
-                       
-        remote_htm = cfg['Upload']['remote_htm']
-                        
-        remote_img = cfg['Upload']['remote_img']
-                        
+        host   = cfg['Upload']['host']                      
+        user   = cfg['Upload']['user']                   
+        remote_htm = cfg['Upload']['remote_htm']                      
+        remote_img = cfg['Upload']['remote_img']                
         remote_csv = cfg['Upload']['remote_csv']
                        
         # Upload pertinent tagged graphics
         imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], '*.png')
                         
         #imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], tag + '*.png')
-        #csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
+        csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
                         
         # Upload pertinent untagged graphics
-        #imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], 'loc*.png')
-                       
-        #csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
+        imgPaths = os.path.join(reportDir + cfg['Analysis']['imgdir'], 'loc*.png')                  
+        csdllib.oper.transfer.upload(imgPaths, user+'@'+host, remote_img)
                         
     except:
         csdllib.oper.sys.msg('w','Report has not been uploaded')
@@ -271,6 +246,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                 'CO': 'Colorado',
                 'CT': 'Connecticut',
                 'DE': 'Delaware',
+                'DC': 'DC',
                 'FL': 'Florida',
                 'GA': 'Georgia',
                 'HI': 'Hawaii',
@@ -337,11 +313,6 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                    fod.write(', '.join(state_links))
                    fod.write('<br>')
 
-                   # Write Islands section
-                   #if island_links:
-                       #fod.write(', '.join(island_links))
-                       #fod.write('<br>') 
-
 
                 # Check if country_list is not empty
                 if countries_list:
@@ -350,40 +321,6 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                    for country in countries_list:
                        country_links.append(f"<a href='#{country}'>{country}</a>")
                    fod.write(', '.join(country_links))
-                   fod.write('<br>')
-
-                # Check if states_list_noObs is not empty
-                if states_list_noObs:
-                   fod.write("<h3 style='font-size: 15px;'>NOS Stations (without Observation):</h3>")
-                   state_links_noObs = []
-                   island_links_noObs = []
-    
-                   for state_initial in states_list_noObs:
-                       if state_initial in state_initials_to_full:
-                          full_state_name = state_initials_to_full[state_initial]
-                          state_links_noObs.append(f"<a href='#{full_state_name}_noObs'>{state_initial}</a>")
-                       else:
-                          island_links_noObs.append(state_initial)
-    
-                   # Add Islands category if there are islands
-                   if island_links_noObs:
-                       state_links_noObs.append("<a href='#Islands_noObs'>Islands</a>")
-    
-                   fod.write(', '.join(state_links_noObs))
-                   fod.write('<br>')
-
-                   # Write Islands section
-                   #if island_links_noObs:
-                       #fod.write(', '.join(island_links_noObs))
-                       #fod.write('<br>') 
-
-                # Check if country_list_noObs is not empty
-                if countries_list_noObs:
-                   fod.write("<h3 style='font-size: 15px;'>IOC Stations:</h3>")
-                   country_links_noObs = []
-                   for country in countries_list_noObs:
-                       country_links_noObs.append(f"<a href='#{country}_noObs'>{country}</a>")
-                   fod.write(', '.join(country_links_noObs))
                    fod.write('<br>')
               
                 # Check if there exists a station meeting the conditions
@@ -422,7 +359,18 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                                timeSeriesPanel (fod, cfg, tag, nosid, name, state)
 
                                csv2html (fod, stats[indices[n]])
-                               #fod.write('<hr>\n')
+                               fod.write('<hr>\n')
+                       
+                       for n in range(len(indices)):
+                           if np.isnan(stats[indices[n]]['rmsd']): #True: 
+                               #fod.write('<br>\n')
+                               nosid = ids[indices[n]]
+                               name  = names[indices[n]]
+                               state = states[indices[n]]
+                               timeSeriesPanel (fod, cfg, tag, nosid, name, state)
+
+                               csv2html (fod, stats[indices[n]])
+                               fod.write('<hr>\n')
                 
                 # Process 'Islands' category
                 if states_list: 
@@ -444,9 +392,21 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                                timeSeriesPanel (fod, cfg, tag, nosid, name, state)
 
                                csv2html (fod, stats[indices[n]])
-                               #fod.write('<hr>\n')
-  
-              
+                               fod.write('<hr>\n')
+
+                       for n in range(len(indices)):
+                           if np.isnan( stats[indices[n]]['rmsd']): #True: 
+                               #fod.write('<br>\n')
+                               nosid = ids[indices[n]]
+                               name  = names[indices[n]]
+                               state = states[indices[n]]
+                               timeSeriesPanel (fod, cfg, tag, nosid, name, state)
+
+                               csv2html (fod, stats[indices[n]])
+                               fod.write('<hr>\n')
+ 
+                    
+                   
                 for country_name in countries_list:
                     #if True: #not np.isnan( stats[n]['rmsd']):
                     #if not np.isnan( stats[n]['rmsd']):
@@ -468,70 +428,8 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                               timeSeriesPanel (fod, cfg, tag, nosid, name, state)
 
                               csv2html (fod, stats[indices[n]])
-                              #fod.write('<hr>\n')
+                              fod.write('<hr>\n')
                 
-                #add sations witout observation
-                
-                for states_name in states_list_noObs:
-                    
-                    if states_name in state_initials_to_full:  
-
-                       # Get indices of entries with the current state
-                       indices = [index for index, value in enumerate(states) if value == states_name]
-                     
-                       # Get the full state name from the mapping
-                       full_state_name = state_initials_to_full.get(states_name,states_name)
-                  
-                       # Write heading for the state
-
-                       heading = f"<h2 id='{full_state_name}_noObs' style='background-color: #e0e0e0; padding: 5px; font-size: 14px;'>{full_state_name} <a href='#list' style='float: right;'>top</a></h2>"
-                       fod.write(heading)
-
-                       for n in range(len(indices)):
-                           if np.isnan( stats[indices[n]]['rmsd']): #True: 
-                               #fod.write('<br>\n')
-                               nosid = ids[indices[n]]
-                               name  = names[indices[n]]
-                               state = states[indices[n]]
-                               timeSeriesPanel (fod, cfg, tag, nosid, name, state)
-
-                               csv2html (fod, stats[indices[n]])
-                               #fod.write('<hr>\n')
-                
-                # Process 'Islands' category
-                if states_list_noObs:
-                   if island_links_noObs:
-                      fod.write("<h2 id='Islands_noObs' style='background-color: #e0e0e0; padding: 5px; font-size: 14px;'>Islands <a href='#list' style='float: right;'>top</a></h2>")
-
-                for states_name in states_list_noObs:  
-                    if states_name not in state_initials_to_full:               
-
-                       # Get indices of entries with the current state
-                       indices = [index for index, value in enumerate(states) if value == states_name]
-
-                       for n in range(len(indices)):
-                           if np.isnan( stats[indices[n]]['rmsd']): #True: 
-                               #fod.write('<br>\n')
-                               nosid = ids[indices[n]]
-                               name  = names[indices[n]]
-                               state = states[indices[n]]
-                               timeSeriesPanel (fod, cfg, tag, nosid, name, state)
-
-                               csv2html (fod, stats[indices[n]])
-                               #fod.write('<hr>\n')
-
-                for country_name in countries_list_noObs:
-                    #if True: #not np.isnan( stats[n]['rmsd']):
-                    #if not np.isnan( stats[n]['rmsd']):
-                      # Get indices of entries with the current state
-                      indices = [index for index, value in enumerate(countries) if value == country_name]
-
-                      # Write heading for the state
-                      #heading = f"<h2 style='background-color: #e0e0e0; padding: 5px; font-size: 14px;'>{full_state_name}</h2>"
-                      heading = f"<h2 id='{country_name}_noObs' style='background-color: #e0e0e0; padding: 5px; font-size: 14px;'>{country_name} <a href='#list' style='float: right;'>top</a></h2>"
-
-                      fod.write(heading)
-
                       for n in range(len(indices)):
                           if np.isnan( stats[indices[n]]['rmsd']): #True:
                               #fod.write('<br>\n')
@@ -541,7 +439,8 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                               timeSeriesPanel (fod, cfg, tag, nosid, name, state)
 
                               csv2html (fod, stats[indices[n]])
-                              #fod.write('<hr>\n')
+                              fod.write('<hr>\n')
+               
                 
                 #add other stations
                 if station_exists:
@@ -555,10 +454,8 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                           state = states[n]
                           timeSeriesPanel (fod, cfg, tag, nosid, name, state)
                           csv2html (fod, stats[n])
-                          #fod.write('<hr>\n')
-                
-                
-
+                          fod.write('<hr>\n')
+                            
             else:
                 line = re.sub('__expname__', tag, line)
                 line = re.sub('__expdesc__', cfg['Analysis']['experimentdescr'], line)
