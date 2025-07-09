@@ -87,13 +87,16 @@ Here we explain how to use Autoval for STOFS-2D-Global on bias corrected data. F
 Go to the `inputs` directory and create two directories: `static` and `dynamic`.
 
    - Inside the 'dynamic' folder, download STOFS-2D-Global outputs for five to six days. Create six folders using the dates of data you are interested in; for example:
-     
-     ```
-     mkdir stofs_2d_glo.202403{05..10} 
-     ```
+    ```
+     for ($i = 5; $i -le 10; $i++) {
+    $folderName = "stofs_2d_glo.202403{0:D2}" -f $i
+    mkdir $folderName
+    }
+    ```
    - To download all the available cycles in each folder, copy the url files available in the 'tests' folder to the corresponding directory and download data for all the available cycles for that date using the following commands:
-     ```
+     
      FOR POWERSHELL:
+     ```
      $dates = "20240310", "20240309", "20240308", "20240307", "20240306", "20240305"
      foreach ($date in $dates) 
      {Set-Location "./stofs_2d_glo.$date"
@@ -110,7 +113,9 @@ Go to the `inputs` directory and create two directories: `static` and `dynamic`.
 - In the csdllib plot/map, plot/series, and plot/scatter scripts, replace the line:
     ```
      matplotlib.use('Agg', warn=False)
+    ```
      with
+    ``` 
      matplotlib.use('Agg')
     ```
 
@@ -146,7 +151,9 @@ The steps to use Autoval for STOFS-3D-Atlantic are very similar to those for STO
 - In the csdllib plot/map, plot/series, and plot/scatter scripts, replace the line:
     ```
      matplotlib.use('Agg', warn=False)
+    ```
      with
+    ``` 
      matplotlib.use('Agg')
     ```
 - To run Autoval, we need a main config file and up to five config files specifying the spatial extent of the maximum water level plots.
@@ -181,7 +188,9 @@ The steps to use Autoval for STOFS-3D-Pacific are very similar to those for STOF
 - In the csdllib plot/map, plot/series, and plot/scatter scripts, replace the line:
     ```
      matplotlib.use('Agg', warn=False)
+    ```
      with
+    ``` 
      matplotlib.use('Agg')
     ```
 
