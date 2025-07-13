@@ -17,18 +17,17 @@
     ```
 
    -Install the required packages using the following commands:
-
-    ```
-    conda install -c conda-forge nco=5.2.4
+    
+    ```conda install -c conda-forge nco=5.2.4
     conda install anaconda::git
     conda install anaconda::pycosat
-    conda install matplotlib=3.3.4 seaborn=0.11.0
-    ```
+    conda install matplotlib=3.3.4 seaborn=0.11.0```
+    
    -Install additional Python dependencies from requirements_windows.txt:
-   
-    ```
-    pip install -r requirements_windows.txt
-    ```
+
+    
+    ``` pip install -r requirements_windows.txt ```
+    
 ### STOFS-2D-Global:
 
 1. **Recommended Directory Structure:**
@@ -90,12 +89,12 @@ Go to the `inputs` directory and create two directories: `static` and `dynamic`.
 
    - Inside the 'dynamic' folder, download STOFS-2D-Global outputs for five to six days. Create six folders using the dates of data you are interested in; for example:
 
-    ```
+     ```
      for ($i = 5; $i -le 10; $i++) {
-    $folderName = "stofs_2d_glo.202403{0:D2}" -f $i
-    mkdir $folderName
-    }
-    ```
+     $folderName = "stofs_2d_glo.202403{0:D2}" -f $i
+     mkdir $folderName
+     }
+     ```
    - To download all the available cycles in each folder, copy the url files available in the 'tests' folder to the corresponding directory and download data for all the available cycles for that date using the following commands:
      
      ```
