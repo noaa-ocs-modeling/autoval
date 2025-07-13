@@ -105,11 +105,11 @@ Go to the `inputs` directory and create two directories: `static` and `dynamic`.
      ```
    - Inside the static folder, download grid data and coastline data:
 
-    ``` 
-     curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/GSTOFSv5.6.5_BT_DMW.14
-     curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/noaa_coastline_world.dat
-     curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/noaa_coastline_world.dat
-    ``` 
+     ``` 
+      curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/GSTOFSv5.6.5_BT_DMW.14
+      curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/noaa_coastline_world.dat
+      curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/noaa_coastline_world.dat
+     ``` 
 
 - In the csdllib plot/map, plot/series, and plot/scatter scripts, replace the line:
     ```
