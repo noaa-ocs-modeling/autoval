@@ -17,16 +17,16 @@
     ```
 
    -Install the required packages using the following commands:
-    ```
-    conda install -c conda-forge nco=5.2.4
-    conda install anaconda::git
-    conda install anaconda::pycosat
-    conda install matplotlib=3.3.4 seaborn=0.11.0
-    ```
+     
+     conda install -c conda-forge nco=5.2.4
+     conda install anaconda::git
+     conda install anaconda::pycosat
+     conda install matplotlib=3.3.4 seaborn=0.11.0
+     
    -Install additional Python dependencies from requirements_windows.txt:
-    ```
-    pip install -r requirements_windows.txt
-    ```
+     ```
+     pip install -r requirements_windows.txt 
+     ```
 ### STOFS-2D-Global:
 
 1. **Recommended Directory Structure:**
@@ -87,13 +87,16 @@ Here we explain how to use Autoval for STOFS-2D-Global on bias corrected data. F
 Go to the `inputs` directory and create two directories: `static` and `dynamic`.
 
    - Inside the 'dynamic' folder, download STOFS-2D-Global outputs for five to six days. Create six folders using the dates of data you are interested in; for example:
-     
+
      ```
-     mkdir stofs_2d_glo.202403{05..10} 
+     for ($i = 5; $i -le 10; $i++) {
+     $folderName = "stofs_2d_glo.202403{0:D2}" -f $i
+     mkdir $folderName
+     }
      ```
    - To download all the available cycles in each folder, copy the url files available in the 'tests' folder to the corresponding directory and download data for all the available cycles for that date using the following commands:
+     
      ```
-     FOR POWERSHELL:
      $dates = "20240310", "20240309", "20240308", "20240307", "20240306", "20240305"
      foreach ($date in $dates) 
      {Set-Location "./stofs_2d_glo.$date"
@@ -101,16 +104,19 @@ Go to the `inputs` directory and create two directories: `static` and `dynamic`.
      Set-Location ".."}
      ```
    - Inside the static folder, download grid data and coastline data:
-    ```
-     curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/GSTOFSv5.6.5_BT_DMW.14
-     curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/noaa_coastline_world.dat
-     curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/noaa_coastline_world.dat
-    ```
+
+     ``` 
+      curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/GSTOFSv5.6.5_BT_DMW.14
+      curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/noaa_coastline_world.dat
+      curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/noaa_coastline_world.dat
+     ``` 
 
 - In the csdllib plot/map, plot/series, and plot/scatter scripts, replace the line:
     ```
      matplotlib.use('Agg', warn=False)
+    ```
      with
+    ``` 
      matplotlib.use('Agg')
     ```
 
@@ -118,9 +124,9 @@ Go to the `inputs` directory and create two directories: `static` and `dynamic`.
 
 - For the extent of the domain, copy `config.map.estofs.glo.ini`, `config.map.estofs.atl.ini`, `config.map.estofs.pac.ini`, `config.map.puertorico.ini` from the cfg.domains folder to the config folder. You can also follow the same format and generate any domain.ini file that you would like. Just note that STOFS-2D-Global model outputs are associated with -180 to 180 longitude coordinates.
 
-- Copy the test4_global.ini file from the tests folder into your config folder. This will serve as your main configuration file. Update the directories inside the file to correspond to your paths.
+- Copy the `test4_global.ini` file from the tests folder into your config folder. This will serve as your main configuration file. Update the directories inside the file to correspond to your paths.
 
-- Copy the test4_global.bash file from the tests directory to your jobs directory. Ensure you have set up the environment as per the Setup Python Environment section. Update the file locations inside the bash script to point to the appropriate files.
+- Copy the `test4_global.bash` file from the tests directory to your jobs directory. Ensure you have set up the environment as per the Setup Python Environment section. Update the file locations inside the bash script to point to the appropriate files.
 
 - Submit the bash file to the computing node or simply run it interactively:
 
@@ -146,7 +152,9 @@ The steps to use Autoval for STOFS-3D-Atlantic are very similar to those for STO
 - In the csdllib plot/map, plot/series, and plot/scatter scripts, replace the line:
     ```
      matplotlib.use('Agg', warn=False)
+    ```
      with
+    ``` 
      matplotlib.use('Agg')
     ```
 - To run Autoval, we need a main config file and up to five config files specifying the spatial extent of the maximum water level plots.
@@ -181,7 +189,9 @@ The steps to use Autoval for STOFS-3D-Pacific are very similar to those for STOF
 - In the csdllib plot/map, plot/series, and plot/scatter scripts, replace the line:
     ```
      matplotlib.use('Agg', warn=False)
+    ```
      with
+    ``` 
      matplotlib.use('Agg')
     ```
 
