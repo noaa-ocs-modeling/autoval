@@ -18,12 +18,11 @@
 
    -Install the required packages using the following commands:
      
-     ```
      conda install -c conda-forge nco=5.2.4
      conda install anaconda::git
      conda install anaconda::pycosat
      conda install matplotlib=3.3.4 seaborn=0.11.0
-     ```
+     
    -Install additional Python dependencies from requirements_windows.txt:
      ```
      pip install -r requirements_windows.txt 
@@ -106,11 +105,11 @@ Go to the `inputs` directory and create two directories: `static` and `dynamic`.
      ```
    - Inside the static folder, download grid data and coastline data:
 
-    ```
+     
      curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/GSTOFSv5.6.5_BT_DMW.14
      curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/noaa_coastline_world.dat
      curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/noaa_coastline_world.dat
-    ```
+     
 
 - In the csdllib plot/map, plot/series, and plot/scatter scripts, replace the line:
     ```
