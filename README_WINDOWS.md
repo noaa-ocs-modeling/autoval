@@ -105,11 +105,11 @@ Go to the `inputs` directory and create two directories: `static` and `dynamic`.
      ```
    - Inside the static folder, download grid data and coastline data:
 
-     
+    ``` 
      curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/GSTOFSv5.6.5_BT_DMW.14
      curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/noaa_coastline_world.dat
      curl -O ftp://ocsftp.ncd.noaa.gov/estofs/data/noaa_coastline_world.dat
-     
+    ``` 
 
 - In the csdllib plot/map, plot/series, and plot/scatter scripts, replace the line:
     ```
@@ -124,9 +124,9 @@ Go to the `inputs` directory and create two directories: `static` and `dynamic`.
 
 - For the extent of the domain, copy `config.map.estofs.glo.ini`, `config.map.estofs.atl.ini`, `config.map.estofs.pac.ini`, `config.map.puertorico.ini` from the cfg.domains folder to the config folder. You can also follow the same format and generate any domain.ini file that you would like. Just note that STOFS-2D-Global model outputs are associated with -180 to 180 longitude coordinates.
 
-- Copy the test4_global.ini file from the tests folder into your config folder. This will serve as your main configuration file. Update the directories inside the file to correspond to your paths.
+- Copy the `test4_global.ini` file from the tests folder into your config folder. This will serve as your main configuration file. Update the directories inside the file to correspond to your paths.
 
-- Copy the test4_global.bash file from the tests directory to your jobs directory. Ensure you have set up the environment as per the Setup Python Environment section. Update the file locations inside the bash script to point to the appropriate files.
+- Copy the `test4_global.bash` file from the tests directory to your jobs directory. Ensure you have set up the environment as per the Setup Python Environment section. Update the file locations inside the bash script to point to the appropriate files.
 
 - Submit the bash file to the computing node or simply run it interactively:
 
