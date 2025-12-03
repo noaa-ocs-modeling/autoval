@@ -720,7 +720,14 @@ nowcast_outputFiles, nowcast_outputFiles_biased), n = args
                 
                 # changing rmsd to rmse 
                 if 'rmsd' in M:
-                    M['rmse'] = M.pop('rmsd')
+    
+                    rmsd_value = M['rmsd']
+                    M.pop('rmsd')
+
+    
+                    M_reordered = {'rmse': rmsd_value}
+                    M_reordered.update(M) # Adds the rest of the items in their original order
+                    M = M_reordered
 
                 myPointData['id']      = info['nosid']            
                 myPointData['info']    = info
@@ -808,7 +815,14 @@ nowcast_outputFiles, nowcast_outputFiles_biased), n = args
                 
                 # changing rmsd to rmse 
                 if 'rmsd' in M:
-                    M['rmse'] = M.pop('rmsd')
+    
+                    rmsd_value = M['rmsd']
+                    M.pop('rmsd')
+
+    
+                    M_reordered = {'rmse': rmsd_value}
+                    M_reordered.update(M) # Adds the rest of the items in their original order
+                    M = M_reordered
 
                 myPointData['id']      = nosid            
                 myPointData['info']    = info
@@ -853,7 +867,14 @@ nowcast_outputFiles, nowcast_outputFiles_biased), n = args
 
                  # changing rmsd to rmse 
                  if 'rmsd' in M:
-                    M['rmse'] = M.pop('rmsd')
+    
+                    rmsd_value = M['rmsd']
+                    M.pop('rmsd')
+
+    
+                    M_reordered = {'rmse': rmsd_value}
+                    M_reordered.update(M) # Adds the rest of the items in their original order
+                    M = M_reordered
                 
                  myPointData['id']      = nosid            
                  myPointData['info']    = info
