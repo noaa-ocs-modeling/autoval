@@ -64,7 +64,7 @@ def panel (cfg, metrics, refDates, nosid, info, tag):
 
     #rmse
     pos = 0
-    axs[pos] = subplot(axs[pos],metrics['rmsd'],'RMSD',[0,1.0], [0,0.2])
+    axs[pos] = subplot(axs[pos],metrics['rmse'],'RMSE',[0,1.0], [0,0.2])   # changing to rmse
     axs[pos].set_ylabel ('meters')
     #bias
     pos = 1

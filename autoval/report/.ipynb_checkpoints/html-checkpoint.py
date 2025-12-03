@@ -171,13 +171,13 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
         # Using states_list as the indicator for US states (NOS stations)
         # The station info must be filtered to match the one on the page
         if current_state in states_list and current_country is None:
-            # We only consider stations with valid skill data (e.g., 'rmsd' is not NaN)
-            if not np.isnan(current_stats.get('rmsd', np.nan)):
+            # We only consider stations with valid skill data (e.g., 'rmse' is not NaN)
+            if not np.isnan(current_stats.get('rmse', np.nan)):  # change to rmse
                 nos_stats_list.append(current_stats)
         
         # Determine if it's an IOC station (has a country)
         elif current_country in countries_list:
-            if not np.isnan(current_stats.get('rmsd', np.nan)):
+            if not np.isnan(current_stats.get('rmse', np.nan)):  # change to rmse
                 ioc_stats_list.append(current_stats)
     
     # Calculate new average stats dictionaries
@@ -185,7 +185,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
     # The avgStats structure is {skill_metric: average_value}
     # To calculate the new averages, you average each skill metric separately.
     
-    # Get all unique skill metric keys from the full avgStats (e.g., 'rmsd', 'mae', etc.)
+    # Get all unique skill metric keys from the full avgStats (e.g., 'rmse', 'mae', etc.)
     skill_keys = list(avgStats.keys())
     
     avgStats_nos = {}
@@ -305,6 +305,14 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                     csv2html (fod, avgStats_ioc)
                     fod.write('<br>\n') # Add a line break for separation
 
+                # Add link to the readme file
+                metrics_link_html = (
+                '<p>For a detailed description of how these statistics are calculated, '
+                'please refer to the <a href="https://github.com/noaa-ocs-modeling/autoval/tree/v3.0.0?tab=readme-ov-file#package-description">'
+                'Autoval Package Description</a>.</p>\n'
+                )
+                fod.write(metrics_link_html)
+
             elif '<!--InsertTimeSeries-->' in line:
                 fod.write('Individual time-series statistics:\n')
                 fod.write('<hr>\n')
@@ -397,7 +405,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                    fod.write('<br>')
               
                 # Check if there exists a station meeting the conditions
-                station_exists = any(np.isnan(stats[n]['rmsd']) and states[n] == 'UN' and countries[n] is None for n in range(len(ids)))
+                station_exists = any(np.isnan(stats[n]['rmse']) and states[n] == 'UN' and countries[n] is None for n in range(len(ids))) # changeto rmse
 
                 # Use the 'station_exists' variable as needed
                 if station_exists:
@@ -424,7 +432,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                        fod.write(heading)
 
                        for n in range(len(indices)):
-                           if not np.isnan( stats[indices[n]]['rmsd']): #True: 
+                           if not np.isnan( stats[indices[n]]['rmse']): #True: # change to rmse
                                #fod.write('<br>\n')
                                nosid = ids[indices[n]]
                                name  = names[indices[n]]
@@ -435,7 +443,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                                fod.write('<hr>\n')
                        
                        for n in range(len(indices)):
-                           if np.isnan(stats[indices[n]]['rmsd']): #True: 
+                           if np.isnan(stats[indices[n]]['rmse']): #True: # change to rmse
                                #fod.write('<br>\n')
                                nosid = ids[indices[n]]
                                name  = names[indices[n]]
@@ -457,7 +465,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                        indices = [index for index, value in enumerate(states) if value == states_name]
 
                        for n in range(len(indices)):
-                           if not np.isnan( stats[indices[n]]['rmsd']): #True: 
+                           if not np.isnan( stats[indices[n]]['rmse']): #True: # change to rmse
                                #fod.write('<br>\n')
                                nosid = ids[indices[n]]
                                name  = names[indices[n]]
@@ -468,7 +476,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                                fod.write('<hr>\n')
 
                        for n in range(len(indices)):
-                           if np.isnan( stats[indices[n]]['rmsd']): #True: 
+                           if np.isnan( stats[indices[n]]['rmse']): #True: # change to rmse
                                #fod.write('<br>\n')
                                nosid = ids[indices[n]]
                                name  = names[indices[n]]
@@ -493,7 +501,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                       fod.write(heading)
 
                       for n in range(len(indices)):
-                          if not np.isnan( stats[indices[n]]['rmsd']): #True:
+                          if not np.isnan( stats[indices[n]]['rmse']): #True: # change to rmse
                               #fod.write('<br>\n')
                               nosid = ids[indices[n]]
                               name  = names[indices[n]]
@@ -504,7 +512,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                               fod.write('<hr>\n')
                 
                       for n in range(len(indices)):
-                          if np.isnan( stats[indices[n]]['rmsd']): #True:
+                          if np.isnan( stats[indices[n]]['rmse']): #True:  # change to rmse
                               #fod.write('<br>\n')
                               nosid = ids[indices[n]]
                               name  = names[indices[n]]
@@ -520,7 +528,7 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
                    heading = f"<h2 id='Others' style='background-color: #e0e0e0; padding: 5px; font-size: 14px;'>Other Stations without Observation <a href='#list' style='float: right;'>top</a></h2>"
                    fod.write(heading)
                 for n in range(len(ids)):
-                    if (np.isnan(stats[n]['rmsd']) and states[n] == 'UN' and countries[n] == None): #True: 
+                    if (np.isnan(stats[n]['rmse']) and states[n] == 'UN' and countries[n] == None): #True: # change to rmse
                           #fod.write('<br>\n')
                           nosid = ids[n]
                           name  = names[n]

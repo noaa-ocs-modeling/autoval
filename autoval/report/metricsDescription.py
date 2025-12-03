@@ -3,8 +3,8 @@
 def waterlevel (field):
 
     description = ''
-    if 'rmsd' in field:
-        description = 'Root Mean Square Difference, meters.'
+    if 'rmse' in field:
+        description = 'Root Mean Square Error, meters.'
     elif 'bias' in field:
         description = 'Model Bias, meters.'
     elif 'peak' in field:

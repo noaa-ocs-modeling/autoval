@@ -716,6 +716,11 @@ nowcast_outputFiles, nowcast_outputFiles_biased), n = args
            
                 # Compute statistics    
                 M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
+                
+                
+                # changing rmsd to rmse 
+                if 'rmsd' in M:
+                    M['rmse'] = M.pop('rmsd')
 
                 myPointData['id']      = info['nosid']            
                 myPointData['info']    = info
@@ -800,6 +805,10 @@ nowcast_outputFiles, nowcast_outputFiles_biased), n = args
 
                     # Compute statistics    
                 M = csdllib.methods.statistics.metrics (obsVals, modVals, refDates)
+                
+                # changing rmsd to rmse 
+                if 'rmsd' in M:
+                    M['rmse'] = M.pop('rmsd')
 
                 myPointData['id']      = nosid            
                 myPointData['info']    = info
@@ -841,6 +850,11 @@ nowcast_outputFiles, nowcast_outputFiles_biased), n = args
             if isVirtual:
                  # Compute statistics    
                  M = csdllib.methods.statistics.metrics (np.nan, np.nan, np.nan)
+
+                 # changing rmsd to rmse 
+                 if 'rmsd' in M:
+                    M['rmse'] = M.pop('rmsd')
+                
                  myPointData['id']      = nosid            
                  myPointData['info']    = info
                  myPointData['metrics'] = M
@@ -999,7 +1013,7 @@ def waterLevel (cfg, path, tag):
         gc.collect()
         # Plot stats on the map
         if cfg['Analysis']['pointskillmap']:
-            plt.skill.map (cfg, lon, lat, mtx, 'rmsd', [0., 1.],      [0.,0.2],tag)
+            plt.skill.map (cfg, lon, lat, mtx, 'rmse', [0., 1.],      [0.,0.2],tag)  # change rmsd to rmse
             plt.skill.map (cfg, lon, lat, mtx, 'bias', [-1., 1.],     [-0.2, 0.2], tag)
             plt.skill.map (cfg, lon, lat, mtx, 'peak', [-1., 1.],     [-0.2, 0.2], tag)
             plt.skill.map (cfg, lon, lat, mtx, 'plag', [-360., 360.], [-30., 30.], tag)
