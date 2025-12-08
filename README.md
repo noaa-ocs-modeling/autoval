@@ -66,22 +66,40 @@ To download the Autoval package, follow these steps:
 - Autoval uses different performance metrics to assess the model's skill at any specific location. The performance metrics are listed below:
 
     - RMSE (meters): Root Mean Square Error between the model and the observations.
+
       $$\text{RMSE} = \sqrt{\frac{1}{N} \sum_{i=1}^{N} (M_i - D_i)^2}$$
     - PEAK (meters): Under/overestimation of the maximal water level.
+
       $$\text{PEAK} = \max(M) - \max(D)$$
     - PLAG (minutes): Time lag between the modeled and the observed peak in water level.
+
       $$\text{PLAG} = (t_{\text{peak}, M} - t_{\text{peak}, D}) \quad \text{(minutes)}$$
     - BIAS (meters): Linear bias in the modeled water level.
+
       $$\text{BIAS} = \bar{M} - \bar{D}$$
     - VEXP (%): Variance explained, a measure of coherence between the model and the observations.
-      $$\text{VEXP} = \text{max} \left( 0, \min \left( 100 \cdot \frac{\sigma_D - \sigma_{D-M}}{\sigma_D}, 100 \right) \right) \quad (\%)$$
+
+      $$\text{VEXP} = \text{max} \left( 0, \min \left( 100 \cdot \frac{\sigma_D - \sigma_{D-M}}{\sigma_D}, 100 \right) \right) \quad $$
     - SKIL (unitless): Statistical Skill of the model against the observations.
+      
       $$\text{SKIL} = 1 - \frac{\sum_{i=1}^{N} (M_i - D_i)^2}{\sum_{i=1}^{N} \left(|M_i - \bar{D}| + |D_i - \bar{D}|\right)^2}$$
     - RVAL (unitless): R-Value of the model against the observations.
+      
       $$\text{RVAL} = \frac{\sum_{i=1}^{N} (D_i - \bar{D})(M_i - \bar{M})}{\sqrt{\sum_{i=1}^{N} (D_i - \bar{D})^2} \sqrt{\sum_{i=1}^{N} (M_i - \bar{M})^2}}$$
+      
     - NPTS (unitless): The number of 6-minute model/data pairs at the location that went into computing the above metrics.
     
-    Key Notation:$M_i$: Modeled water level at time $i$.$D_i$: Observed water level at time $i$.$\bar{M}, \bar{D}$: Mean of modeled and observed values, respectively.$N$: Total number of valid data pairs.$\sigma_X$: Standard deviation of $X$.
+    **Key Notation:**
+  
+  $M_i$: Modeled water level at time $i$.
+  
+  $D_i$: Observed water level at time $i$.
+  
+  $\bar{M}, \bar{D}$: Mean of modeled and observed values, respectively.
+  
+  $N$: Total number of valid data pairs.
+  
+  $\sigma_X$: Standard deviation of $X$.
 
 For more information, please refer to this [link](https://polar.ncep.noaa.gov/estofs/glo.htm).
 
