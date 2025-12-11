@@ -199,20 +199,63 @@ def pointSeries(cfg, obsVals, modVals, refDates, nosid, info, tag,
        # Use the specified values
        ylim = [cfg['WaterLevel']['pointymin'], cfg['WaterLevel']['pointymax']]
     else:
-       # Calculate the min/max for each dataset individually
+       #Calculate the min/max for each dataset individually
        obs_min = np.nanmin(obsVals)
        obs_max = np.nanmax(obsVals)
        mod_min = np.nanmin(modVals)
        mod_max = np.nanmax(modVals)
-       # Find the overall minimum and maximum from the four values
-       if obs_min is None and obs_max is None:
-           y_min = mod_min-0.1
-           y_max = mod_max+0.1
-       else:  
-           y_min = np.nanmin([obs_min, mod_min])-0.1
-           y_max = np.nanmax([obs_max, mod_max])+0.1
-       # Assign the final ylim
-       ylim = [y_min, y_max]
+
+       # --- START OF FIX ---
+       def safe_to_float(val):
+           """
+           Safely attempts to convert a value to a float. 
+           Returns np.nan if conversion fails (indicating None, empty scalar, etc.).
+           """
+           try:
+               # Tries to convert the value to a float (including standard NumPy scalars)
+               return float(val)
+           except (TypeError, ValueError):
+               # Catches errors if the value is None, or a non-numeric/empty object
+               return np.nan
+
+       # Convert all extremes to a standard float or np.nan
+       all_values = [
+          safe_to_float(obs_min),
+          safe_to_float(obs_max),
+          safe_to_float(mod_min),
+          safe_to_float(mod_max)
+          ]
+       
+       #Filter out all NaN values to get only the valid numbers
+       valid_values = [v for v in all_values if not np.isnan(v)]
+
+       # Check for the case where all min/max values are NaN (meaning no valid data)
+       if not valid_values:
+          # Fallback if no valid data exists in any array (e.g., set a default)
+          y_abs_max = 0.0
+       else:
+          # Find the overall absolute maximum value among the four min/max values
+          y_abs_max = np.max(np.abs(valid_values))
+        
+          # Apply the stepwise logic based on the overall absolute maximum
+       if y_abs_max < 1.0:
+          ylim = [-1.0, 1.0]
+       elif 1.0 <= y_abs_max < 2.0:
+          ylim = [-2.0, 2.0]
+       elif 2.0 <= y_abs_max < 4.0:
+          ylim = [-4.0, 4.0]
+       elif 4.0 <= y_abs_max < 6.0:
+          ylim = [-6.0, 6.0]
+       elif 6.0 <= y_abs_max < 8.0:
+          ylim = [-8.0, 8.0]
+       else:
+          # Default behavior for values >= 8.0 or if the stepwise logic wasn't met
+          # Ensure mod_min and mod_max are used as fallback if obs data is all NaN
+          y_min = np.nanmin([obs_min if not np.isnan(obs_min) else mod_min, 
+                            mod_min])-0.1
+          y_max = np.nanmax([obs_max if not np.isnan(obs_max) else mod_max, 
+                            mod_max])+0.1
+          ylim = [y_min, y_max]
 
 
     vdatum = cfg['Analysis']['vdatum']

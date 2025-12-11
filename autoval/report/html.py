@@ -55,7 +55,7 @@ def csv2html (fod, avgStats):
     fod.write('</tr>\n<tr>\n')
     for key in avgStats:
         fod.write('<td>\n')
-        fod.write( str(np.round(avgStats[key],3)) + '\n') #changed to millimeter percision
+        fod.write( "{:.3f}\n".format(np.round(avgStats[key], 3)) ) #changed to millimeter percision
         fod.write('</td>\n')
     fod.write('</tr>') 
     fod.write('</table>\n')
@@ -208,7 +208,16 @@ def singleReport (cfg, tag, info, datespan, stats, avgStats):
             else:
                 avgStats_ioc[key] = np.nan
 
-
+    all_stats_list = nos_stats_list + ioc_stats_list
+    
+    avgStats = {} # Re-initialize the average
+    if all_stats_list:
+       for key in skill_keys:
+           values = [s.get(key, np.nan) for s in all_stats_list if not np.isnan(s.get(key, np.nan))]
+           if values:
+               avgStats[key] = np.mean(values)
+           else:
+               avgStats[key] = np.nan
 
     
     outFile   = os.path.join( reportDir, 'index.htm')
