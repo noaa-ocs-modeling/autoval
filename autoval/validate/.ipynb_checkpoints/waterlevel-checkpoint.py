@@ -986,7 +986,7 @@ def pointValidation (cfg, path, tag):
     #--------------------------------------
     # accessing COOPS API only once:
     # api issue in searvey 
-    
+    '''
     def patched_normalize_coops_stations(df: pd.DataFrame) -> geopandas.GeoDataFrame:
         if "lon" in df.columns:
             df.loc[df.lon.notnull(), "lng"] = df.lon[df.lon.notnull()]
@@ -1023,7 +1023,62 @@ def pointValidation (cfg, path, tag):
         df = df.drop_duplicates(subset=["nos_id", "nws_id", "station_type", "status", "removed"]).set_index("nos_id")
     
         return geopandas.GeoDataFrame(data=df, geometry=geopandas.points_from_xy(df.lon, df.lat, crs="EPSG:4326"))
+    '''
+    def patched_normalize_coops_stations(df: pd.DataFrame) -> geopandas.GeoDataFrame:
 
+        # If 'lon' exists, move it to 'lng'; if 'stationID' exists, move it to 'id'
+        if "lon" in df.columns:
+            df["lng"] = df["lng"].fillna(df["lon"]) if "lng" in df.columns else df["lon"]
+        if "stationID" in df.columns:
+            df["id"] = df["id"].fillna(df["stationID"]) if "id" in df.columns else df["stationID"]
+
+        df = df.drop(columns=["lon", "stationID"], errors='ignore')
+
+        if "details.removed" in df.columns:
+            df["details.removed"] = pd.to_datetime(df["details.removed"], errors='coerce')
+        else:
+            df["details.removed"] = pd.NaT
+
+        df = df.rename(
+            columns={
+                "id": "nos_id",
+                "shefcode": "nws_id",
+                "lat": "lat",
+                "lng": "lon",
+                "details.removed": "removed",
+            }
+        )
+        # Ensure all required columns exist before astype and filtering
+        required_cols = ["nos_id", "nws_id", "lat", "lon", "state", "name", "station_type", "removed"]
+        for col in required_cols:
+            if col not in df.columns:
+                df[col] = np.nan if col in ["lat", "lon"] else ""
+
+        df = df.astype({
+            "nos_id": "string",
+            "nws_id": "string",
+            "lon": np.float32,
+            "lat": np.float32,
+            "state": "string",
+            "name": "string",
+        })
+
+        df = df[required_cols]
+    
+        # Assign status based on the 'removed' column
+        df["status"] = coops.COOPS_StationStatus.ACTIVE.value
+        df.loc[df["removed"].notna(), "status"] = coops.COOPS_StationStatus.DISCONTINUED.value
+
+        # Remove duplicates and set index
+        df = df.drop_duplicates(subset=["nos_id", "nws_id", "station_type", "status", "removed"])
+        df = df.set_index("nos_id")
+
+        return geopandas.GeoDataFrame(
+            data=df, 
+            geometry=geopandas.points_from_xy(df.lon, df.lat, crs="EPSG:4326")
+        )
+
+    
     # Apply the patch: Swap the library's function for our new one
     coops.normalize_coops_stations = patched_normalize_coops_stations
     coops_table = coops.get_coops_stations(metadata_source='main')
