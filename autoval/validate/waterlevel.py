@@ -541,7 +541,9 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
     forecast = model['zeta'][:,n]
 
     forecast[np.where(forecast<-100.)] = np.nan  # _fillvalue doesnt work
-    
+    forecast[np.where(forecast>100.)] = np.nan  # _fillvalue doesnt work
+
+           
     if cfg['Analysis']['nowcast'] == 1: 
        num_intervals_per_hour = int(60 / 6)  # 6 minutes interval
        num_intervals_hours = num_intervals_per_hour * cfg['Analysis']['nowcastperiodineachfile']
@@ -571,7 +573,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
 
                #nowcast=np.array(nowcast)
                nowcast[np.where(nowcast<-100.)] = np.nan  # _fillvalue doesnt work
-           
+               nowcast[np.where(nowcast>100.)] = np.nan  # _fillvalue doesnt work
     if cfg['Analysis']['dynamicbiascorrection'] == 1:
 
 
@@ -592,7 +594,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
 
        #nowcast=np.array(nowcast)
        nowcast_biased[np.where(nowcast_biased<-100.)] = np.nan  # _fillvalue doesnt work
-
+       nowcast_biased[np.where(nowcast_biased>100.)] = np.nan  # _fillvalue doesnt work
 
     # Try to obtain NOS ID
     nosid = csdllib.data.coops.getNOSID ( stations[n].strip() )
@@ -646,7 +648,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
         info['country'] = None
         msg('w','Station is not NOAA gauge. Using id=' + info['nosid'])
      
-
+  
     # Check lon/lats  
   
     
@@ -728,7 +730,8 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
                     M_reordered = {'rmse': rmsd_value}
                     M_reordered.update(M) # Adds the rest of the items in their original order
                     M = M_reordered
-
+                  
+                
                 myPointData['id']      = info['nosid']            
                 myPointData['info']    = info
                 myPointData['metrics'] = M
@@ -791,7 +794,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
 
                 elif len(forecast) == 0 or np.sum(~np.isnan(forecast)) == 0:
                     msg('w','No forecast found for station ' + nosid + ', skipping.')
-
+          
                 else:
 
                     # Unify model and data series 
