@@ -14,8 +14,7 @@ import gc
 from searvey import coops 
 from searvey import ioc
 from searvey import uhslc
-import geopandas
-import pandas as pd
+
 
 #==============================================================================
 def detectCycle (tag):
@@ -320,23 +319,24 @@ def fieldValidation (cfg, path, tag, grid):
 #==============================================================================
 # get COOPS station info
 
-def getNOS_StationInfo (stationID, coops_table): 
+def getNOS_StationInfo (stationID): 
           
     try:
-        station = coops_table[coops_table['station_type'] == 'waterlevels'].loc[stationID] # using new coops api and only once
-        #station = coops.COOPS_Station(int(stationID))
+
+        station = coops.COOPS_Station(int(stationID))
+
     except:
 
         msg('e','Cannot get info for  ' + stationID)
         return None
     
     try:
-        
-        stationName = station['name']
-        stationState = station['state']
-        lat = station['lat']
-        lon = station['lon']
-        
+
+        stationName = station.name
+        stationState = station.state
+        lat = station.location.y
+        lon = station.location.x  
+
         #This is ADCIRC requirement.
         if lon > 0:
             lon = lon - 360.
@@ -532,7 +532,7 @@ def getIOCData(uhslcid,datespan):
 #def stationValidation(cfg, path, tag, lonMin, lonMax, latMin, latMax, n, stations, model, tmpDir, datespan, pointSkill):
 def stationValidation(args):
     (cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, 
-nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
+nowcast_outputFiles, nowcast_outputFiles_biased), n = args
     msg('i', 'Working on station : ' + str(n).zfill(5) + 
                                    ' ' + stations[n].strip())
     myPointData = dict () 
@@ -541,9 +541,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
     forecast = model['zeta'][:,n]
 
     forecast[np.where(forecast<-100.)] = np.nan  # _fillvalue doesnt work
-    forecast[np.where(forecast>100.)] = np.nan  # _fillvalue doesnt work
-
-           
+    
     if cfg['Analysis']['nowcast'] == 1: 
        num_intervals_per_hour = int(60 / 6)  # 6 minutes interval
        num_intervals_hours = num_intervals_per_hour * cfg['Analysis']['nowcastperiodineachfile']
@@ -573,7 +571,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
 
                #nowcast=np.array(nowcast)
                nowcast[np.where(nowcast<-100.)] = np.nan  # _fillvalue doesnt work
-               nowcast[np.where(nowcast>100.)] = np.nan  # _fillvalue doesnt work
+           
     if cfg['Analysis']['dynamicbiascorrection'] == 1:
 
 
@@ -594,10 +592,10 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
 
        #nowcast=np.array(nowcast)
        nowcast_biased[np.where(nowcast_biased<-100.)] = np.nan  # _fillvalue doesnt work
-       nowcast_biased[np.where(nowcast_biased>100.)] = np.nan  # _fillvalue doesnt work
+
 
     # Try to obtain NOS ID
-    nosid = csdllib.data.coops.getNOSID ( stations[n].strip() )
+    nosid       = csdllib.data.coops.getNOSID ( stations[n].strip() )
   
 
     # Try to obtaion UHSLC ID
@@ -624,7 +622,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
         # Try to get stations' info, save locally as info.nos.XXXXXXX.dat
         localFile = os.path.join(cfg['Analysis']['localdatadir'], 'info.nos.'+nosid+'.dat')
         if not os.path.exists(localFile) and uhslcid is None:  # Is not IOC station
-            info = getNOS_StationInfo(nosid, coops_table)
+            info = getNOS_StationInfo(nosid)
             if info is None:
                 msg('w','No info found for station ' + nosid)
                 isVirtual = True
@@ -648,7 +646,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
         info['country'] = None
         msg('w','Station is not NOAA gauge. Using id=' + info['nosid'])
      
-  
+
     # Check lon/lats  
   
     
@@ -730,8 +728,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
                     M_reordered = {'rmse': rmsd_value}
                     M_reordered.update(M) # Adds the rest of the items in their original order
                     M = M_reordered
-                  
-                
+
                 myPointData['id']      = info['nosid']            
                 myPointData['info']    = info
                 myPointData['metrics'] = M
@@ -794,7 +791,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
 
                 elif len(forecast) == 0 or np.sum(~np.isnan(forecast)) == 0:
                     msg('w','No forecast found for station ' + nosid + ', skipping.')
-          
+
                 else:
 
                     # Unify model and data series 
@@ -956,6 +953,7 @@ def pointValidation (cfg, path, tag):
     # Set/get datespan
     dates = model['time']
 
+    
     datespan = [dates[0], dates[-1]] 
     try:
         datespan[0] = stampToTime (cfg[diagVar].get('pointdatesstart'))
@@ -985,115 +983,13 @@ def pointValidation (cfg, path, tag):
     num_stations = len(stations)
     #num_stations = 239
     tupleArgs = []
-    
-    #--------------------------------------
-    # accessing COOPS API only once:
-    # api issue in searvey 
-    '''
-    def patched_normalize_coops_stations(df: pd.DataFrame) -> geopandas.GeoDataFrame:
-        if "lon" in df.columns:
-            df.loc[df.lon.notnull(), "lng"] = df.lon[df.lon.notnull()]
-        if "stationID" in df.columns:
-            df.loc[df.stationID.notnull(), "id"] = df.stationID[df.stationID.notnull()]
-    
-        df = df.drop(columns=["lon", "stationID"])
-    
-        # FIX: Convert the 'removed' column separately using format='mixed' or errors='coerce'
-        # This prevents the ValueError 
-        df["details.removed"] = pd.to_datetime(df["details.removed"], errors='coerce')
-        import numpy
-        df = df.rename(
-            columns={
-                "id": "nos_id",
-                "shefcode": "nws_id",
-                "lat": "lat",
-                "lng": "lon",
-                "details.removed": "removed",
-            }
-        ).astype({
-            "nos_id": "string",
-            "nws_id": "string",
-            "lon": numpy.float32,
-            "lat": numpy.float32,
-            "state": "string",
-            "name": "string",
-            # Removed 'removed' from astype because we handled it above
-        })
-    
-        df = df[["nos_id", "nws_id", "station_type", "name", "state", "lon", "lat", "removed"]]
-        df["status"] = coops.COOPS_StationStatus.ACTIVE.value
-        df.loc[~df.removed.isna(), "status"] = coops.COOPS_StationStatus.DISCONTINUED.value
-        df = df.drop_duplicates(subset=["nos_id", "nws_id", "station_type", "status", "removed"]).set_index("nos_id")
-    
-        return geopandas.GeoDataFrame(data=df, geometry=geopandas.points_from_xy(df.lon, df.lat, crs="EPSG:4326"))
-    '''
-    def patched_normalize_coops_stations(df: pd.DataFrame) -> geopandas.GeoDataFrame:
-
-        # If 'lon' exists, move it to 'lng'; if 'stationID' exists, move it to 'id'
-        if "lon" in df.columns:
-            df["lng"] = df["lng"].fillna(df["lon"]) if "lng" in df.columns else df["lon"]
-        if "stationID" in df.columns:
-            df["id"] = df["id"].fillna(df["stationID"]) if "id" in df.columns else df["stationID"]
-
-        df = df.drop(columns=["lon", "stationID"], errors='ignore')
-
-        if "details.removed" in df.columns:
-            df["details.removed"] = pd.to_datetime(df["details.removed"], errors='coerce')
-        else:
-            df["details.removed"] = pd.NaT
-
-        df = df.rename(
-            columns={
-                "id": "nos_id",
-                "shefcode": "nws_id",
-                "lat": "lat",
-                "lng": "lon",
-                "details.removed": "removed",
-            }
-        )
-        # Ensure all required columns exist before astype and filtering
-        required_cols = ["nos_id", "nws_id", "lat", "lon", "state", "name", "station_type", "removed"]
-        for col in required_cols:
-            if col not in df.columns:
-                df[col] = np.nan if col in ["lat", "lon"] else ""
-
-        df = df.astype({
-            "nos_id": "string",
-            "nws_id": "string",
-            "lon": np.float32,
-            "lat": np.float32,
-            "state": "string",
-            "name": "string",
-        })
-
-        df = df[required_cols]
-    
-        # Assign status based on the 'removed' column
-        df["status"] = coops.COOPS_StationStatus.ACTIVE.value
-        df.loc[df["removed"].notna(), "status"] = coops.COOPS_StationStatus.DISCONTINUED.value
-
-        # Remove duplicates and set index
-        df = df.drop_duplicates(subset=["nos_id", "nws_id", "station_type", "status", "removed"])
-        df = df.set_index("nos_id")
-
-        return geopandas.GeoDataFrame(
-            data=df, 
-            geometry=geopandas.points_from_xy(df.lon, df.lat, crs="EPSG:4326")
-        )
-
-    
-    # Apply the patch: Swap the library's function for our new one
-    coops.normalize_coops_stations = patched_normalize_coops_stations
-    coops_table = coops.get_coops_stations(metadata_source='main')
-    #--------------------------------------
-
     for i in range(num_stations):
         if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] == 1:
-           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, sorted(nowcast_outputFiles),sorted(nowcast_outputFiles_biased),coops_table))
+           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, sorted(nowcast_outputFiles),sorted(nowcast_outputFiles_biased)))
         elif cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] != 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
-           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, sorted(nowcast_outputFiles),None,coops_table))
+           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, sorted(nowcast_outputFiles),None))
         else:
-           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, None, None, coops_table))           
+           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, None, None))           
  
     input = zip(tupleArgs, range(num_stations))
     pool = multiprocessing.Pool(processes=nProcessors)
