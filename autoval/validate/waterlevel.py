@@ -473,7 +473,7 @@ def getIOCData(uhslcid,datespan):
 
        # take data every six minutes
        filtered_df.set_index('time', inplace=True)
-       station_df_resampled = filtered_df.resample('6T').first()
+       station_df_resampled = filtered_df.resample('6min').first()
        station_df_resampled.reset_index(inplace=True)   
    
        #In some stations we have the report of multiple sensores, here we first calculate the relative water level
