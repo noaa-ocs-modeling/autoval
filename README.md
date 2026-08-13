@@ -224,7 +224,7 @@ Inside the dynamic folder, download STOFS-3D-Atlantic outputs using the followin
 
      ```
      wget https://noaa-nos-stofs3d-pds.s3.amazonaws.com/STOFS-3D-Atl/staticfiles/v2.1/stofs_3d_atl_hgrid.gr3
-     wget https://noaa-nos-stofs3d-pds.s3.amazonaws.com/index.html#STOFS-3D-Atl/coastline/
+     wget https://noaa-nos-stofs3d-pds.s3.amazonaws.com/STOFS-3D-Atl/coastline/coastline.dat
      ```
   - To run Autoval, we need a main config file and up to five config files specifying the spatial extent of the maximum water level plots.
 
