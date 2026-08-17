@@ -8,13 +8,10 @@ conda activate autoval_env
 # Set path to python3
 pyPath=/work/noaa/nosofs/aalipour/envs/miniconda3/envs/autoval_env/bin/python
 
-module load nco
-
 datetimeLabel="202501091830" #$(date +\%Y\%m\%d\%H\%M)
 currenttime="18:30" #$(date +%H:%M)
 echo $currenttime
 runDate="20230717" 
-
 
 export USER=`whoami`
 
