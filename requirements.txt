@@ -4,6 +4,7 @@
 # Note: csdllib is not on PyPI; install separately from
 #   https://github.com/noaa-ocs-modeling/csdllib
 
+--only-binary :all:
 searvey
 xarray
 netcdf4
