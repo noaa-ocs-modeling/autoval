@@ -1,15 +1,11 @@
 #!/bin/bash
 
 #Script execution instructions
+source /work/noaa/nosofs/aalipour/envs/miniconda3/etc/profile.d/conda.sh
+conda activate autoval_env
 
-source /work/noaa/nosofs/aalipour/envs/autoval_env/bin/activate  #activate the virtual environment
-
-
-# Set path to python3 
-pyPath=/work/noaa/nosofs/aalipour/envs/autoval_env/bin/python
-
-module load nco
-
+# Set path to python3
+pyPath=/work/noaa/nosofs/aalipour/envs/miniconda3/envs/autoval_env/bin/python
 
 datetimeLabel="202403101030" #$(date +\%Y\%m\%d\%H\%M)
 currenttime="10:30" #$(date +%H:%M)

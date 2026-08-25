@@ -13,9 +13,11 @@ import multiprocessing
 import gc
 from searvey import coops 
 from searvey import ioc
-from searvey import uhslc
-import geopandas
-import pandas as pd
+import requests as _requests
+import io as _io
+import codecs as _codecs
+import pandas as _pd_uhslc
+
 
 #==============================================================================
 def detectCycle (tag):
@@ -320,23 +322,24 @@ def fieldValidation (cfg, path, tag, grid):
 #==============================================================================
 # get COOPS station info
 
-def getNOS_StationInfo (stationID, coops_table): 
+def getNOS_StationInfo (stationID): 
           
     try:
-        station = coops_table[coops_table['station_type'] == 'waterlevels'].loc[stationID] # using new coops api and only once
-        #station = coops.COOPS_Station(int(stationID))
+
+        station = coops.COOPS_Station(int(stationID))
+
     except:
 
         msg('e','Cannot get info for  ' + stationID)
         return None
     
     try:
-        
-        stationName = station['name']
-        stationState = station['state']
-        lat = station['lat']
-        lon = station['lon']
-        
+
+        stationName = station.name
+        stationState = station.state
+        lat = station.location.y
+        lon = station.location.x  
+
         #This is ADCIRC requirement.
         if lon > 0:
             lon = lon - 360.
@@ -420,23 +423,128 @@ def remove_outliers(data, window_size):
 
 #=======================================
 
+# def get_uhslc_station_info
+#
+# Returns (ssc_id, station_name, station_country) for a given UHSLC id.
+# Queries global_hourly_fast first, then falls back to global_hourly_rqds,
+# because not all UHSLC stations are present in the fast-delivery dataset.
+
+_UHSLC_SSC_CACHE = {}   # module-level cache to avoid repeated ERDDAP calls
+
+def _decode_uhslc_country(raw):
+    """Fix double-encoded UTF-8 country strings returned by the UHSLC ERDDAP.
+
+    Some country names (e.g. Réunion, Côte d'Ivoire, Curaçao) are stored as
+    UTF-8 bytes that were misread as Latin-1 and then unicode-escaped, resulting
+    in strings like ``R\\u00c3\\u00a9union``.  This function detects and repairs
+    that encoding, and also strips any stray surrounding quotes.
+    """
+    if not raw:
+        return raw
+    raw = raw.strip().strip('"')
+    if '\\u00' in raw:
+        try:
+            raw = _codecs.decode(raw.encode('utf-8'), 'unicode_escape').encode('latin1').decode('utf-8')
+        except Exception:
+            pass
+    return raw
+
+
+def _query_uhslc_erddap(uhslcid, dataset):
+    """Query a UHSLC ERDDAP tabledap dataset for station metadata."""
+    url = ('https://uhslc.soest.hawaii.edu/erddap/tabledap/{ds}.csv'
+           '?uhslc_id,ssc_id,station_name,station_country'
+           '&uhslc_id={id}&distinct()'.format(ds=dataset, id=int(uhslcid)))
+    try:
+        r = _requests.get(url, timeout=15)
+        # Skip the units row (index 1) and parse with pandas so that
+        # comma-containing country names (e.g. "Micronesia, Federated States of")
+        # are handled correctly.
+        lines = r.text.split('\n')
+        if len(lines) < 3:
+            return None, None, None
+        csv_text = lines[0] + '\n' + '\n'.join(lines[2:])
+        df = _pd_uhslc.read_csv(_io.StringIO(csv_text))
+        if df.empty or 'ssc_id' not in df.columns:
+            return None, None, None
+        row = df.iloc[0]
+        ssc_id  = str(row.get('ssc_id',  '')).strip() or None
+        name    = str(row.get('station_name',    '')).strip() or None
+        country = _decode_uhslc_country(str(row.get('station_country', ''))) or None
+        return ssc_id, name, country
+    except Exception:
+        pass
+    return None, None, None
+
+_IOC_STATIONS_CACHE = None   # cached IOC station GeoDataFrame
+
+def _get_ioc_stations_cached():
+    """Return the IOC station list, caching it after the first fetch."""
+    global _IOC_STATIONS_CACHE
+    if _IOC_STATIONS_CACHE is None:
+        try:
+            _IOC_STATIONS_CACHE = ioc._get_ioc_stations()
+        except Exception:
+            _IOC_STATIONS_CACHE = None
+    return _IOC_STATIONS_CACHE
+
+
+def getUHSLC_StationInfo(uhslcid, lon=None, lat=None):
+    """Return (ssc_id, station_name, station_country) for a UHSLC id.
+
+    Strategy:
+    1. Query global_hourly_fast ERDDAP dataset.
+    2. Fall back to global_hourly_rqds (research-quality) ERDDAP dataset.
+    3. If still not found and model lon/lat are provided, find the nearest
+       IOC station within 1.5 degrees as a last resort.  This handles UHSLC
+       stations that are not in either ERDDAP dataset but do have IOC data
+       (e.g. UH914 Meulaboh, UH908 Port Blair, UH818 Smogen …).
+    """
+    uhslcid = int(uhslcid)
+    cache_key = (uhslcid, round(lon, 3) if lon is not None else None,
+                           round(lat, 3) if lat is not None else None)
+    if cache_key in _UHSLC_SSC_CACHE:
+        return _UHSLC_SSC_CACHE[cache_key]
+
+    # 1 & 2 — ERDDAP lookup
+    for dataset in ('global_hourly_fast', 'global_hourly_rqds'):
+        ssc_id, name, country = _query_uhslc_erddap(uhslcid, dataset)
+        if ssc_id:
+            result = (ssc_id, name, country)
+            _UHSLC_SSC_CACHE[cache_key] = result
+            return result
+
+    # 3 — coordinate-based nearest-IOC fallback
+    if lon is not None and lat is not None:
+        ioc_df = _get_ioc_stations_cached()
+        if ioc_df is not None and not ioc_df.empty:
+            ioc_lons = ioc_df.geometry.x.values
+            ioc_lats = ioc_df.geometry.y.values
+            dist = np.sqrt((ioc_lons - lon) ** 2 + (ioc_lats - lat) ** 2)
+            nearest_idx = int(np.argmin(dist))
+            if dist[nearest_idx] <= 1.5:
+                row     = ioc_df.iloc[nearest_idx]
+                ssc_id  = str(row['ioc_code']).strip() or None
+                name    = str(row['location']).strip() or None
+                country = str(row['country']).strip() or None
+                if ssc_id:
+                    result = (ssc_id, name, country)
+                    _UHSLC_SSC_CACHE[cache_key] = result
+                    return result
+
+    _UHSLC_SSC_CACHE[cache_key] = (None, None, None)
+    return None, None, None
+
+
+#=======================================
+
 # def get_IOC_country
 
-def getIOC_Country(uhslcid,datespan):
+def getIOC_Country(uhslcid, datespan, lon=None, lat=None):
     ioc_country = None
 
     try:
-
-       # get uhslc id 
-       all_UHSLC_stations = uhslc.get_uhslc_data(start_date = datespan[0]-timedelta(days=1095),end_date=datespan[1]-timedelta(days=1085),)   #get data from 3 years ago, UHSLC is not updated
-       all_UHSLC_stations = all_UHSLC_stations.set_index('uhslc_id')
-       stationn=int(uhslcid)
-   
-       
-       # Get IOC country name for plotting
-       ioc_stations_c = all_UHSLC_stations['station_country'][stationn]
-       ioc_stations_c_new = ioc_stations_c.reset_index()
-       ioc_country = ioc_stations_c_new['station_country'][0]
+       _, _, ioc_country = getUHSLC_StationInfo(uhslcid, lon=lon, lat=lat)
        return ioc_country
 
     except:
@@ -450,19 +558,17 @@ def getIOC_Country(uhslcid,datespan):
 
 # This function use UHSLC id
 
-def getIOCData(uhslcid,datespan): 
+def getIOCData(uhslcid, datespan, lon=None, lat=None): 
 
    try:
-       # Get IOC Id using uhslc id 
-       all_UHSLC_stations = uhslc.get_uhslc_data(start_date = datespan[0]-timedelta(days=1095),end_date=datespan[1]-timedelta(days=1085),)   #get data from 3 years ago, UHSLC is not updated
-     
-       all_UHSLC_stations = all_UHSLC_stations.set_index('uhslc_id')
-       stationn=int(uhslcid)
+       # Get IOC id (ssc_id) for this UHSLC station.
+       # getUHSLC_StationInfo queries ERDDAP first, then falls back to a
+       # coordinate-based nearest-IOC search if lon/lat are supplied.
+       ioc_id, _, _ = getUHSLC_StationInfo(uhslcid, lon=lon, lat=lat)
 
-       ioc_stations = all_UHSLC_stations['ssc_id'][stationn]
-       ioc_stations_new = ioc_stations.reset_index()
-       ioc_id = ioc_stations_new['ssc_id'][0]
-       
+       if not ioc_id:
+           return {'dates' : [], 'values' : []}
+        
          
        # download data using ioc function in searvey
        station_df = ioc.get_ioc_station_data(ioc_code = ioc_id,endtime=datespan[1], )
@@ -473,7 +579,7 @@ def getIOCData(uhslcid,datespan):
 
        # take data every six minutes
        filtered_df.set_index('time', inplace=True)
-       station_df_resampled = filtered_df.resample('6T').first()
+       station_df_resampled = filtered_df.resample('6min').first()
        station_df_resampled.reset_index(inplace=True)   
    
        #In some stations we have the report of multiple sensores, here we first calculate the relative water level
@@ -532,18 +638,17 @@ def getIOCData(uhslcid,datespan):
 #def stationValidation(cfg, path, tag, lonMin, lonMax, latMin, latMax, n, stations, model, tmpDir, datespan, pointSkill):
 def stationValidation(args):
     (cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, 
-nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
+nowcast_outputFiles, nowcast_outputFiles_biased), n = args
     msg('i', 'Working on station : ' + str(n).zfill(5) + 
                                    ' ' + stations[n].strip())
     myPointData = dict () 
     isVirtual   = False  # 'virtual' station has no obs counterpart
+    info        = {}     # populated below; initialised here to avoid UnboundLocalError
 
     forecast = model['zeta'][:,n]
 
     forecast[np.where(forecast<-100.)] = np.nan  # _fillvalue doesnt work
-    forecast[np.where(forecast>100.)] = np.nan  # _fillvalue doesnt work
-
-           
+    
     if cfg['Analysis']['nowcast'] == 1: 
        num_intervals_per_hour = int(60 / 6)  # 6 minutes interval
        num_intervals_hours = num_intervals_per_hour * cfg['Analysis']['nowcastperiodineachfile']
@@ -573,7 +678,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
 
                #nowcast=np.array(nowcast)
                nowcast[np.where(nowcast<-100.)] = np.nan  # _fillvalue doesnt work
-               nowcast[np.where(nowcast>100.)] = np.nan  # _fillvalue doesnt work
+           
     if cfg['Analysis']['dynamicbiascorrection'] == 1:
 
 
@@ -594,10 +699,10 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
 
        #nowcast=np.array(nowcast)
        nowcast_biased[np.where(nowcast_biased<-100.)] = np.nan  # _fillvalue doesnt work
-       nowcast_biased[np.where(nowcast_biased>100.)] = np.nan  # _fillvalue doesnt work
+
 
     # Try to obtain NOS ID
-    nosid = csdllib.data.coops.getNOSID ( stations[n].strip() )
+    nosid       = csdllib.data.coops.getNOSID ( stations[n].strip() )
   
 
     # Try to obtaion UHSLC ID
@@ -616,7 +721,9 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
         info['lat']   =  model['lat'][n]
         info['name']  =  model['stations'][n]
         info['state'] = 'UN'
-        info['country'] = getIOC_Country(uhslcid,datespan)
+        info['country'] = getIOC_Country(uhslcid, datespan,
+                                          lon=model['lon'][n],
+                                          lat=model['lat'][n])
         msg('w','Station is uhslc gauge. Using id=' + info['nosid'])
 
     else:
@@ -624,7 +731,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
         # Try to get stations' info, save locally as info.nos.XXXXXXX.dat
         localFile = os.path.join(cfg['Analysis']['localdatadir'], 'info.nos.'+nosid+'.dat')
         if not os.path.exists(localFile) and uhslcid is None:  # Is not IOC station
-            info = getNOS_StationInfo(nosid, coops_table)
+            info = getNOS_StationInfo(nosid)
             if info is None:
                 msg('w','No info found for station ' + nosid)
                 isVirtual = True
@@ -639,16 +746,20 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
 
     if isVirtual:
 
+        # Preserve the IOC country if it was already resolved (UH station with
+        # no obs but a known country should still appear under that country).
+        preserved_country = info.get('country', None) if isinstance(info, dict) else None
+
         info          = dict()
         info['nosid'] = 'UN'+str(n).zfill(5)
         info['lon']   =  model['lon'][n]
         info['lat']   =  model['lat'][n]
         info['name']  =  model['stations'][n]
         info['state'] = 'UN'
-        info['country'] = None
+        info['country'] = preserved_country
         msg('w','Station is not NOAA gauge. Using id=' + info['nosid'])
      
-  
+
     # Check lon/lats  
   
     
@@ -668,21 +779,11 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
             #Plot IOS stations
         
             if not isVirtual and uhslcid is not None: # changed this for ioc
-                
-                localFile = os.path.join(
-                        cfg['Analysis']['localdatadir'], 
-                        'cwl.uhslc.' + info['nosid'] + '.' + \
-                        timeToStamp(datespan[0]) + '-' + \
-                        timeToStamp(datespan[1]) + '.dat')
-                      
-                if not os.path.exists(localFile):
 
-                    obs = getIOCData(uhslcid, datespan)
-                    #obs = csdllib.data.coops.getData(nosid, datespan, tmpDir=tmpDir) 
-                    csdllib.data.coops.writeData    (obs,  localFile)
-                else:
-                    
-                    obs = csdllib.data.coops.readData ( localFile )
+                # Always fetch fresh IOC data — no local caching — so that
+                # every run uses the same data source regardless of datespan.
+                obs = getIOCData(uhslcid, datespan,
+                                 lon=info['lon'], lat=info['lat'])
        
               
                 refDates = np.nan
@@ -730,8 +831,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
                     M_reordered = {'rmse': rmsd_value}
                     M_reordered.update(M) # Adds the rest of the items in their original order
                     M = M_reordered
-                  
-                
+
                 myPointData['id']      = info['nosid']            
                 myPointData['info']    = info
                 myPointData['metrics'] = M
@@ -794,7 +894,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased, coops_table), n = args
 
                 elif len(forecast) == 0 or np.sum(~np.isnan(forecast)) == 0:
                     msg('w','No forecast found for station ' + nosid + ', skipping.')
-          
+
                 else:
 
                     # Unify model and data series 
@@ -956,6 +1056,7 @@ def pointValidation (cfg, path, tag):
     # Set/get datespan
     dates = model['time']
 
+    
     datespan = [dates[0], dates[-1]] 
     try:
         datespan[0] = stampToTime (cfg[diagVar].get('pointdatesstart'))
@@ -985,115 +1086,13 @@ def pointValidation (cfg, path, tag):
     num_stations = len(stations)
     #num_stations = 239
     tupleArgs = []
-    
-    #--------------------------------------
-    # accessing COOPS API only once:
-    # api issue in searvey 
-    '''
-    def patched_normalize_coops_stations(df: pd.DataFrame) -> geopandas.GeoDataFrame:
-        if "lon" in df.columns:
-            df.loc[df.lon.notnull(), "lng"] = df.lon[df.lon.notnull()]
-        if "stationID" in df.columns:
-            df.loc[df.stationID.notnull(), "id"] = df.stationID[df.stationID.notnull()]
-    
-        df = df.drop(columns=["lon", "stationID"])
-    
-        # FIX: Convert the 'removed' column separately using format='mixed' or errors='coerce'
-        # This prevents the ValueError 
-        df["details.removed"] = pd.to_datetime(df["details.removed"], errors='coerce')
-        import numpy
-        df = df.rename(
-            columns={
-                "id": "nos_id",
-                "shefcode": "nws_id",
-                "lat": "lat",
-                "lng": "lon",
-                "details.removed": "removed",
-            }
-        ).astype({
-            "nos_id": "string",
-            "nws_id": "string",
-            "lon": numpy.float32,
-            "lat": numpy.float32,
-            "state": "string",
-            "name": "string",
-            # Removed 'removed' from astype because we handled it above
-        })
-    
-        df = df[["nos_id", "nws_id", "station_type", "name", "state", "lon", "lat", "removed"]]
-        df["status"] = coops.COOPS_StationStatus.ACTIVE.value
-        df.loc[~df.removed.isna(), "status"] = coops.COOPS_StationStatus.DISCONTINUED.value
-        df = df.drop_duplicates(subset=["nos_id", "nws_id", "station_type", "status", "removed"]).set_index("nos_id")
-    
-        return geopandas.GeoDataFrame(data=df, geometry=geopandas.points_from_xy(df.lon, df.lat, crs="EPSG:4326"))
-    '''
-    def patched_normalize_coops_stations(df: pd.DataFrame) -> geopandas.GeoDataFrame:
-
-        # If 'lon' exists, move it to 'lng'; if 'stationID' exists, move it to 'id'
-        if "lon" in df.columns:
-            df["lng"] = df["lng"].fillna(df["lon"]) if "lng" in df.columns else df["lon"]
-        if "stationID" in df.columns:
-            df["id"] = df["id"].fillna(df["stationID"]) if "id" in df.columns else df["stationID"]
-
-        df = df.drop(columns=["lon", "stationID"], errors='ignore')
-
-        if "details.removed" in df.columns:
-            df["details.removed"] = pd.to_datetime(df["details.removed"], errors='coerce')
-        else:
-            df["details.removed"] = pd.NaT
-
-        df = df.rename(
-            columns={
-                "id": "nos_id",
-                "shefcode": "nws_id",
-                "lat": "lat",
-                "lng": "lon",
-                "details.removed": "removed",
-            }
-        )
-        # Ensure all required columns exist before astype and filtering
-        required_cols = ["nos_id", "nws_id", "lat", "lon", "state", "name", "station_type", "removed"]
-        for col in required_cols:
-            if col not in df.columns:
-                df[col] = np.nan if col in ["lat", "lon"] else ""
-
-        df = df.astype({
-            "nos_id": "string",
-            "nws_id": "string",
-            "lon": np.float32,
-            "lat": np.float32,
-            "state": "string",
-            "name": "string",
-        })
-
-        df = df[required_cols]
-    
-        # Assign status based on the 'removed' column
-        df["status"] = coops.COOPS_StationStatus.ACTIVE.value
-        df.loc[df["removed"].notna(), "status"] = coops.COOPS_StationStatus.DISCONTINUED.value
-
-        # Remove duplicates and set index
-        df = df.drop_duplicates(subset=["nos_id", "nws_id", "station_type", "status", "removed"])
-        df = df.set_index("nos_id")
-
-        return geopandas.GeoDataFrame(
-            data=df, 
-            geometry=geopandas.points_from_xy(df.lon, df.lat, crs="EPSG:4326")
-        )
-
-    
-    # Apply the patch: Swap the library's function for our new one
-    coops.normalize_coops_stations = patched_normalize_coops_stations
-    coops_table = coops.get_coops_stations(metadata_source='main')
-    #--------------------------------------
-
     for i in range(num_stations):
         if cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] == 1:
-           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, sorted(nowcast_outputFiles),sorted(nowcast_outputFiles_biased),coops_table))
+           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, sorted(nowcast_outputFiles),sorted(nowcast_outputFiles_biased)))
         elif cfg['Analysis']['nowcast'] == 1 and cfg['Analysis']['dynamicbiascorrection'] != 1 and cfg['Analysis']['nowcastperiodineachfile'] < cfg['Analysis']['nowcastperiod']:
-           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, sorted(nowcast_outputFiles),None,coops_table))
+           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, sorted(nowcast_outputFiles),None))
         else:
-           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, None, None, coops_table))           
+           tupleArgs.append((cfg, path, tag, lonMin, lonMax, latMin, latMax, stations, model, tmpDir, datespan, None, None))           
  
     input = zip(tupleArgs, range(num_stations))
     pool = multiprocessing.Pool(processes=nProcessors)

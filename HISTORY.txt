@@ -75,3 +75,32 @@ Updated V3.0.0  (Based on V3.0.0)      			          12/03/2025
 - Changed autoval/plot/waterlevel.py to plot timeseries using a flexible y-axis.
 - Changed autoval/plot/skill.py to show RMSE instead of RMSD.
 - Changed autoval/report/metricsDescription.py to show RMSE instead of RMSD.
+
+Updated V3.0.0  (Based on Updated V3.0.0)                   08/18/2026
+================================================================================
+- Changed autoval/validate/waterlevel.py to include:
+    - Removed dependency on searvey.uhslc for IOC station metadata lookup.
+      The searvey.uhslc module hardcodes the global_hourly_fast ERDDAP dataset
+      which contains only ~11 stations, causing all other UHSLC stations to be
+      silently skipped.
+    - Added _query_uhslc_erddap() helper that queries the UHSLC ERDDAP REST API
+      directly, trying global_hourly_fast first and falling back to
+      global_hourly_rqds (research-quality dataset with ~533 stations).
+    - Added _decode_uhslc_country() helper to fix double-encoded UTF-8 country
+      names (e.g. Reunion, Cote d'Ivoire, Curacao) and strip stray quotes
+      that resulted from incorrect CSV splitting of comma-containing country
+      names (e.g. "Micronesia, Federated States of").
+    - Replaced manual CSV split(',') with pandas.read_csv() in ERDDAP response
+      parsing to correctly handle country names that contain commas.
+    - Added _get_ioc_stations_cached() helper that fetches and caches the full
+      IOC station list from the IOC sea level monitoring website.
+    - Added coordinate-based nearest-IOC fallback in getUHSLC_StationInfo():
+      for UHSLC stations absent from both ERDDAP datasets, the nearest IOC
+      station within 1.5 degrees is used to obtain the IOC code. This resolves
+      ~31 additional stations (e.g. UH914 Meulaboh, UH908 Port Blair, UH818
+      Smogen, UH541 Bamfield, UH340 Kaohsiung) that were previously listed as
+      "Other Stations without Observation" despite having IOC data.
+    - Added module-level cache (_UHSLC_SSC_CACHE, _IOC_STATIONS_CACHE) to avoid
+      redundant HTTP calls during parallel station processing.
+    - Propagated model lon/lat through getIOC_Country() and getIOCData() to
+      enable the coordinate-based fallback lookup.
