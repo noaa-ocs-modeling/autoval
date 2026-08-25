@@ -13,7 +13,10 @@ import multiprocessing
 import gc
 from searvey import coops 
 from searvey import ioc
-from searvey import uhslc
+import requests as _requests
+import io as _io
+import codecs as _codecs
+import pandas as _pd_uhslc
 
 
 #==============================================================================
@@ -420,23 +423,128 @@ def remove_outliers(data, window_size):
 
 #=======================================
 
+# def get_uhslc_station_info
+#
+# Returns (ssc_id, station_name, station_country) for a given UHSLC id.
+# Queries global_hourly_fast first, then falls back to global_hourly_rqds,
+# because not all UHSLC stations are present in the fast-delivery dataset.
+
+_UHSLC_SSC_CACHE = {}   # module-level cache to avoid repeated ERDDAP calls
+
+def _decode_uhslc_country(raw):
+    """Fix double-encoded UTF-8 country strings returned by the UHSLC ERDDAP.
+
+    Some country names (e.g. Réunion, Côte d'Ivoire, Curaçao) are stored as
+    UTF-8 bytes that were misread as Latin-1 and then unicode-escaped, resulting
+    in strings like ``R\\u00c3\\u00a9union``.  This function detects and repairs
+    that encoding, and also strips any stray surrounding quotes.
+    """
+    if not raw:
+        return raw
+    raw = raw.strip().strip('"')
+    if '\\u00' in raw:
+        try:
+            raw = _codecs.decode(raw.encode('utf-8'), 'unicode_escape').encode('latin1').decode('utf-8')
+        except Exception:
+            pass
+    return raw
+
+
+def _query_uhslc_erddap(uhslcid, dataset):
+    """Query a UHSLC ERDDAP tabledap dataset for station metadata."""
+    url = ('https://uhslc.soest.hawaii.edu/erddap/tabledap/{ds}.csv'
+           '?uhslc_id,ssc_id,station_name,station_country'
+           '&uhslc_id={id}&distinct()'.format(ds=dataset, id=int(uhslcid)))
+    try:
+        r = _requests.get(url, timeout=15)
+        # Skip the units row (index 1) and parse with pandas so that
+        # comma-containing country names (e.g. "Micronesia, Federated States of")
+        # are handled correctly.
+        lines = r.text.split('\n')
+        if len(lines) < 3:
+            return None, None, None
+        csv_text = lines[0] + '\n' + '\n'.join(lines[2:])
+        df = _pd_uhslc.read_csv(_io.StringIO(csv_text))
+        if df.empty or 'ssc_id' not in df.columns:
+            return None, None, None
+        row = df.iloc[0]
+        ssc_id  = str(row.get('ssc_id',  '')).strip() or None
+        name    = str(row.get('station_name',    '')).strip() or None
+        country = _decode_uhslc_country(str(row.get('station_country', ''))) or None
+        return ssc_id, name, country
+    except Exception:
+        pass
+    return None, None, None
+
+_IOC_STATIONS_CACHE = None   # cached IOC station GeoDataFrame
+
+def _get_ioc_stations_cached():
+    """Return the IOC station list, caching it after the first fetch."""
+    global _IOC_STATIONS_CACHE
+    if _IOC_STATIONS_CACHE is None:
+        try:
+            _IOC_STATIONS_CACHE = ioc._get_ioc_stations()
+        except Exception:
+            _IOC_STATIONS_CACHE = None
+    return _IOC_STATIONS_CACHE
+
+
+def getUHSLC_StationInfo(uhslcid, lon=None, lat=None):
+    """Return (ssc_id, station_name, station_country) for a UHSLC id.
+
+    Strategy:
+    1. Query global_hourly_fast ERDDAP dataset.
+    2. Fall back to global_hourly_rqds (research-quality) ERDDAP dataset.
+    3. If still not found and model lon/lat are provided, find the nearest
+       IOC station within 1.5 degrees as a last resort.  This handles UHSLC
+       stations that are not in either ERDDAP dataset but do have IOC data
+       (e.g. UH914 Meulaboh, UH908 Port Blair, UH818 Smogen …).
+    """
+    uhslcid = int(uhslcid)
+    cache_key = (uhslcid, round(lon, 3) if lon is not None else None,
+                           round(lat, 3) if lat is not None else None)
+    if cache_key in _UHSLC_SSC_CACHE:
+        return _UHSLC_SSC_CACHE[cache_key]
+
+    # 1 & 2 — ERDDAP lookup
+    for dataset in ('global_hourly_fast', 'global_hourly_rqds'):
+        ssc_id, name, country = _query_uhslc_erddap(uhslcid, dataset)
+        if ssc_id:
+            result = (ssc_id, name, country)
+            _UHSLC_SSC_CACHE[cache_key] = result
+            return result
+
+    # 3 — coordinate-based nearest-IOC fallback
+    if lon is not None and lat is not None:
+        ioc_df = _get_ioc_stations_cached()
+        if ioc_df is not None and not ioc_df.empty:
+            ioc_lons = ioc_df.geometry.x.values
+            ioc_lats = ioc_df.geometry.y.values
+            dist = np.sqrt((ioc_lons - lon) ** 2 + (ioc_lats - lat) ** 2)
+            nearest_idx = int(np.argmin(dist))
+            if dist[nearest_idx] <= 1.5:
+                row     = ioc_df.iloc[nearest_idx]
+                ssc_id  = str(row['ioc_code']).strip() or None
+                name    = str(row['location']).strip() or None
+                country = str(row['country']).strip() or None
+                if ssc_id:
+                    result = (ssc_id, name, country)
+                    _UHSLC_SSC_CACHE[cache_key] = result
+                    return result
+
+    _UHSLC_SSC_CACHE[cache_key] = (None, None, None)
+    return None, None, None
+
+
+#=======================================
+
 # def get_IOC_country
 
-def getIOC_Country(uhslcid,datespan):
+def getIOC_Country(uhslcid, datespan, lon=None, lat=None):
     ioc_country = None
 
     try:
-
-       # get uhslc id 
-       all_UHSLC_stations = uhslc.get_uhslc_data(start_date = datespan[0]-timedelta(days=1095),end_date=datespan[1]-timedelta(days=1085),)   #get data from 3 years ago, UHSLC is not updated
-       all_UHSLC_stations = all_UHSLC_stations.set_index('uhslc_id')
-       stationn=int(uhslcid)
-   
-       
-       # Get IOC country name for plotting
-       ioc_stations_c = all_UHSLC_stations['station_country'][stationn]
-       ioc_stations_c_new = ioc_stations_c.reset_index()
-       ioc_country = ioc_stations_c_new['station_country'][0]
+       _, _, ioc_country = getUHSLC_StationInfo(uhslcid, lon=lon, lat=lat)
        return ioc_country
 
     except:
@@ -450,19 +558,17 @@ def getIOC_Country(uhslcid,datespan):
 
 # This function use UHSLC id
 
-def getIOCData(uhslcid,datespan): 
+def getIOCData(uhslcid, datespan, lon=None, lat=None): 
 
    try:
-       # Get IOC Id using uhslc id 
-       all_UHSLC_stations = uhslc.get_uhslc_data(start_date = datespan[0]-timedelta(days=1095),end_date=datespan[1]-timedelta(days=1085),)   #get data from 3 years ago, UHSLC is not updated
-     
-       all_UHSLC_stations = all_UHSLC_stations.set_index('uhslc_id')
-       stationn=int(uhslcid)
+       # Get IOC id (ssc_id) for this UHSLC station.
+       # getUHSLC_StationInfo queries ERDDAP first, then falls back to a
+       # coordinate-based nearest-IOC search if lon/lat are supplied.
+       ioc_id, _, _ = getUHSLC_StationInfo(uhslcid, lon=lon, lat=lat)
 
-       ioc_stations = all_UHSLC_stations['ssc_id'][stationn]
-       ioc_stations_new = ioc_stations.reset_index()
-       ioc_id = ioc_stations_new['ssc_id'][0]
-       
+       if not ioc_id:
+           return {'dates' : [], 'values' : []}
+        
          
        # download data using ioc function in searvey
        station_df = ioc.get_ioc_station_data(ioc_code = ioc_id,endtime=datespan[1], )
@@ -473,7 +579,7 @@ def getIOCData(uhslcid,datespan):
 
        # take data every six minutes
        filtered_df.set_index('time', inplace=True)
-       station_df_resampled = filtered_df.resample('6T').first()
+       station_df_resampled = filtered_df.resample('6min').first()
        station_df_resampled.reset_index(inplace=True)   
    
        #In some stations we have the report of multiple sensores, here we first calculate the relative water level
@@ -537,6 +643,7 @@ nowcast_outputFiles, nowcast_outputFiles_biased), n = args
                                    ' ' + stations[n].strip())
     myPointData = dict () 
     isVirtual   = False  # 'virtual' station has no obs counterpart
+    info        = {}     # populated below; initialised here to avoid UnboundLocalError
 
     forecast = model['zeta'][:,n]
 
@@ -614,7 +721,9 @@ nowcast_outputFiles, nowcast_outputFiles_biased), n = args
         info['lat']   =  model['lat'][n]
         info['name']  =  model['stations'][n]
         info['state'] = 'UN'
-        info['country'] = getIOC_Country(uhslcid,datespan)
+        info['country'] = getIOC_Country(uhslcid, datespan,
+                                          lon=model['lon'][n],
+                                          lat=model['lat'][n])
         msg('w','Station is uhslc gauge. Using id=' + info['nosid'])
 
     else:
@@ -637,13 +746,17 @@ nowcast_outputFiles, nowcast_outputFiles_biased), n = args
 
     if isVirtual:
 
+        # Preserve the IOC country if it was already resolved (UH station with
+        # no obs but a known country should still appear under that country).
+        preserved_country = info.get('country', None) if isinstance(info, dict) else None
+
         info          = dict()
         info['nosid'] = 'UN'+str(n).zfill(5)
         info['lon']   =  model['lon'][n]
         info['lat']   =  model['lat'][n]
         info['name']  =  model['stations'][n]
         info['state'] = 'UN'
-        info['country'] = None
+        info['country'] = preserved_country
         msg('w','Station is not NOAA gauge. Using id=' + info['nosid'])
      
 
@@ -666,21 +779,11 @@ nowcast_outputFiles, nowcast_outputFiles_biased), n = args
             #Plot IOS stations
         
             if not isVirtual and uhslcid is not None: # changed this for ioc
-                
-                localFile = os.path.join(
-                        cfg['Analysis']['localdatadir'], 
-                        'cwl.uhslc.' + info['nosid'] + '.' + \
-                        timeToStamp(datespan[0]) + '-' + \
-                        timeToStamp(datespan[1]) + '.dat')
-                      
-                if not os.path.exists(localFile):
 
-                    obs = getIOCData(uhslcid, datespan)
-                    #obs = csdllib.data.coops.getData(nosid, datespan, tmpDir=tmpDir) 
-                    csdllib.data.coops.writeData    (obs,  localFile)
-                else:
-                    
-                    obs = csdllib.data.coops.readData ( localFile )
+                # Always fetch fresh IOC data — no local caching — so that
+                # every run uses the same data source regardless of datespan.
+                obs = getIOCData(uhslcid, datespan,
+                                 lon=info['lon'], lat=info['lat'])
        
               
                 refDates = np.nan

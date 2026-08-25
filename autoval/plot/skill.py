@@ -59,7 +59,10 @@ def panel (cfg, metrics, refDates, nosid, info, tag):
                             cfg['Analysis']['imgdir'])
 
     fig, axs = plt.subplots(1,10,figsize=(5.5, 4.5))
-    plt.style.use('seaborn-white')
+    try:
+        plt.style.use('seaborn-v0_8-white')  # matplotlib >= 3.6
+    except (OSError, IOError):
+        plt.style.use('seaborn-white')       # matplotlib < 3.6
     plt.suptitle(tag + ' ' + nosid + ' ' + info['name'] + ', ' + info['state'], fontsize=8)
 
     #rmse
